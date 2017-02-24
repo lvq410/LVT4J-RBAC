@@ -1,0 +1,79 @@
+#set($navs=['授权项管理'])
+#set($pageDesc='所有使用授权中心的产品的授权项的查询，修改与删除')
+#parse('/header.vm')
+
+<script src="/vm/permission/index.js"></script>
+
+##授权项编辑
+<div id="editPermissionDiv" class="col-xs-12" style="display:none;"><div class="widget-box">
+<div class="widget-header">
+    <h4 class="widget-title" style="word-break:break-all;">编辑授权项</h4>
+    <div class="widget-toolbar">
+        <a href="javascript:;" onclick="$(this).closest('.col-xs-12').slideUp()">
+            <i class="ace-icon fa fa-close bigger-130"></i>
+        </a>
+    </div>
+</div>
+<div class="widget-body"><div class="widget-main">
+<form class="form-horizontal">
+    <p class="valid-err text-danger col-xs-9 col-xs-offset-3"></p>
+    <input name="oldId" type="hidden"/>
+    <div class="form-group">
+        <label class="col-xs-3 control-label">ID：</label>
+        <div class="col-xs-9">
+            <input name="id" data-required data-regex="^[a-zA-Z]+[a-zA-Z0-9_]*$"
+                data-err="授权项ID不能为空,且必须以字母开头,只能由字母数字和下划线组成"
+                type="text" class="form-control" placeholder="授权项ID"/>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-xs-3 control-label">名称：</label>
+        <div class="col-xs-9">
+            <input name="name" data-required data-err="授权项名称不能为空"
+                type="text" class="form-control" placeholder="授权项名称，短名称"/>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-xs-3 control-label">描述：</label>
+        <div class="col-xs-9">
+            <textarea name="des" data-required data-err="授权项描述不能为空"
+                type="text" class="form-control" style="min-height:150px;" placeholder="授权项描述"></textarea>
+        </div>
+    </div>
+    <button type="button" class="btn btn-purple btn-block" onclick="editPermissionSave()">保存</button>
+</form>
+</div></div>##widget-body
+</div></div>##widget-box
+
+##授权项列表
+<div class="col-xs-12"><div class="widget-box">
+<div class="widget-header">
+    <h4 class="widget-title">授权项列表</h4>
+    <div class="widget-toolbar">
+        <div class="input-group" style="width:200px;">
+            <input id="keyword" type="text" class="form-control" style="height:22px;margin-top:7px;" placeholder="请输入关键词">
+            <span class="input-group-btn">
+                <button type="button" class="btn btn-purple btn-minier" onclick="loadPermissions()">
+                    搜索<i class="ace-icon fa fa-search"></i>
+                </button>
+            </span>
+        </div>
+    </div>
+</div>
+<div id="permissionsDiv" class="widget-body" style="display:none;"><div class="widget-main" style="padding-bottom:52px;">
+<table class="table table-striped table-bordered table-hover table-condensed" style="margin-bottom:0;">
+    <thead>
+        <tr>
+            <td style="width:140px;" title="授权项的ID">ID</td>
+            <td title="授权项的名称">名称</td>
+            <td style="width:87px;">
+                <button onclick="addPermission()" title="增加一个新授权项" type="button" class="btn btn-primary btn-minier">新增</button>
+            </td>
+        </tr>
+    </thead>
+    <tbody id="permissions"></tbody>
+</table>
+<div id="permissionsPager" widget="pager" class="pull-right" onpage="loadPermissions()"></div>
+</div></div>##widget-body
+</div></div>##widget-box
+#parse('/footer.vm')

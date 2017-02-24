@@ -1,0 +1,32 @@
+.pager{
+    color: #2283c5;
+    margin: 10px 0;
+    text-align: left;
+    display: inline-block;
+}
+.pager .pager-ele:first-child{
+    margin: 0;
+}
+.pager-ele{
+    display: inline;
+    padding: 5px 14px;
+    border: 1px solid #d4dfe3;
+    float: left;
+    margin-left: -1px;
+}
+.pager .pager-ele:last-child{
+    margin-left: -1px;
+}
+.pager-btn{
+    cursor: pointer;
+}
+.pager-btn:hover{
+    background-color: #eaeff2;
+}
+.pager input{
+    width:30px;
+    height:18px;
+    border:none;
+    padding: 0;
+    text-align: center;
+}

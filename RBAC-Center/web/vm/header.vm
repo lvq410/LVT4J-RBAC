@@ -1,0 +1,119 @@
+## 每个页面头部模块，需要参数
+## 1.navs 数组，指示该页面网站位置 如['用户管理']
+## 2.pageDesc 当前页面描述
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8"/>
+    <title>授权中心</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link href="/img/logo.png" type="image/x-icon" rel="shortcut icon">
+    
+    <link href="/plugin/ace/assets/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="/plugin/ace/assets/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet"/>
+    <link href="/plugin/jquery-ui/jquery-ui.min.css" rel="stylesheet"/>
+    <link href="/plugin/ace/assets/fonts/fonts.googleapis.com.css" rel="stylesheet"/>
+    <link href="/plugin/select2/css/select2.min.css" rel="stylesheet">
+    <link href="/plugin/ace/assets/css/ace.min.css" rel="stylesheet"/>
+    <link href="/css/common.css" rel="stylesheet"/>
+    <link href="/css/widget.css" rel="stylesheet"/>
+
+    <script src="/plugin/ace/assets/js/jquery.2.1.1.min.js"></script>
+    <script src="/plugin/ace/assets/js/bootstrap.min.js"></script>
+    <script src="/plugin/jquery-ui/jquery-ui.min.js"></script>
+    <script src="/plugin/ace/assets/js/ace-elements.min.js"></script>
+    <script src="/plugin/ace/assets/js/ace.min.js"></script>
+    <script src="/plugin/ace/assets/js/ace-extra.min.js"></script>
+    <script src="/plugin/lvt4js.js"></script>
+    <script src="/plugin/select2/js/select2.min.js"></script>
+    <script src="/plugin/jstpl-2.0.1.min.js"></script>
+    <script src="/js/common.js"></script>
+    <script src="/js/widget.js"></script>
+    <script>
+        var curPro = #if($curPro){id:'${curPro.id}',name:'${curPro.name}'}#else null#end;
+    </script>
+</head>
+
+<body class="no-skin">
+<!-- 警告弹出层 -->
+<div id="alerter" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="alertLbl" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span></button>
+                <h4 id="alertTitle" class="modal-title">注意!</h4>
+            </div>
+            <div class="modal-body">
+                <pre id="alertMsg" style="word-break:break-all;white-space:pre-wrap;"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal">确定</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 顶部条 -->
+<div id="navbar" class="navbar navbar-default">
+    <script type="text/javascript">
+        try { ace.settings.check('navbar', 'fixed') } catch (e) {}
+    </script>
+    
+    <div class="navbar-container" id="navbar-container" style="padding:0;">
+        <button data-target="#sidebar" type="button" class="navbar-toggle menu-toggler pull-left">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <div class="navbar-header pull-left">
+            <a href="/" title="首页" class="navbar-brand" style="padding-top:11px;padding-bottom:7px;font-size:25px;">
+                <strong>
+                    <img class="nav-user-photo" src="/img/logo.png" style="margin-top:-4px;width:30px;"/>
+                    授权中心
+                </strong>
+            </a>
+        </div>
+        <div class="navbar-header pull-right" title="重置当前选择的产品" style="padding-top:7px;padding-right:5px;">
+            <select id="curProId" widget="select2" url="/edit/product/list.json" onchange="onCurProIdChange()" placeholder="请选择当前产品" style="width:150px;"></select>
+        </div>
+        <div class="navbar-header pull-right" style="color:white;font-size:20px;line-height:40px;">当前产品：</div>
+    </div>
+</div>
+
+<!-- 内容区 -->
+<div id="main-container" class="main-container">
+    <script type="text/javascript">
+        try { ace.settings.check('main-container', 'fixed') } catch (e) {}
+    </script>
+    <!-- 内容区左侧菜单栏 -->
+    #parse('sidebar.vm')
+<div class="main-content">
+<div class="main-content-inner">
+<!-- 内容区顶部网站位置指示区 -->
+<div class="breadcrumbs" id="breadcrumbs">
+    <script type="text/javascript">
+        try{ace.settings.check('breadcrumbs' , 'fixed')}catch(e){}
+    </script>
+    <ul class="breadcrumb">
+        <li>
+            <i class="ace-icon fa fa-home"></i>
+            <a href="/">首页</a>
+        </li>
+        #foreach($nav in $navs)
+        <li>$nav</li>
+        #end
+    </ul>
+</div>
+<!-- 具体内容区 -->
+<div class="page-content">
+    <div class="page-header">
+        #set($curPageIdx=$navs.size() - 1)
+        <h1>
+            $navs.get($curPageIdx)
+            <small>
+                <i class="ace-icon fa fa-angle-double-right"></i>
+                $!{pageDesc}
+            </small>
+        </h1>
+    </div>
+    <div class="row main-container"><div class="row page-content">

@@ -1,0 +1,4 @@
+include 'RBAC-Client'
+include 'RBAC-Center'
+
+rootProject.name = 'RBAC'

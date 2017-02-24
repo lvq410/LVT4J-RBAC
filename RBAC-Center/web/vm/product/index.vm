@@ -1,0 +1,88 @@
+#set($navs=['产品管理'])
+#set($pageDesc='所有使用授权中心的产品的查询，修改与删除')
+#parse('/header.vm')
+
+<script src="/vm/product/index.js"></script>
+
+##产品编辑
+<div id="editProductDiv" class="col-xs-12" style="display:none;"><div class="widget-box">
+<div class="widget-header">
+    <h4 class="widget-title" style="word-break:break-all;">编辑产品</h4>
+    <div class="widget-toolbar">
+        <a href="javascript:;" onclick="$(this).closest('.col-xs-12').slideUp()">
+            <i class="ace-icon fa fa-close bigger-130"></i>
+        </a>
+    </div>
+</div>
+<div class="widget-body"><div class="widget-main">
+<form class="form-horizontal">
+    <p class="valid-err text-danger col-xs-9 col-xs-offset-3"></p>
+    <input name="oldId" type="hidden"/>
+    <div class="form-group">
+        <label class="col-xs-3 control-label">ID：</label>
+        <div class="col-xs-9">
+            <input name="id" data-required data-regex="^[a-zA-Z]+[a-zA-Z0-9_]*$"
+                data-err="产品ID不能为空,且必须以字母开头,只能由字母数字和下划线组成"
+                type="text" class="form-control" placeholder="与其他产品区分的唯一ID"/>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-xs-3 control-label">名称：</label>
+        <div class="col-xs-9">
+            <input name="name" data-required data-err="产品名称不能为空"
+                type="text" class="form-control" placeholder="产品名称，短名称"/>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-xs-3 control-label">描述：</label>
+        <div class="col-xs-9">
+            <textarea name="des" data-required data-err="产品描述不能为空"
+                type="text" class="form-control" style="min-height:150px;" placeholder="产品描述"></textarea>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-xs-3 control-label">管理员ID：</label>
+        <div class="col-xs-9">
+            <input name="adminUserId" type="text" class="form-control"
+                placeholder="该产品管理员用户ID，用于当用户授权不通过时，提示用户管理员是谁"/>
+        </div>
+    </div>
+    <button type="button" class="btn btn-purple btn-block" onclick="editProductSave()">保存</button>
+</form>
+</div></div>##widget-body
+</div></div>##widget-box
+
+##产品列表
+<div class="col-xs-12"><div class="widget-box">
+<div class="widget-header">
+    <h4 class="widget-title">产品列表</h4>
+    <div class="widget-toolbar">
+        <div class="input-group" style="width:200px;">
+            <input id="keyword" type="text" class="form-control" style="height:22px;margin-top:7px;" placeholder="请输入关键词">
+            <span class="input-group-btn">
+                <button type="button" class="btn btn-purple btn-minier" onclick="loadProducts()">
+                    搜索<i class="ace-icon fa fa-search"></i>
+                </button>
+            </span>
+        </div>
+    </div>
+</div>
+<div class="widget-body"><div class="widget-main" style="padding-bottom:52px;">
+<table class="table table-striped table-bordered table-hover table-condensed" style="margin-bottom:0;">
+    <thead>
+        <tr>
+            <td style="width:140px;" title="产品的ID">ID</td>
+            <td title="产品的名称">名称</td>
+            <td style="width:135px;" title="与产品相关的任何信息最近一次的修改时间">修改时间</td>
+            <td style="width:200px;" title="该产品管理员用户ID，用于当用户授权不通过时，提示用户管理员是谁">管理员</td>
+            <td style="width:87px;">
+                <button onclick="addProduct()" title="增加一个新产品" type="button" class="btn btn-primary btn-minier">新增</button>
+            </td>
+        </tr>
+    </thead>
+    <tbody id="products"></tbody>
+</table>
+<div id="productsPager" widget="pager" class="pull-right" onpage="loadProducts()"></div>
+</div></div>##widget-body
+</div></div>##widget-box
+#parse('/footer.vm')

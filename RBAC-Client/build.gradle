@@ -1,0 +1,43 @@
+apply plugin: 'java'
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+        resources {
+            srcDir 'src/main/java'
+        }
+    }
+}
+
+jar {
+    baseName 'rbac-client'
+    archiveName 'rbac-client.jar'
+    version version
+    manifest {
+        attributes 'Implementation-Title': 'RBAC-CLIENT',
+                   'Implementation-Version': version
+    }
+    from sourceSets.main.allSource
+}
+
+uploadArchives {
+    repositories {
+       flatDir {
+           dirs 'repos'
+       }
+    }
+}
+
+dependencies {
+    compile('javax.servlet:javax.servlet-api:3.1.0')
+    compile('org.springframework:spring-webmvc:2.0'){
+        exclude module: '*'
+    }
+    
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}

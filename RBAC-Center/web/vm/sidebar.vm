@@ -1,0 +1,53 @@
+##左侧菜单栏  配置各参数说明:
+##n:name,列表显示名   h:href,连接地址  i:icon,图标的class  l:list,子列表  p:permission,授权控制
+#set($Navs=[
+    {'n':'首页','i':'fa-home','h':'','l':[]},
+    {'n':'产品管理','i':'fa-leaf','h':'/view?path=/product/index','l':[]},
+    {'n':'用户管理','i':'fa-user','h':'/view?path=/user/index','l':[]},
+    {'n':'配置项管理','i':'fa-info-circle','h':'/view?path=/param/index','l':[]},
+    {'n':'访问项管理','i':'fa-globe','h':'/view?path=/access/index','l':[]},
+    {'n':'授权项管理','i':'fa-gear','h':'/view?path=/permission/index','l':[]},
+    {'n':'角色管理','i':'fa-group','h':'/view?path=/role/index','l':[]},
+    {'n':'用户授权','i':'fa-key','h':'/view?path=/userAuth/index','l':[]}
+])
+<div id="sidebar" class="sidebar responsive" data-sidebar="true" data-sidebar-scroll="true" data-sidebar-hover="true">
+    <script type="text/javascript">
+        try{ace.settings.check('sidebar' , 'fixed')}catch(e){}
+    </script>
+
+    <ul class="nav nav-list" style="top: 0px;">
+        #foreach($Nav in $Navs)
+            <li class="#if($navs.get(0)==$Nav.get('n')) open #end">
+                <a href="$Nav.get('h')"#if(!$Nav.get('l').isEmpty()) class="dropdown-toggle" #end>
+                    <i class="menu-icon fa $Nav.get('i')"></i>
+                    <span class="menu-text">$Nav.get('n')</span>
+                    #if(!$Nav.get('l').isEmpty()) 
+                    <b class="arrow fa fa-angle-down"></b>
+                    #end
+                </a>
+                #if(!$Nav.get('l').isEmpty()) 
+                    <b class="arrow"></b>
+                    <ul class="submenu nav-hide">
+                        #foreach($SubNav in $Nav.get('l'))
+                            <li class="#if($navs.size()>1 && $navs.get(1)==$SubNav.get('n')) active #end">
+                                <a href="$SubNav.get('h')">
+                                    <i class="menu-icon fa fa-caret-right"></i>
+                                    $SubNav.get('n')
+                                </a>
+                                <b class="arrow"></b>
+                            </li>
+                        #end
+                    </ul>
+                #end
+            </li>
+        #end
+    </ul>
+
+    <div class="sidebar-toggle sidebar-collapse" id="sidebar-collapse">
+        <i class="ace-icon fa fa-angle-double-left" data-icon1="ace-icon fa fa-angle-double-left" data-icon2="ace-icon fa fa-angle-double-right"></i>
+    </div>
+
+    <script type="text/javascript">
+        try{ace.settings.check('sidebar' , 'collapsed')}catch(e){}
+    </script>
+</div>

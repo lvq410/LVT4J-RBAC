@@ -1,0 +1,81 @@
+html{
+    min-width:1000px;
+    overflow: scroll;
+}
+input {
+    z-index: 0 !important;
+}
+select {
+    z-index: 0 !important;
+}
+textarea {
+    z-index: 0 !important;
+}
+
+td{
+    word-break:break-all !important;
+}
+
+thead td{
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+tbody td{
+    text-align: left !important;
+    vertical-align: top !important;
+}
+
+.flex-container{
+    display: -webkit-flex;
+    display: flex;
+}
+.flex-initial{
+    -webkit-flex: initial;
+    flex: initial;
+    width: 200px;
+    min-width: 100px;
+}
+.flex-none{
+    -webkit-flex: none;
+    flex: none;
+    width: 200px;
+}
+.flex-flex1{
+    -webkit-flex: 1;
+    flex: 1;
+}
+.flex-flex2{
+    -webkit-flex: 2;
+    flex: 2;
+}
+.vertical-container{
+  display: -webkit-flex;
+  display:         flex;
+  -webkit-align-items: center;
+          align-items: center;
+  -webkit-justify-content: center;
+          justify-content: center;
+}
+
+.main-container:before{
+    left: 0;
+    right: 0;
+}
+
+.ui-tooltip{
+    background: #fff !important;
+    color: #333 !important;
+    max-width: none !important;
+}
+.ui-tooltip-content{
+    overflow: hidden !important;
+}
+
+.tooltip-msg{
+    display:none;
+}
+
+input[type=checkbox].ace.ace-switch.ace-switch-5+.lbl::before {
+    content: "\662F\a0\a0\a0\a0\a0\a0\a0\a0\a0\a0\a0\5426";
+}
