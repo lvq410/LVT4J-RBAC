@@ -15,14 +15,14 @@ function loadParams(){
 
 function addParam() {
     $('#editParamDiv').formData({});
-    $('#editParamDiv').slideDown();
+    $('#editParamDiv').slideDown().scrollToMe();
 }
 
 function editParam(btn) {
     var param = $(btn).closest('tr').attrData();
     param.oldKey = param.key;
     $('#editParamDiv').formData(param);
-    $('#editParamDiv').slideDown();
+    $('#editParamDiv').slideDown().scrollToMe();
 }
 
 function editParamSave() {
@@ -31,7 +31,10 @@ function editParamSave() {
     param.proId = curPro.id;
     q('/edit/param/set.json',
         param,
-        loadParams,
+        function() {
+            alert('保存成功!');
+            loadParams();
+        },
         '保存配置项中'
     );
 }
@@ -44,7 +47,10 @@ function delParam(btn) {
             proId:curPro.id,
             key:param.key
         },
-        loadParams,
+        function(){
+            alert('删除成功!');
+            loadParams();
+        },
         '删除配置项中'
     );
 }

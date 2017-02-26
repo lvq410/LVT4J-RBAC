@@ -1,22 +1,17 @@
 package com.lvt4j.rbac.web.controller;
 
-import java.beans.PropertyEditorSupport;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
 
 import lombok.NonNull;
 import net.sf.json.JSONObject;
 
+import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.DataBinder;
-import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,6 +30,11 @@ import com.lvt4j.rbac.data.bean.UserAccess;
 import com.lvt4j.rbac.data.bean.UserParam;
 import com.lvt4j.rbac.data.bean.UserPermission;
 import com.lvt4j.rbac.data.bean.UserRole;
+import com.lvt4j.rbac.data.bean.VisitorAccess;
+import com.lvt4j.rbac.data.bean.VisitorParam;
+import com.lvt4j.rbac.data.bean.VisitorPermission;
+import com.lvt4j.rbac.data.bean.VisitorRole;
+import com.lvt4j.rbac.data.bean.base.BaseParam;
 import com.lvt4j.rbac.service.Cache;
 import com.lvt4j.spring.JsonResult;
 
@@ -52,6 +52,12 @@ public class EditController {
     
     @Autowired
     Cache cache;
+    
+    @RequestMapping("/curProSet")
+    public JsonResult curProSet(
+            @RequestParam String curProId) {
+        return JsonResult.success();
+    }
     
     @RequestMapping("/product/list")
     public JsonResult productList(
@@ -92,8 +98,8 @@ public class EditController {
                             product.id).execute2BasicOne(boolean.class))
                 return JsonResult.fail("ID为["+product.id+"]的产品已存在，请另取ID!");
             product.lastModify = System.currentTimeMillis();
-            db.executeSQL("update product set id=?,name=?,des=?,lastModify=?,adminUserId=? where id=?",
-                    product.id, product.name, product.des, product.lastModify, product.adminUserId, oldId)
+            db.executeSQL("update product set id=?,name=?,des=?,lastModify=? where id=?",
+                    product.id, product.name, product.des, product.lastModify, oldId)
                     .execute();
             if(oldId!=product.id) productNotify(oldId);
             productNotify(product.id);
@@ -130,18 +136,23 @@ public class EditController {
                 pager.getStart(), pager.getSize())
                 .execute2Model(User.class));
     }
+    @RequestMapping("/user/get")
+    public JsonResult userGet(
+            @RequestParam String id) {
+        return JsonResult.success(db.select("select * from user where id=?", id)
+                .execute2ModelOne(User.class));
+    }
     @RequestMapping("/user/set")
     public JsonResult userSet(
             @RequestParam(required=false) String oldId,
             User user){
         db.beginTransaction();
-        // TODO 统计用户涉及到的产品并发送更改通知
         if(oldId==null) {
             if(db.select("select count(id)<>0 from user where id=?",
                     user.id).execute2BasicOne(boolean.class))
                 return JsonResult.fail("ID为["+user.id+"]的用户已存在，请另取ID!");
             db.insert(user).execute();
-            // TODO 
+            productNotify(userProducts(user.id));
         } else {
             if(!db.select("select count(id)<>0 from user where id=?",
                     oldId).execute2BasicOne(boolean.class))
@@ -152,7 +163,7 @@ public class EditController {
                 return JsonResult.fail("ID为["+user.id+"]的用户已存在，请另取ID!");
             db.executeSQL("update user set id=?,name=?,des=? where id=?",
                     user.id, user.name, user.des, oldId).execute();
-            // TODO 
+            productNotify(userProducts(user.id));
         }
         return JsonResult.success();
     }
@@ -164,189 +175,18 @@ public class EditController {
                 .execute2BasicOne(boolean.class)) 
             return JsonResult.fail("不存在用户[id="+id+"],请刷新页面或重新查询!");
         db.executeSQL("delete from user where id=?", id).execute();
-        // TODO 统计用户涉及到的产品并发送更改通知
-        productNotify();
+        productNotify(userProducts(id));
         return JsonResult.success();
     }
-    @RequestMapping("/user/getAuth")
-    public JsonResult userGetAuth(
-            @RequestParam String proId,
-            @RequestParam String id){
-        User user = db.select("select * from user where id=?",
-                id).execute2ModelOne(User.class);
-        
-        List<Param> params = db.select("select * from param where proId=?",
-                proId).execute2Model(Param.class);
-        Map<String, String> userParams = new TreeMap<String, String>();
-        List<UserParam> rawUserParams = db.select("select key,val from user_param where proId=? and userId=?",
-                proId, id).execute2Model(UserParam.class);
-        for(UserParam rawUserParam : rawUserParams) userParams.put(rawUserParam.key, rawUserParam.val);
-        
-        List<Role> userRoles = new LinkedList<Role>();
-        List<String> userRoleIds = db.select("select roleId from user_role where proId=? and userId=?",
-                proId, id).execute2Basic(String.class);
-        for(String userRoleId : userRoleIds) {
-            Role userRole = db.select("select * from role where proId=? and id=?",
-                    proId, userRoleId).execute2ModelOne(Role.class);
-            if(userRole==null)
-                return JsonResult.fail("产品["+proId+"]下用户["+id+"]的ID为["
-                        +userRoleId+"]的角色不存在,请刷新页面或重新查询!");
-            userRoles.add(userRole);
-        }
-        
-        List<Access> userAccesses = new LinkedList<Access>();
-        List<String> userAccessPatterns = db.select("select accessPattern from user_access where proId=? and userId=?",
-                proId, id).execute2Basic(String.class);
-        for(String userAccessPattern : userAccessPatterns) {
-            Access userAccess = db.select("select * from access where pattern=?",
-                    userAccessPattern).execute2ModelOne(Access.class);
-            if(userAccess==null)
-                return JsonResult.fail("产品["+proId+"]下用户["+id+"]的pattern为["
-                        +userAccessPattern+"]的访问项不存在,请刷新页面或重新查询!");
-            userAccesses.add(userAccess);
-        }
-        
-        List<Permission> userPermissions = new LinkedList<Permission>();
-        List<String> userPermissionIds = db.select("select permissionId from user_permission where proId=? and userId=?",
-                proId, id).execute2Basic(String.class);
-        for(String userPermissionId : userPermissionIds) {
-            Permission userPermission = db.select("select * from permission where id=?",
-                    userPermissionId).execute2ModelOne(Permission.class);
-            if(userPermission==null)
-                return JsonResult.fail("产品["+proId+"]下用户["+id+"]的ID为["
-                        +userPermissionId+"]的授权项不存在,请刷新页面或重新查询!");
-            userPermissions.add(userPermission);
-        }
-        return JsonResult.success()
-                .dataPut("user", user)
-                .dataPut("params", params)
-                .dataPut("userParams", userParams)
-                .dataPut("userRoles", userRoles)
-                .dataPut("userAccesses", userAccesses)
-                .dataPut("userPermissions", userPermissions)
-                .dataPut("mergeAccesses", mergeAccesses(proId, userRoleIds, userAccessPatterns))
-                .dataPut("mergePermissions", mergePermissions(proId, userRoleIds, userPermissionIds));
-    }
-    @RequestMapping("/user/calAuth")
-    public JsonResult userCalAuth(
-            @RequestParam String proId,
-            @RequestParam String userId,
-            @RequestParam(required=false) String[] roleIds,
-            @RequestParam(required=false) String[] accessPatterns,
-            @RequestParam(required=false) String[] permissionIds) {
-        List<String> userRoleIds = roleIds==null?
-                new LinkedList<String>()
-                :Arrays.asList(roleIds);
-        List<String> userAccessPatterns = accessPatterns==null?
-                new LinkedList<String>()
-                :Arrays.asList(accessPatterns);
-        List<String> userPermissionIds = permissionIds==null?
-                new LinkedList<String>()
-                :Arrays.asList(permissionIds);
-        return JsonResult.success()
-                .dataPut("mergeAccesses", mergeAccesses(proId, userRoleIds, userAccessPatterns))
-                .dataPut("mergePermissions", mergePermissions(proId, userRoleIds, userPermissionIds));
-    }
-    
-    @RequestMapping("/user/setAuth")
-    public JsonResult userSetAuth(
-            @RequestParam String proId,
-            @RequestParam String userId,
-            @RequestParam(value="params",required=false) JSONObject params,
-            @RequestParam(required=false) String[] roleIds,
-            @RequestParam(required=false) String[] accessPatterns,
-            @RequestParam(required=false) String[] permissionsIds){
-        db.beginTransaction();
-        //用户配置
-        db.executeSQL("delete from user_param where proId=? and userId=?",
-                proId, userId).execute();
-        if(params!=null){
-            UserParam userParam = new UserParam();
-            userParam.proId = proId;
-            userParam.userId = userId;
-            for(Object key : params.keySet()){
-                userParam.key = key.toString();
-                userParam.val = params.getString(userParam.key);
-                db.insert(userParam).execute();
-            }
-        }
-        //角色修改
-        db.executeSQL("delete from user_role where proId=? and userId=?",
-                proId, userId).execute();
-        if(roleIds!=null) {
-            UserRole userRole = new UserRole();
-            userRole.proId = proId;
-            userRole.userId = userId;
-            for(String roleId: roleIds){
-                userRole.roleId = roleId;
-                db.insert(userRole).execute();
-            }
-        }
-        //访问项修改
-        db.executeSQL("delete from user_access where proId=? and userId=?",
-                proId, userId).execute();
-        if(accessPatterns!=null) {
-            UserAccess userAccess = new UserAccess();
-            userAccess.proId = proId;
-            userAccess.userId = userId;
-            for(String accessPattern: accessPatterns){
-                userAccess.accessPattern = accessPattern;
-                db.insert(userAccess).execute();
-            }
-        }
-        //授权项修改
-        db.executeSQL("delete from user_permission where proId=? and userId=?",
-                proId, userId).execute();
-        if(permissionsIds!=null) {
-            UserPermission userPermission = new UserPermission();
-            userPermission.proId = proId;
-            userPermission.userId = userId;
-            for(String permissionId: permissionsIds){
-                userPermission.permissionId = permissionId;
-                db.insert(userPermission).execute();
-            }
-        }
-        // TODO 产品变动通知
-        productNotify(proId);
-        return JsonResult.success();
-    }
-    
-    private Set<Access> mergeAccesses(@NonNull String proId, @NonNull List<String> roleIds, @NonNull List<String> accessePatterns) {
-        Set<Access> mergeAccesses = new HashSet<Access>();
-        Set<String> mergeAccessePatterns = new HashSet<String>(accessePatterns);
-        for(String roleId : roleIds)
-            mergeAccessePatterns.addAll(
-                    db.select("select accessPattern from role_access where proId=? and roleId=?",
-                            proId, roleId).execute2Basic(String.class));
-        for(String pattern : mergeAccessePatterns){
-            Access access = db.select("select * from access where proId=? and pattern=?",
-                    proId, pattern).execute2ModelOne(Access.class);
-            if(access==null) continue;
-            mergeAccesses.add(access);
-        }
-        return mergeAccesses;
-    }
-    private Set<Permission> mergePermissions(@NonNull String proId, @NonNull List<String> roleIds, @NonNull List<String> permissionIds) {
-        Set<Permission> mergePermissions = new HashSet<Permission>();
-        Set<String> mergePermissionIds = new HashSet<String>(permissionIds);
-        for(String roleId : roleIds)
-            mergePermissionIds.addAll(
-                    db.select("select permissionId from role_permission where proId=? and roleId=?",
-                            proId, roleId).execute2Basic(String.class));
-        for(String permissionId : mergePermissionIds){
-            Permission permission = db.select("select * from permission where proId=? and id=?",
-                    proId, permissionId).execute2ModelOne(Permission.class);
-            if(permission==null) continue;
-            mergePermissions.add(permission);
-        }
-        return mergePermissions;
-    }
-    
-    
-    @RequestMapping("/curProSet")
-    public JsonResult curProSet(
-            @RequestParam String curProId) {
-        return JsonResult.success();
+    private String[] userProducts(String userId) {
+        List<String> list = db.select(
+                "select distinct proId from ("
+                    +"select proId from user_param where userId=?"
+                    +" union select proId from user_role where userId=?"
+                    +" union select proId from user_access where userId=?"
+                    +" union select proId from user_permission where userId=?"
+                +")", userId, userId, userId, userId).execute2Basic(String.class);
+        return list.toArray(new String[list.size()]);
     }
     
     @RequestMapping("/param/list")
@@ -521,53 +361,34 @@ public class EditController {
             @RequestParam String proId,
             @RequestParam(required=false) String keyword,
             @RequestParam TPager pager){
+        List<Role> roles = null;
         StringBuilder sql = new StringBuilder("select * from role where proId=?");
         if(StringUtils.isNotEmpty(keyword)){
             keyword = '%'+keyword+'%';
             sql.append(" and (id like ? or name like ?)");
             sql.append(" limit ?,?");
-            return JsonResult.success(db.select(sql.toString(),
+            roles = db.select(sql.toString(),
                     proId, keyword, keyword, pager.getStart(), pager.getSize())
-                    .execute2Model(Role.class));
+                    .execute2Model(Role.class);
+        } else {
+            sql.append(" limit ?,?");
+            roles = db.select(sql.toString(),
+                    proId, pager.getStart(), pager.getSize())
+                    .execute2Model(Role.class);
         }
-        sql.append(" limit ?,?");
-        return JsonResult.success(db.select(sql.toString(),
-                proId, pager.getStart(), pager.getSize())
-                .execute2Model(Role.class));
-    }
-    @RequestMapping("/role/get")
-    public JsonResult roleGet(
-            @RequestParam String proId,
-            @RequestParam String id) {
-        Role role = db.select("select * from role where proId=? and id=?",
-                proId, id).execute2ModelOne(Role.class);
-        if(role==null)
-            return JsonResult.fail("产品["+proId+"]下ID为["
-                    +id+"]的角色不存在,请刷新页面或重新查询!");
-        List<String> accessPatterns = db.select("select accessPattern from role_access where proId=? and roleId=?",
-                proId, id).execute2Basic(String.class);
-        List<Access> accesses = new LinkedList<Access>();
-        for (String accessPattern : accessPatterns) {
-            Access access = db.select("select * from access where proId=? and pattern=?",
-                    proId, accessPattern).execute2ModelOne(Access.class);
-            if(access==null) return JsonResult.fail("产品["+proId+"]下角色["+id+"]的pattern为["
-                    +accessPattern+"]的访问项不存在,请刷新页面或重新查询!");
-            accesses.add(access);
+        for(Role role : roles){
+            Map<String, Object> auth = new HashMap<String, Object>();
+            auth.put("accesses", db.select(
+                    "select * from access where proId=? and pattern in("
+                        +"select accessPattern from role_access where proId=? and roleId=?"
+                    +")", proId, proId, role.id).execute2Model(Access.class));
+            auth.put("permissions", db.select(
+                    "select * from permission where proId=? and id in("
+                        +"select permissionId from role_permission where proId=? and roleId=?"
+                    +")", proId, proId, role.id).execute2Model(Permission.class));
+            role.auth = auth;
         }
-        List<String> permissionIds = db.select("select permissionId from role_permission where proId=? and roleId=?",
-                proId, id).execute2Basic(String.class);
-        List<Permission> permissions = new LinkedList<Permission>();
-        for (String permissionId : permissionIds) {
-            Permission permission = db.select("select * from permission where proId=? and id=?",
-                    proId, permissionId).execute2ModelOne(Permission.class);
-            if(permission==null) return JsonResult.fail("产品["+proId+"]下角色["+id+"]的ID为["
-                    +permissionId+"]的授权项不存在,请刷新页面或重新查询!");
-            permissions.add(permission);
-        }
-        return JsonResult.success()
-                .dataPut("role", role)
-                .dataPut("accesses", accesses)
-                .dataPut("permissions", permissions);
+        return JsonResult.success(roles);
     }
     @RequestMapping("/role/set")
     public JsonResult roleSet(
@@ -629,8 +450,383 @@ public class EditController {
         return JsonResult.success();
     }
     
-    /** 产品变动通知 */
-    private void productNotify(String... proIds) {
-        //TODO
+    @RequestMapping("/auth/visitor/get")
+    public JsonResult authVisitorGet(
+            @RequestParam String proId){
+        List<Param> params = db.select("select * from param where proId=?",
+                proId).execute2Model(Param.class);
+        Map<String, String> visitorParams = BaseParam.toMap(db.select(
+                "select key,val from visitor_param where proId=?",
+                    proId).execute2Model(BaseParam.class));
+        List<Role> visitorRoles = db.select("select * from role where id in("
+                +"select roleId from visitor_role where proId=?)",
+                    proId).execute2Model(Role.class);
+        List<Access> visitorAccesses = db.select("select * from access where pattern in("
+                +"select accessPattern from visitor_access where proId=?)",
+                    proId).execute2Model(Access.class);
+        List<Permission> visitorPermissions = db.select("select * from permission where id in("
+                +"select permissionId from visitor_permission where proId=?)",
+                    proId).execute2Model(Permission.class);
+        List<Access> allAccesses = db.select(
+                "select * from access where proId=? and pattern in("
+                    +"select distinct accessPattern from (" //所有访问项去重
+                        +"select accessPattern from role_access where proId=? and roleId in(" //所有角色拥有的访问项
+                            +"select roleId from visitor_role where proId=?" //游客拥有的角色
+                        +") "
+                        +"union "
+                        +"select accessPattern from visitor_access where proId=?" //联合分配给游客的访问项
+                    +")"
+                +")", proId, proId, proId, proId).execute2Model(Access.class);
+        List<Permission> allPermissions = db.select(
+                "select * from permission where proId=? and id in("
+                    +"select distinct permissionId from (" //所有授权项去重
+                        +"select permissionId from role_permission where proId=? and roleId in(" //所有角色拥有的授权项
+                            +"select roleId from visitor_role where proId=?" //游客拥有的角色
+                        +")"
+                        +"union "
+                        +"select permissionId from visitor_permission where proId=?" //联合分配给游客的授权项
+                    +")"
+                +")", proId, proId, proId, proId).execute2Model(Permission.class);
+        return JsonResult.success()
+                .dataPut("params", params)
+                .dataPut("visitorParams", visitorParams)
+                .dataPut("visitorRoles", visitorRoles)
+                .dataPut("visitorAccesses", visitorAccesses)
+                .dataPut("visitorPermissions", visitorPermissions)
+                .dataPut("allAccesses", allAccesses)
+                .dataPut("allPermissions", allPermissions);
+    }
+    @RequestMapping("/auth/visitor/set")
+    public JsonResult authVisitorSet(
+            @RequestParam String proId,
+            @RequestParam(value="params",required=false) JSONObject params,
+            @RequestParam(required=false) String[] roleIds,
+            @RequestParam(required=false) String[] accessPatterns,
+            @RequestParam(required=false) String[] permissionIds){
+        db.beginTransaction();
+        //游客配置配置项
+        db.executeSQL("delete from visitor_param where proId=?", proId).execute();
+        if(MapUtils.isNotEmpty(params)){
+            VisitorParam visitorParam = new VisitorParam();
+            visitorParam.proId = proId;
+            for(Object key : params.keySet()){
+                visitorParam.key = key.toString();
+                visitorParam.val = params.getString(visitorParam.key);
+                db.insert(visitorParam).execute();
+            }
+        }
+        //角色修改
+        db.executeSQL("delete from visitor_role where proId=?", proId).execute();
+        if(ArrayUtils.isNotEmpty(roleIds)) {
+            VisitorRole visitorRole = new VisitorRole();
+            visitorRole.proId = proId;
+            for(String roleId: roleIds){
+                visitorRole.roleId = roleId;
+                db.insert(visitorRole).execute();
+            }
+        }
+        //访问项修改
+        db.executeSQL("delete from visitor_access where proId=?", proId).execute();
+        if(ArrayUtils.isNotEmpty(permissionIds)) {
+            VisitorAccess visitorAccess = new VisitorAccess();
+            visitorAccess.proId = proId;
+            for(String accessPattern: accessPatterns){
+                visitorAccess.accessPattern = accessPattern;
+                db.insert(visitorAccess).execute();
+            }
+        }
+        //授权项修改
+        db.executeSQL("delete from visitor_permission where proId=?", proId).execute();
+        if(ArrayUtils.isNotEmpty(permissionIds)) {
+            VisitorPermission visitorPermission = new VisitorPermission();
+            visitorPermission.proId = proId;
+            for(String permissionId: permissionIds){
+                visitorPermission.permissionId = permissionId;
+                db.insert(visitorPermission).execute();
+            }
+        }
+        productNotify(proId);
+        return JsonResult.success();
+    }
+    @RequestMapping("/auth/visitor/cal")
+    public JsonResult authVisitorCal(
+            @RequestParam String proId,
+            @RequestParam(required=false) String[] roleIds,
+            @RequestParam(required=false) String[] accessPatterns,
+            @RequestParam(required=false) String[] permissionIds) {
+        StringBuilder allRoleSql = new StringBuilder();
+        List<Object> allRoleArgs = new LinkedList<Object>();
+        if(ArrayUtils.isNotEmpty(roleIds)){
+            for(int i=0; i<roleIds.length; i++){
+                if(i!=0) allRoleSql.append(',');
+                allRoleSql.append("?");
+                allRoleArgs.add(roleIds[i]);
+            }
+        }
+        
+        StringBuilder sql = new StringBuilder();
+        List<Object> args = new LinkedList<Object>();
+        
+        sql.append("select * from access where proId=? and pattern in(")
+            .append("select distinct accessPattern from (")
+                .append("select accessPattern from role_access where proId=? and roleId in(")
+                    .append(allRoleSql)
+                .append(')');
+        args.add(proId);
+        args.add(proId);
+        args.addAll(allRoleArgs);
+        if(ArrayUtils.isNotEmpty(accessPatterns)){
+            for(String accessPattern : accessPatterns){
+                sql.append("union select ? ");
+                args.add(accessPattern);
+            }
+        }
+        sql.append("))");
+        List<Access> allAccesses = db.select(sql.toString(),
+                args.toArray(new Object[args.size()])).execute2Model(Access.class);
+        
+        sql.setLength(0);
+        args.clear();
+        
+        sql.append("select * from permission where proId=? and id in(")
+            .append("select distinct permissionId from (")
+                .append("select permissionId from role_permission where proId=? and roleId in(")
+                    .append(allRoleSql)
+                .append(')');
+        args.add(proId);
+        args.add(proId);
+        args.addAll(allRoleArgs);
+        if(ArrayUtils.isNotEmpty(permissionIds)){
+            for(String permissionId : permissionIds){
+                sql.append("union select ? ");
+                args.add(permissionId);
+            }
+        }
+        sql.append("))");
+        List<Permission> allPermissions = db.select(sql.toString(),
+                args.toArray(new Object[args.size()])).execute2Model(Permission.class);
+        
+        return JsonResult.success()
+                .dataPut("allAccesses", allAccesses)
+                .dataPut("allPermissions", allPermissions);
+    }
+    
+    @RequestMapping("/auth/user/list")
+    public JsonResult authUserList(
+            @RequestParam String proId,
+            @RequestParam(required=false) String keyword,
+            @RequestParam TPager pager) {
+        @SuppressWarnings("unchecked")
+        List<User> users = (List<User>)userList(keyword, pager).data();
+        for(User user : users) user.auth = authUserGet(proId, user.id);
+        return JsonResult.success(users);
+    }
+    private Map<String, Object> authUserGet(String proId, String id){
+        List<Param> params = db.select("select * from param where proId=?",
+                proId).execute2Model(Param.class);
+        Map<String, String> userParams = BaseParam.toMap(db.select(
+                "select key,val from user_param where proId=? and userId=?",
+                    proId, id).execute2Model(BaseParam.class));
+        List<Role> userRoles = db.select("select * from role where proId=? and id in("+
+                "select roleId from user_role where proId=? and userId=?)",
+                    proId, proId, id).execute2Model(Role.class);
+        List<Access> userAccesses = db.select("select * from access where proId=? and pattern in("
+                +"select accessPattern from user_access where proId=? and userId=?)",
+                    proId, proId, id).execute2Model(Access.class);
+        List<Permission> userPermissions = db.select("select * from permission where proId=? and id in("
+                    +"select permissionId from user_permission where proId=? and userId=?)",
+                        proId, proId, id).execute2Model(Permission.class);
+        List<Role> allRoles = db.select("select * from role where proId=? and id in("
+                +"select roleId from user_role where proId=? and userId=? "
+                +"union "
+                +"select roleId from visitor_role where proId=?)",
+                proId, proId, id, proId).execute2Model(Role.class);
+        List<Access> allAccesses = db.select(
+                "select * from access where proId=? and pattern in("
+                    +"select distinct accessPattern from (" //所有访问项去重
+                        +"select accessPattern from role_access where proId=? and roleId in(" //所有角色拥有的访问项
+                            +"select distinct roleId from (" //所有角色去重
+                                +"select roleId from user_role where proId=? and userId=? " //用户拥有的角色
+                                + "union "
+                                + "select roleId from visitor_role where proId=?" //联合游客拥有的角色
+                            +")"
+                        +") "
+                        +"union "
+                        +"select accessPattern from user_access where proId=? and userId=?" //联合单独分配给用户的访问项
+                        +"union "
+                        +"select accessPattern from visitor_access where proId=?" // 联合分配给游客的访问项
+                    +")"
+                +")", proId, proId, proId, id, proId, proId, id, proId).execute2Model(Access.class);
+        List<Permission> allPermissions = db.select(
+                "select * from permission where proId=? and id in("
+                    +"select distinct permissionId from (" //所有授权项去重
+                        +"select permissionId from role_permission where proId=? and roleId in(" //所有角色拥有的授权项
+                            +"select distinct roleId from (" //
+                                +"select roleId from user_role where proId=? and userId=? " //用户拥有的角色
+                                +"union "
+                                +"select roleId from visitor_role where proId=?" //联合游客拥有的角色
+                            +")"
+                        +")"
+                        +"union "
+                        +"select permissionId from user_permission where proId=? and userId=?" //联合单独分配给用户的授权项
+                        +"union "
+                        +"select permissionId from visitor_permission where proId=?" //联合分配给游客的授权项
+                    +")"
+                +")", proId, proId, proId, id, proId, proId, id, proId).execute2Model(Permission.class);
+        Map<String, Object> auth = new HashMap<String, Object>();
+        auth.put("params", params);
+        auth.put("userParams", userParams);
+        auth.put("userRoles", userRoles);
+        auth.put("userAccesses", userAccesses);
+        auth.put("userPermissions", userPermissions);
+        auth.put("allRoles", allRoles);
+        auth.put("allAccesses", allAccesses);
+        auth.put("allPermissions", allPermissions);
+        return auth;
+    }
+    @RequestMapping("/auth/user/set")
+    public JsonResult authUserSet(
+            @RequestParam String proId,
+            @RequestParam String userId,
+            @RequestParam(value="params",required=false) JSONObject params,
+            @RequestParam(required=false) String[] roleIds,
+            @RequestParam(required=false) String[] accessPatterns,
+            @RequestParam(required=false) String[] permissionIds){
+        db.beginTransaction();
+        //用户配置
+        db.executeSQL("delete from user_param where proId=? and userId=?",
+                proId, userId).execute();
+        if(params!=null){
+            UserParam userParam = new UserParam();
+            userParam.proId = proId;
+            userParam.userId = userId;
+            for(Object key : params.keySet()){
+                userParam.key = key.toString();
+                userParam.val = params.getString(userParam.key);
+                db.insert(userParam).execute();
+            }
+        }
+        //角色修改
+        db.executeSQL("delete from user_role where proId=? and userId=?",
+                proId, userId).execute();
+        if(roleIds!=null) {
+            UserRole userRole = new UserRole();
+            userRole.proId = proId;
+            userRole.userId = userId;
+            for(String roleId: roleIds){
+                userRole.roleId = roleId;
+                db.insert(userRole).execute();
+            }
+        }
+        //访问项修改
+        db.executeSQL("delete from user_access where proId=? and userId=?",
+                proId, userId).execute();
+        if(accessPatterns!=null) {
+            UserAccess userAccess = new UserAccess();
+            userAccess.proId = proId;
+            userAccess.userId = userId;
+            for(String accessPattern: accessPatterns){
+                userAccess.accessPattern = accessPattern;
+                db.insert(userAccess).execute();
+            }
+        }
+        //授权项修改
+        db.executeSQL("delete from user_permission where proId=? and userId=?",
+                proId, userId).execute();
+        if(permissionIds!=null) {
+            UserPermission userPermission = new UserPermission();
+            userPermission.proId = proId;
+            userPermission.userId = userId;
+            for(String permissionId: permissionIds){
+                userPermission.permissionId = permissionId;
+                db.insert(userPermission).execute();
+            }
+        }
+        productNotify(proId);
+        return JsonResult.success();
+    }
+    @RequestMapping("/auth/user/cal")
+    public JsonResult authUserCal(
+            @RequestParam String proId,
+            @RequestParam(required=false) String[] roleIds,
+            @RequestParam(required=false) String[] accessPatterns,
+            @RequestParam(required=false) String[] permissionIds) {
+        StringBuilder allRoleSql = new StringBuilder("select distinct roleId from (");
+        List<Object> allRoleArgs = new LinkedList<Object>();
+        if(ArrayUtils.isNotEmpty(roleIds)){
+            for(int i=0; i<roleIds.length; i++){
+                if(i!=0) allRoleSql.append("union ");
+                allRoleSql.append("select ? as 'roleId' ");
+                allRoleArgs.add(roleIds[i]);
+            }
+            allRoleSql.append("union ");
+        }
+        allRoleSql.append("select roleId from visitor_role where proId=?)");
+        allRoleArgs.add(proId);
+        
+        StringBuilder sql = new StringBuilder();
+        List<Object> args = new LinkedList<Object>();
+        
+        sql.append("select * from role where id in(")
+            .append(allRoleSql)
+            .append(')');
+        args.addAll(allRoleArgs);
+        List<Role> allRoles = db.select(sql.toString(),
+                args.toArray(new Object[args.size()])).execute2Model(Role.class);
+        
+        sql.setLength(0);
+        args.clear();
+        
+        sql.append("select * from access where proId=? and pattern in(")
+            .append("select distinct accessPattern from (")
+                .append("select accessPattern from role_access where proId=? and roleId in(")
+                    .append(allRoleSql)
+                .append(')');
+        args.add(proId);
+        args.add(proId);
+        args.addAll(allRoleArgs);
+        if(ArrayUtils.isNotEmpty(accessPatterns)){
+            for(String accessPattern : accessPatterns){
+                sql.append("union select ? as 'accessPattern' ");
+                args.add(accessPattern);
+            }
+        }
+        sql.append("union select accessPattern from visitor_access where proId=?))");
+        args.add(proId);
+        List<Access> allAccesses = db.select(sql.toString(),
+                args.toArray(new Object[args.size()])).execute2Model(Access.class);
+        
+        sql.setLength(0);
+        args.clear();
+        
+        sql.append("select * from permission where proId=? and id in(")
+            .append("select distinct permissionId from (")
+                .append("select permissionId from role_permission where proId=? and roleId in(")
+                    .append(allRoleSql)
+                .append(')');
+        args.add(proId);
+        args.add(proId);
+        args.addAll(allRoleArgs);
+        if(ArrayUtils.isNotEmpty(permissionIds)){
+            for(String permissionId : permissionIds){
+                sql.append("union select ? as 'permissionId' ");
+                args.add(permissionId);
+            }
+        }
+        sql.append("union select permissionId from visitor_permission where proId=?))");
+        args.add(proId);
+        List<Permission> allPermissions = db.select(sql.toString(),
+                args.toArray(new Object[args.size()])).execute2Model(Permission.class);
+        
+        return JsonResult.success()
+                .dataPut("allRoles", allRoles)
+                .dataPut("allAccesses", allAccesses)
+                .dataPut("allPermissions", allPermissions);
+    }
+    
+    private void productNotify(@NonNull String... proIds) {
+        for(String proId : proIds){
+            System.out.println("proChange:"+proId);
+        }
     }
 }

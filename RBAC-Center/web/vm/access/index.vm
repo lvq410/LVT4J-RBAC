@@ -74,9 +74,9 @@
 <table class="table table-striped table-bordered table-hover table-condensed" style="margin-bottom:0;">
     <thead>
         <tr>
-            <td style="width:140px;" title="访问项的pattern">pattern</td>
+            <td style="width:30%;" title="访问项的pattern">pattern</td>
             <td title="访问项的名称">名称</td>
-            <td style="width:87px;">
+            <td style="width:88px;">
                 <button onclick="addAccess()" title="增加一个新访问项" type="button" class="btn btn-primary btn-minier">新增</button>
             </td>
         </tr>

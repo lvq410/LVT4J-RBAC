@@ -17,14 +17,14 @@ function loadAccesses(){
 
 function addAccess() {
     $('#editAccessDiv').formData({});
-    $('#editAccessDiv').slideDown();
+    $('#editAccessDiv').slideDown().scrollToMe();
 }
 
 function editAccess(btn) {
     var access = $(btn).closest('tr').attrData();
     access.oldPattern = access.pattern;
     $('#editAccessDiv').formData(access);
-    $('#editAccessDiv').slideDown();
+    $('#editAccessDiv').slideDown().scrollToMe();
 }
 
 function testPattern() {
@@ -52,7 +52,10 @@ function editAccessSave() {
     access.proId = curPro.id;
     q('/edit/access/set.json',
         access,
-        loadAccesses,
+        function() {
+            alert('保存成功!');
+            loadAccesses();
+        },
         '保存访问项中'
     );
 }
@@ -65,7 +68,10 @@ function delAccess(btn) {
             proId:curPro.id,
             pattern:access.pattern
         },
-        loadAccesses,
+        function(){
+            alert('删除成功!');
+            loadAccesses();
+        },
         '删除访问项中'
     );
 }

@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
-import com.lvt4j.rbac.data.ProductAuthImp;
+import com.lvt4j.rbac.ProductAuthImp;
 import com.lvt4j.rbac.data.bean.Product;
 import com.lvt4j.rbac.service.Cache;
 

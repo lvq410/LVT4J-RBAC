@@ -8,10 +8,9 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper=true)
-@Table("user_param")
-public class UserParam extends BaseParam{
+@Table("visitor_param")
+public class VisitorParam extends BaseParam{
 
     public String proId;
-    public String userId;
     
 }

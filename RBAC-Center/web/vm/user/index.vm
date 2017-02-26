@@ -63,9 +63,9 @@
 <table class="table table-striped table-bordered table-hover table-condensed" style="margin-bottom:0;">
     <thead>
         <tr>
-            <td style="width:140px;" title="用户的ID">ID</td>
+            <td style="width:30%;" title="用户的ID">ID</td>
             <td title="用户的名称">名称</td>
-            <td style="width:87px;">
+            <td style="width:88px;">
                 <button onclick="addUser()" title="增加一个新用户" type="button" class="btn btn-primary btn-minier">新增</button>
             </td>
         </tr>

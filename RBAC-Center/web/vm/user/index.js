@@ -14,14 +14,14 @@ function loadUsers() {
 
 function addUser() {
     $('#editUserDiv').formData({});
-    $('#editUserDiv').slideDown();
+    $('#editUserDiv').slideDown().scrollToMe();
 }
 
 function editUser(btn) {
     var user = $(btn).closest('tr').attrData();
     user.oldId = user.id;
     $('#editUserDiv').formData(user);
-    $('#editUserDiv').slideDown();
+    $('#editUserDiv').slideDown().scrollToMe();
 }
 
 function editUserSave() {
@@ -29,7 +29,10 @@ function editUserSave() {
     if(!user) return;
     q('/edit/user/set.json',
         user,
-        loadUsers,
+        function(){
+            alert('保存成功!');
+            loadUsers();
+        },
         '保存用户中'
     );
 }
@@ -41,7 +44,10 @@ function delUser(btn) {
         {
             id:user.id
         },
-        loadUsers,
+        function(){
+            alert('删除成功!');
+            loadUsers();
+        },
         '删除用户中'
     );
 }

@@ -21,37 +21,19 @@ function addRole() {
     $('#accesses').empty();
     $('#permission').select2Clear();
     $('#permissions').empty();
-    $('#editRoleDiv').slideDown();
+    $('#editRoleDiv').slideDown().scrollToMe();
 }
 
 function editRole(btn) {
     var role = $(btn).closest('tr').attrData();
     role.oldId = role.id;
     $('#editRoleDiv').formData(role);
-    getRole(role.id);
-    
+    $('#access').select2Clear();
+    $('#accesses').html($tpl(tpl_accesses)(role.auth.accesses, true));
+    $('#permission').select2Clear();
+    $('#permissions').html($tpl(tpl_permissions)(role.auth.permissions, true));
+    $('#editRoleDiv').slideDown().scrollToMe();
 }
-function getRole(id) {
-    q('/edit/role/get.json',
-        {
-            proId: curPro.id,
-            id: id
-        },
-        function(roleAuth){
-            var role = roleAuth.role;
-            role.oldId = role.id;
-            $('#editRoleDiv').formData(role);
-            $('#access').select2Clear();
-            $('#accesses').html($tpl(tpl_accesses)(roleAuth.accesses, true));
-            $('#permission').select2Clear();
-            $('#permissions').html($tpl(tpl_permissions)(roleAuth.permissions, true));
-            $('#editRoleDiv').slideDown();
-        },
-        '加载角色中'
-    );
-}
-
-
 
 function editRoleSave() {
     var role = $('#editRoleDiv').formData();
@@ -75,7 +57,10 @@ function delRole(btn) {
             proId:curPro.id,
             id:role.id
         },
-        loadRoles,
+        function() {
+            alert('删除成功!');
+            loadRoles();
+        },
         '删除角色中'
     );
 }
@@ -93,6 +78,8 @@ function tpl_roles(roles) {
         /*<tr data="{Tigh(role)}" title="{Tigh(role.des)}">
             <td>{Tigh(role.id)}</td>
             <td>{Tigh(role.name)}</td>
+            <td>{$tpl(tpl_accesses)(role.auth.accesses)}</td>
+            <td>{$tpl(tpl_permissions)(role.auth.permissions)}</td>
             <td>
                 <button onclick="editRole(this)" type="button" class="btn btn-info btn-minier">编辑</button>
                 <button onclick="delRole(this)" type="button" class="btn btn-danger btn-minier">删除</button>

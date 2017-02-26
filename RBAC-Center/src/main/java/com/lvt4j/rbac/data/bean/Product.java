@@ -19,5 +19,5 @@ public class Product implements Serializable {
     public String name;
     public String des;
     public long lastModify;
-    public String adminUserId;
+    
 }

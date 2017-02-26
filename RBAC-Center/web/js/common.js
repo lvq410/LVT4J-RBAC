@@ -110,23 +110,22 @@ function addAccess() {
     if(Tarr.contains(accessPatterns, access.pattern))
         return alert('已有访问项['+access.name+']!');
     $('#accesses').append($tpl(tpl_accesses)([access], true));
-    if(afterAdd) afterAdd();
+    if(window.onRAPChange) onRAPChange();
 }
 function tpl_accesses(accesses, removable) {
-    if(!accesses) return;
+    if(!accesses) return '';
     for (var i = 0; i < accesses.length; i++) {
         var access = accesses[i];
         /*<span class="badge badge-{getBadge(access.pattern)} msg-tooltiper" style="cursor:default;">
             {Tigh(access.name)}*/
             if(removable) {
                 /*<input name value="{Tigh(access.pattern)}" type="hidden"/>
-                <i onclick="$(this).closest('span').remove();if(afterAdd) afterAdd();"
+                <i onclick="removeRAP(this)"
                     class="ace-icon fa fa-close" style="cursor:pointer;"></i>*/
             }
             /*<div class="tooltip-msg">
                 <strong>pattern:</strong>{Tigh(access.pattern)}<br>
-                <strong>名称:</strong>{Tigh(access.name)}<br>
-                {Tigh(access.des).replace(/\n/g, '<br>')}<br>
+                {Tigh(access.des).replace(/\n/g, '<br>')}
             </div>
         </span>*/
     }
@@ -139,23 +138,22 @@ function addPermission() {
     if(Tarr.contains(permissionIds, permission.id))
         return alert('已有授权项['+permission.name+']!');
     $('#permissions').append($tpl(tpl_permissions)([permission], true));
-    if(afterAdd) afterAdd();
+    if(window.onRAPChange) onRAPChange();
 }
 function tpl_permissions(permissions, removable) {
-    if(!permissions) return;
+    if(!permissions) return '';
     for (var i = 0; i < permissions.length; i++) {
         var permission = permissions[i];
         /*<span class="badge badge-{getBadge(permission.id)} msg-tooltiper" style="cursor:default;">
             {Tigh(permission.name)}*/
             if(removable) {
                 /*<input name value="{Tigh(permission.id)}" type="hidden"/>
-                <i onclick="$(this).closest('span').remove();if(afterAdd) afterAdd();"
+                <i onclick="removeRAP(this)"
                     class="ace-icon fa fa-close" style="cursor:pointer;"></i>*/
             }
             /*<div class="tooltip-msg">
                 <strong>ID:</strong>{Tigh(permission.id)}<br>
-                <strong>名称:</strong>{Tigh(permission.name)}<br>
-                {Tigh(permission.des).replace(/\n/g, '<br>')}<br>
+                {Tigh(permission.des).replace(/\n/g, '<br>')}
             </div>
         </span>*/
     }
@@ -168,26 +166,30 @@ function addRole() {
     if(Tarr.contains(roles, role.id))
         return alert('已有角色['+role.name+']!');
     $('#roles').append($tpl(tpl_roles)([role], true));
-    if(afterAdd) afterAdd();
+    if(window.onRAPChange) onRAPChange();
 }
 function tpl_roles(roles, removable) {
-    if(!roles) return;
+    if(!roles) return '';
     for (var i = 0; i < roles.length; i++) {
         var role = roles[i];
         /*<span class="badge badge-{getBadge(role.id)} msg-tooltiper" style="cursor:default;">
             {Tigh(role.name)}*/
             if(removable) {
                 /*<input name value="{Tigh(role.id)}" type="hidden"/>
-                <i onclick="$(this).closest('span').remove();if(afterAdd) afterAdd();"
+                <i onclick="removeRAP(this)"
                     class="ace-icon fa fa-close" style="cursor:pointer;"></i>*/;
             }
             /*<div class="tooltip-msg">
                 <strong>ID:</strong>{Tigh(role.id)}<br>
-                <strong>名称:</strong>{Tigh(role.name)}<br>
-                {Tigh(role.des).replace(/\n/g, '<br>')}<br>
+                {Tigh(role.des).replace(/\n/g, '<br>')}
             </div>
         </span>*/
     }
+}
+
+function removeRAP(btn) {
+    $(btn).closest('span').remove();
+    if(window.onRAPChange) onRAPChange();
 }
 
 var BadgeClses = ['success','warning','danger','info','purple','pink','yellow'];

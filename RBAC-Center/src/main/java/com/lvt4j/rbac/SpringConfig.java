@@ -1,8 +1,6 @@
 package com.lvt4j.rbac;
 
 import java.io.File;
-import java.util.LinkedList;
-import java.util.List;
 
 import javax.sql.DataSource;
 
@@ -11,19 +9,16 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
 import org.sqlite.SQLiteDataSource;
 
 import com.lvt4j.basic.TDB;
 import com.lvt4j.rbac.web.CurProInterceptor;
 import com.lvt4j.rbac.web.DBInterceptor;
 import com.lvt4j.spring.ControllerConfig;
-import com.lvt4j.spring.TypeSupportHandlerMethodArgumentResolver;
 
 /**
  * MVC配置

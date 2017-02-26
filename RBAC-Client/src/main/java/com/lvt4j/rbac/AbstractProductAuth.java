@@ -1,4 +1,4 @@
-package com.lvt4j.rbac.data;
+package com.lvt4j.rbac;
 
 import java.util.Set;
 
@@ -7,8 +7,8 @@ import java.util.Set;
  * 抽象类,具体实现需要采用懒加载机制
  * @author LV
  */
-public abstract class AbstractProductAuth{
-
+abstract class AbstractProductAuth{
+    
     /** 产品id */
     String proId;
     /** 用户配置项缓存 */

@@ -1,7 +1,9 @@
 package com.lvt4j.rbac.data.bean;
 
 import java.io.Serializable;
+import java.util.Map;
 
+import com.lvt4j.basic.TDB.NotCol;
 import com.lvt4j.basic.TDB.Table;
 
 import lombok.Data;
@@ -18,5 +20,8 @@ public class User implements Serializable {
     public String id;
     public String name;
     public String des;
+    
+    @NotCol
+    public Map<?, ?> auth;
     
 }

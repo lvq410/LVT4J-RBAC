@@ -88,9 +88,11 @@
 <table class="table table-striped table-bordered table-hover table-condensed" style="margin-bottom:0;">
     <thead>
         <tr>
-            <td style="width:140px;" title="角色的ID">ID</td>
+            <td style="width:30%;" title="角色的ID">ID</td>
             <td title="角色的名称">名称</td>
-            <td style="width:87px;">
+            <td title="角色拥有的访问项">访问项</td>
+            <td title="角色拥有的授权项">授权项</td>
+            <td style="width:88px;">
                 <button onclick="addRole()" title="增加一个新角色" type="button" class="btn btn-primary btn-minier">新增</button>
             </td>
         </tr>

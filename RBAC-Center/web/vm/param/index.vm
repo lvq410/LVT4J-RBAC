@@ -54,9 +54,9 @@
 <table class="table table-striped table-bordered table-hover table-condensed" style="margin-bottom:0;">
     <thead>
         <tr>
-            <td style="width:140px;" title="配置项的key">key</td>
+            <td style="width:30%;" title="配置项的key">key</td>
             <td title="配置项的名称">名称</td>
-            <td style="width:87px;">
+            <td style="width:88px;">
                 <button onclick="addParam()" title="增加一个新配置项" type="button" class="btn btn-primary btn-minier">新增</button>
             </td>
         </tr>

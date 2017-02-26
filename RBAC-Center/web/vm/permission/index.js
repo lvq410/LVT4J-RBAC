@@ -17,14 +17,14 @@ function loadPermissions(){
 
 function addPermission() {
     $('#editPermissionDiv').formData({});
-    $('#editPermissionDiv').slideDown();
+    $('#editPermissionDiv').slideDown().scrollToMe();
 }
 
 function editPermission(btn) {
     var permission = $(btn).closest('tr').attrData();
     permission.oldId = permission.id;
     $('#editPermissionDiv').formData(permission);
-    $('#editPermissionDiv').slideDown();
+    $('#editPermissionDiv').slideDown().scrollToMe();
 }
 
 function editPermissionSave() {
@@ -33,20 +33,26 @@ function editPermissionSave() {
     permission.proId = curPro.id;
     q('/edit/permission/set.json',
         permission,
-        loadPermissions,
+        function() {
+            alert('保存成功!');
+            loadPermissions();
+        },
         '保存授权项中'
     );
 }
 
 function delPermission(btn) {
     var permission = $(btn).closest('tr').attrData();
-    if(!confirm('确定要删除授权项\nID:'+permission.ID+'\n名称:'+permission.name+'\n吗?')) return;
+    if(!confirm('确定要删除授权项\nID:'+permission.id+'\n名称:'+permission.name+'\n吗?')) return;
     q('/edit/permission/del.json',
         {
             proId:curPro.id,
             id:permission.id
         },
-        loadPermissions,
+        function() {
+            alert('删除成功!');
+            loadPermissions();
+        },
         '删除授权项中'
     );
 }

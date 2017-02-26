@@ -8,7 +8,8 @@
     {'n':'访问项管理','i':'fa-globe','h':'/view?path=/access/index','l':[]},
     {'n':'授权项管理','i':'fa-gear','h':'/view?path=/permission/index','l':[]},
     {'n':'角色管理','i':'fa-group','h':'/view?path=/role/index','l':[]},
-    {'n':'用户授权','i':'fa-key','h':'/view?path=/userAuth/index','l':[]}
+    {'n':'游客授权','i':'fa-key','h':'/view?path=/auth/visitor/index','l':[]},
+    {'n':'用户授权','i':'fa-key','h':'/view?path=/auth/user/index','l':[]}
 ])
 <div id="sidebar" class="sidebar responsive" data-sidebar="true" data-sidebar-scroll="true" data-sidebar-hover="true">
     <script type="text/javascript">

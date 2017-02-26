@@ -14,14 +14,15 @@ function loadProducts() {
 
 function addProduct() {
     $('#editProductDiv').formData({});
-    $('#editProductDiv').slideDown();
+    $('#adminUserId').select2Clear();
+    $('#editProductDiv').slideDown().scrollToMe();
 }
 
 function editProduct(btn) {
     var product = $(btn).closest('tr').attrData();
     product.oldId = product.id;
     $('#editProductDiv').formData(product);
-    $('#editProductDiv').slideDown();
+    $('#editProductDiv').slideDown().scrollToMe();
 }
 
 function editProductSave() {
@@ -29,7 +30,10 @@ function editProductSave() {
     if(!product) return;
     q('/edit/product/set.json',
         product,
-        loadProducts,
+        function() {
+            alert('保存成功');
+            loadProducts();
+        },
         '保存产品中'
     );
 }
@@ -41,7 +45,10 @@ function delProduct(btn) {
         {
             id:product.id
         },
-        loadProducts,
+        function() {
+            alert('删除成功!');
+            loadProducts();
+        },
         '删除产品中'
     );
 }
@@ -60,7 +67,6 @@ function tpl_products(products) {
             <td>{Tigh(product.id)}</td>
             <td>{Tigh(product.name)}</td>
             <td>{Tigh(TtimestampFormat(product.lastModify))}</td>
-            <td>{Tigh(product.adminUserId)}</td>
             <td>
                 <button onclick="editProduct(this)" type="button" class="btn btn-info btn-minier">编辑</button>
                 <button onclick="delProduct(this)" type="button" class="btn btn-danger btn-minier">删除</button>

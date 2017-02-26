@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 
 import com.lvt4j.basic.TDB;
 import com.lvt4j.basic.TLruCache;
-import com.lvt4j.rbac.data.ProductAuthImp;
+import com.lvt4j.rbac.ProductAuthImp;
 import com.lvt4j.rbac.data.bean.Product;
 
 

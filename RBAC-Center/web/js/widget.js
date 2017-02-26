@@ -36,8 +36,10 @@ function widget_select2_init() {
         var url = widget.attr('url');
         var placeHolder = widget.attr('placeholder');
         if(!placeHolder) placeHolder = '请选择...';
+        var allowClear = widget.attr('allow-clear')=='true';
         widget.select2({
             placeholder : placeHolder,
+            allowClear : allowClear,
             templateResult : function(rst){
                 if(rst.loading) return '加载中...';
                 var obj = rst.data;
