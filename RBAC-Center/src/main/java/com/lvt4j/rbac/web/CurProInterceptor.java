@@ -10,12 +10,12 @@ import org.springframework.web.servlet.ModelAndView;
 
 import com.lvt4j.rbac.ProductAuthImp;
 import com.lvt4j.rbac.data.bean.Product;
-import com.lvt4j.rbac.service.Cache;
+import com.lvt4j.rbac.service.ProductAuthCache;
 
 public class CurProInterceptor implements HandlerInterceptor {
 
     @Autowired
-    Cache cacheService;
+    ProductAuthCache cacheService;
     
     @Override
     public boolean preHandle(HttpServletRequest request,
@@ -23,12 +23,12 @@ public class CurProInterceptor implements HandlerInterceptor {
         String curProId = request.getParameter("curProId");
         HttpSession session = request.getSession();
         if(curProId!=null) {
-            ProductAuthImp productAuth = cacheService.getProductAuth(curProId);
+            ProductAuthImp productAuth = cacheService.get(curProId);
             session.setAttribute("curPro", productAuth==null?null:productAuth.product);
         } else {
             Product curPro = (Product) session.getAttribute("curPro");
             if(curPro!=null){
-                ProductAuthImp productAuth = cacheService.getProductAuth(curPro.id);
+                ProductAuthImp productAuth = cacheService.get(curPro.id);
                 session.setAttribute("curPro", productAuth==null?null:productAuth.product);
             }
         }

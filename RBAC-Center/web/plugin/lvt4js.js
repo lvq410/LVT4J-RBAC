@@ -24,7 +24,7 @@ LVT.cbxRely = {
     init:function(){
         $(':checkbox[group]').unbind('change',LVT.cbxRely.changeSub).bind('change',LVT.cbxRely.changeSub);
         $(':checkbox[forgroup]').unbind('change',LVT.cbxRely.changeSub).bind('change',LVT.cbxRely.changeGroup);
-        $(":checkbox[forgroup]").each(function() {
+        $(":checkbox[forgroup]").each(function(){
             var groupName = $(this).attr('forgroup');
             $(":checkbox[forgroup="+groupName+"]").prop('checked',
                     $(":checkbox[group="+groupName+"]").length!=0 &&
@@ -49,10 +49,10 @@ LVT.arr = {
      * @returns {Boolean}
      */
     contains : function(arr, ele){
-        try {
-            for (var c = 0; c < arr.length; c++) 
+        try{
+            for(var c = 0; c < arr.length; c++) 
                 if(arr[c]==ele) return true;
-        } catch (ignore) {}
+        }catch(ignore){}
         return false;
     },
     /**
@@ -64,11 +64,11 @@ LVT.arr = {
     add : function(arr, ele){
         var tmpArr = [];
         var contain = false;
-        for (var c = 0; c < arr.length; c++){
-            if (!contain) contain = arr[c]==ele;
+        for(var c = 0; c < arr.length; c++){
+            if(!contain) contain = arr[c]==ele;
             tmpArr.push(arr[c]);
         }
-        if (contain) return tmpArr;
+        if(contain) return tmpArr;
         tmpArr.push(ele);
         return tmpArr;
     },
@@ -80,9 +80,18 @@ LVT.arr = {
      */
     remove : function(arr, ele){
         var tmpArr = [];
-        for (var c = 0; c < arr.length; c++){
-            if (arr[c]!=ele) tmpArr.push(arr[c]);
+        for(var c = 0; c < arr.length; c++){
+            if(arr[c]!=ele) tmpArr.push(arr[c]);
         }
+        return tmpArr;
+    },
+    /**
+     * 克隆一个数组
+     * @param arr
+     */
+    clone : function(arr){
+        var tmpArr = [];
+        for(var c = 0; c < arr.length; c++) tmpArr.push(arr[c]);
         return tmpArr;
     }
 };
@@ -92,7 +101,7 @@ if(!$arr) var $arr=LVT.arr;
 LVT.uuid = function(factor){
     var d = new Date().getTime();
     if(factor!=null) d += LVT.obj.hashCode(factor);
-    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c){
         var r = (d + Math.random()*16)%16 | 0;
         d = Math.floor(d/16);
         return (c=='x' ? r : (r&0x7|0x8)).toString(16);
@@ -130,9 +139,9 @@ if(!$str) var $str=LVT.str;
  */
 LVT.params = function(){
     var params = {};
-    if (location.search) {
+    if(location.search){
         var search = location.search.substring(1,location.search.length).split("&");
-        for (var i = 0; i < search.length; i++) {
+        for(var i = 0; i < search.length; i++){
             var eIdx = search[i].indexOf('=');
             params[search[i].substring(0,eIdx)] =  decodeURI(search[i].substring(eIdx+1,search[i].length));
         }
@@ -183,7 +192,7 @@ LVT.loader = {
         return {msg:msg, hash:loadingMsgHash, ele:loadingMsgEle};
     },
     internalShow : function(){
-        if (LVT.loader.msgs.length==0) return;
+        if(LVT.loader.msgs.length==0) return;
         LVT.loader.container.show();
     },
     hide : function(msg){
@@ -198,7 +207,7 @@ LVT.loader = {
         if(loadingMsgObj==null) return;
         loadingMsgObj.ele.remove();
         LVT.loader.msgs = LVT.arr.remove(LVT.loader.msgs, loadingMsgObj);
-        if (LVT.loader.msgs.length==0) LVT.loader.container.hide();
+        if(LVT.loader.msgs.length==0) LVT.loader.container.hide();
     }
 };
 if(!Tloader) var Tloader=LVT.loader;
@@ -207,8 +216,8 @@ if(!$loader) var $loader=LVT.loader;
  * 回避null,undefined,NaN,输出空字符串
  */
 LVT.ig = function(val){
-    if (val==null || val==undefined) return '';
-    if (typeof val =='number' && isNaN(val)) return '';
+    if(val==null || val==undefined) return '';
+    if(typeof val =='number' && isNaN(val)) return '';
     return val;
 };
 if(!Tig) var Tig=LVT.ig;
@@ -244,7 +253,7 @@ LVT.obj = {
         return size;
     },
     /** 克隆一个object */
-    clone : function(obj) {
+    clone : function(obj){
         var tmp = {};
         for(var key in obj){
             tmp[key] = obj[key];
@@ -252,7 +261,7 @@ LVT.obj = {
         return tmp;
     },
     /** 从object删除指定key */
-    remove : function(obj, key2Del) {
+    remove : function(obj, key2Del){
         var tmp = {};
         for(var key in obj){
             if(key!=key2Del) tmp[key] = obj[key];
@@ -260,7 +269,7 @@ LVT.obj = {
         return tmp;
     },
     /** 将一个obj加入另一个obj */
-    add : function(obj, obj2Add) {
+    add : function(obj, obj2Add){
         var tmp = LVT.obj.clone(obj);
         for(var key in obj2Add){
             tmp[key] = obj2Add[key];
@@ -271,8 +280,8 @@ LVT.obj = {
     hashCode : function(obj){
         obj = JSON.stringify(obj);
         var hash = 0;
-        if (obj.length == 0) return hash;
-        for (var i = 0; i < obj.length; i++) {
+        if(obj.length == 0) return hash;
+        for(var i = 0; i < obj.length; i++){
             var character = obj.charCodeAt(i);
             hash = ((hash<<5)-hash)+character;
             hash = hash & hash;
@@ -295,7 +304,7 @@ if(!TtimeRegex) var TtimeRegex=LVT.timeRegex;
 
 /** 时间戳格式化为'yyyy-MM-dd HH:mm:ss'函数 */
 LVT.timestampFormat = function(time){
-    if (time==null) return;
+    if(time==null) return;
     time = new Date(time);
     var year = time.getFullYear();
     var month = time.getMonth() + 1 < 10 ? "0" + (time.getMonth() + 1) : time.getMonth() + 1;
@@ -310,7 +319,7 @@ if(!jQuery.timestampFormat) jQuery.timestampFormat=LVT.timestampFormat;
 
 /** 时间长度格式化为'HH:mm:ss'函数 */
 LVT.timeFormat = function(time){
-    if (time==null) return;
+    if(time==null) return;
     time = LVT.int(time/1000);
     var s = time%60; s = s<10? "0"+s : s; time = LVT.int(time/60);
     var m = time%60; m = m<10? "0"+m : m; time = LVT.int(time/60);
@@ -322,7 +331,7 @@ if(!jQuery.timeFormat) jQuery.timeFormat=LVT.timeFormat;
 
 /** 转换序列化的字符串为json数据,出现异常返回null */
 LVT.json = function(jsonStr){
-    try {
+    try{
         return eval('('+jsonStr+')');
     }catch(e){}
     return null;
@@ -339,9 +348,9 @@ if(!jQuery.jsf) jQuery.jsf=LVT.jsf;
 
 /** 返回参数列表中第一个非空的参数 */
 LVT.fnn = function(){
-    for ( var i in arguments) {
+    for( var i in arguments){
         var arg = arguments[i];
-        if (arg!=null) return arg;
+        if(arg!=null) return arg;
     }
 };
 if(!Tfnn) var Tfnn=LVT.fnn;
@@ -349,11 +358,11 @@ if(!jQuery.fnn) jQuery.fnn=LVT.fnn;
 
 /** 原始的parseInt会返回NaN,封装一下,遇到NaN时返回def */
 LVT.int = function(str, def){
-    try {
+    try{
         var num = parseInt(str);
-        if (isNaN(num)) return def;
+        if(isNaN(num)) return def;
         return num;
-    } catch (e) {}
+    }catch(e){}
     return def
 };
 if(!Tint) var Tint=LVT.int;
@@ -361,11 +370,11 @@ if(!jQuery.int) jQuery.int=LVT.int;
 
 /** 原始的parseFloat会返回NaN,封装一下,遇到NaN时返回def */
 LVT.float = function(str, def){
-    try {
+    try{
         var num = parseFloat(str);
-        if (isNaN(num)) return def;
+        if(isNaN(num)) return def;
         return num;
-    } catch (e) {}
+    }catch(e){}
     return def
 };
 if(!Tfloat) var Tfloat=LVT.float;
@@ -435,7 +444,7 @@ LVT.form = {
                 if(!required && !val) return null;
                 var range = LVT.form.dataAttr.range(ele, valid);
                 if(valid.isFail()) return;
-                if(range) {
+                if(range){
                     var rangeNumBegin = range[0];
                     if(rangeNumBegin!=null && val.length<rangeNumBegin) 
                         return valid.err(ele);
@@ -454,9 +463,9 @@ LVT.form = {
                 ele.val('');
                 if(val==null) return;
                 var time = val;
-                switch (typeof time) {
+                switch (typeof time){
                 case 'string':
-                    try {
+                    try{
                         time = new Date(time).getTime();
                     }catch(e){
                         return console.warn('尝试设置日期['+ele.attr('name')+']为['+val+']失败!');
@@ -479,7 +488,7 @@ LVT.form = {
                 var regex = LVT.form.dataAttr.regex(ele, valid);
                 if(valid.isFail()) return;
                 if(regex && !regex.test(val)) return valid.err(ele);
-                try {
+                try{
                     return new Date(val).getTime();
                 }catch(e){}
                 return valid.err(ele);
@@ -518,7 +527,7 @@ LVT.form = {
                 if(!required && !val) return null;
                 var range = LVT.form.dataAttr.range(ele, valid);
                 if(valid.isFail()) return;
-                if(range) {
+                if(range){
                     var rangeNumBegin = range[0];
                     if(rangeNumBegin!=null && val.length<rangeNumBegin) 
                         return valid.err(ele);
@@ -544,7 +553,7 @@ LVT.form = {
                 if(!required && val==null) return null;
                 var range = LVT.form.dataAttr.range(ele, valid);
                 if(valid.isFail()) return;
-                if(range) {
+                if(range){
                     var rangeNumBegin = range[0];
                     if(rangeNumBegin!=null && val<rangeNumBegin) 
                         return valid.err(ele);
@@ -554,7 +563,7 @@ LVT.form = {
                 }
                 var regex = LVT.form.dataAttr.regex(ele, valid);
                 if(valid.isFail()) return;
-                if(regex && val!=null) {
+                if(regex && val!=null){
                     if(!regex.test(ele.val())) return valid.err(ele);
                 }
                 return val;
@@ -578,7 +587,7 @@ LVT.form = {
                     var ele = eles.eq(i);
                     var val = data[ele.attr('name')];
                     var dataType = LVT.form.dataType.type(ele);
-                    if(!dataType) {
+                    if(!dataType){
                         console.warn('无法为', ele, '设置值', val);
                         continue;
                     }
@@ -591,7 +600,7 @@ LVT.form = {
                 for(var i=0; i<eles.length; i++){
                     var ele = eles.eq(i);
                     var dataType = LVT.form.dataType.type(ele);
-                    if(!dataType) {
+                    if(!dataType){
                         console.warn('无法获取', ele, '的值!');
                         continue;
                     }
@@ -605,7 +614,7 @@ LVT.form = {
                 if(!required && LVT.obj.isEmpty(data)) return null;
                 var range = LVT.form.dataAttr.range(ele, valid);
                 if(valid.isFail()) return;
-                if(range) {
+                if(range){
                     var size = LVT.obj.size(data);
                     var rangeNumBegin = range[0];
                     if(rangeNumBegin!=null && size<rangeNumBegin) 
@@ -627,7 +636,7 @@ LVT.form = {
                     var ele = eles.eq(i);
                     var val = vals[i];
                     var dataType = LVT.form.dataType.type(ele);
-                    if(!dataType) {
+                    if(!dataType){
                         console.warn('无法为', ele ,'设置值', val);
                         continue;
                     }
@@ -640,7 +649,7 @@ LVT.form = {
                 for(var i=0; i<eles.length; i++){
                     var ele = eles.eq(i);
                     var dataType = LVT.form.dataType.type(ele);
-                    if(!dataType) {
+                    if(!dataType){
                         console.warn('无法获取', ele ,'的值!');
                         continue;
                     }
@@ -652,7 +661,7 @@ LVT.form = {
                 if(!required && vals.length==0) return null;
                 var range = LVT.form.dataAttr.range(ele, valid);
                 if(valid.isFail()) return;
-                if(range) {
+                if(range){
                     var rangeNumBegin = range[0];
                     if(rangeNumBegin!=null && vals.length<rangeNumBegin) 
                         return valid.err(ele);
@@ -685,7 +694,7 @@ LVT.form = {
             return range;
         },
         regex : function(ele, valid){
-            try {
+            try{
                 var regexStr = ele.attr('data-regex');
                 if(!regexStr) return;
                 return new RegExp(regexStr);

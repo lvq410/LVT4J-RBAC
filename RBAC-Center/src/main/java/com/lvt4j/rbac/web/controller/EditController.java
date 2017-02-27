@@ -35,7 +35,7 @@ import com.lvt4j.rbac.data.bean.VisitorParam;
 import com.lvt4j.rbac.data.bean.VisitorPermission;
 import com.lvt4j.rbac.data.bean.VisitorRole;
 import com.lvt4j.rbac.data.bean.base.BaseParam;
-import com.lvt4j.rbac.service.Cache;
+import com.lvt4j.rbac.service.ProductAuthCache;
 import com.lvt4j.spring.JsonResult;
 
 
@@ -51,7 +51,7 @@ public class EditController {
     TDB db;
     
     @Autowired
-    Cache cache;
+    ProductAuthCache productAuthCache;
     
     @RequestMapping("/curProSet")
     public JsonResult curProSet(
@@ -637,9 +637,10 @@ public class EditController {
                     +"select permissionId from user_permission where proId=? and userId=?)",
                         proId, proId, id).execute2Model(Permission.class);
         List<Role> allRoles = db.select("select * from role where proId=? and id in("
-                +"select roleId from user_role where proId=? and userId=? "
-                +"union "
-                +"select roleId from visitor_role where proId=?)",
+                +"select distinct role from ("
+                    + "select roleId from user_role where proId=? and userId=? "
+                    + "union "
+                    + "select roleId from visitor_role where proId=?))",
                 proId, proId, id, proId).execute2Model(Role.class);
         List<Access> allAccesses = db.select(
                 "select * from access where proId=? and pattern in("
@@ -825,8 +826,7 @@ public class EditController {
     }
     
     private void productNotify(@NonNull String... proIds) {
-        for(String proId : proIds){
-            System.out.println("proChange:"+proId);
-        }
+        for(String proId : proIds)
+            productAuthCache.invalidate(proId);
     }
 }

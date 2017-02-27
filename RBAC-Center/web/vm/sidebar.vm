@@ -1,5 +1,5 @@
 ##左侧菜单栏  配置各参数说明:
-##n:name,列表显示名   h:href,连接地址  i:icon,图标的class  l:list,子列表  p:permission,授权控制
+##n:name,列表显示名   h:href,连接地址  i:icon,图标的class  l:list,子列表
 #set($Navs=[
     {'n':'首页','i':'fa-home','h':'','l':[]},
     {'n':'产品管理','i':'fa-leaf','h':'/view?path=/product/index','l':[]},
@@ -16,7 +16,7 @@
         try{ace.settings.check('sidebar' , 'fixed')}catch(e){}
     </script>
 
-    <ul class="nav nav-list" style="top: 0px;">
+    <ul class="nav nav-list" style="top:0px;">
         #foreach($Nav in $Navs)
             <li class="#if($navs.get(0)==$Nav.get('n')) open #end">
                 <a href="$Nav.get('h')"#if(!$Nav.get('l').isEmpty()) class="dropdown-toggle" #end>

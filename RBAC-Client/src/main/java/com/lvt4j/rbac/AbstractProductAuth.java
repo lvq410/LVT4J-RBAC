@@ -15,10 +15,12 @@ abstract class AbstractProductAuth{
     LruCache<String, UserAuth> userAuths;
     
     protected AbstractProductAuth(String proId, int cacheCapacity){
+        if(proId==null)return;
         this.proId = proId;
         userAuths = new LruCache<String, UserAuth>(cacheCapacity);
     }
     
+    /** 查询用户权限,若userId为空,返回游客权限 */
     public UserAuth getUserAuth(String userId){
         UserAuth userAuth = userAuths.get(userId);
         if(userAuth!=null) return userAuth;
@@ -31,7 +33,7 @@ abstract class AbstractProductAuth{
         return userAuth;
     }
     
-    /** 加载用户配置项 */
+    /** 加载用户权限,若userId为空,加载游客权限 */
     protected abstract UserAuth loadUserAuth(String userId);
     
     /** 用户是否有权限访问指定uri */

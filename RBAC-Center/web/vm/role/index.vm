@@ -1,5 +1,5 @@
 #set($navs=['角色管理'])
-#set($pageDesc='所有使用授权中心的产品的角色的查询，修改与删除')
+#set($pageDesc='当前产品的角色的查询，修改与删除')
 #parse('/header.vm')
 
 <script src="/vm/role/index.js"></script>

@@ -5,7 +5,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.lvt4j.rbac.service.Cache;
+import com.lvt4j.rbac.ProductAuthImp;
+import com.lvt4j.rbac.service.ProductAuthCache;
 import com.lvt4j.spring.JsonResult;
 
 @RestController
@@ -13,14 +14,15 @@ import com.lvt4j.spring.JsonResult;
 public class ApiController{
 
     @Autowired
-    Cache cacheService;
+    ProductAuthCache productAuthCache;
     
     @RequestMapping("/user/auth")
     public JsonResult userAuth(
             @RequestParam String proId,
             @RequestParam String userId) {
-        return JsonResult.success(cacheService.getProductAuth(proId)
-                .getUserAuth(userId));
+        ProductAuthImp productAuth = productAuthCache.get(proId);
+        if(productAuth==null) return JsonResult.fail(404, "产品["+proId+"]不存在!");
+        return JsonResult.success(productAuth.getUserAuth(userId));
     }
     
     @RequestMapping("/user/allowAccess")
@@ -28,8 +30,9 @@ public class ApiController{
             @RequestParam String proId,
             @RequestParam String userId,
             @RequestParam String uri) {
-        return JsonResult.success(cacheService.getProductAuth(proId)
-                .allowAccess(userId, uri));
+        ProductAuthImp productAuth = productAuthCache.get(proId);
+        if(productAuth==null) return JsonResult.fail(404, "产品["+proId+"]不存在!");
+        return JsonResult.success(productAuth.allowAccess(userId, uri));
     }
     
     @RequestMapping("/user/permission")
@@ -37,6 +40,7 @@ public class ApiController{
             @RequestParam String proId,
             @RequestParam String userId,
             @RequestParam String permissionId) {
+        
         return JsonResult.success();
     }
     
