@@ -32,7 +32,13 @@ public class ProductAuthImp extends AbstractProductAuth{
         
         userAuth.exist = db.select("select count(id)<>0 from user where id=?",
                 userId).execute2BasicOne(boolean.class);
-        if(!userAuth.exist) return userAuth;
+        if(!userAuth.exist) {
+            userAuth.param = loadVisitorAuth().param;
+            userAuth.roles = loadVisitorAuth().roles;
+            userAuth.access = loadVisitorAuth().access;
+            userAuth.permission = loadVisitorAuth().permission;
+            return userAuth;
+        }
         
         Map<String, String> param = null;
         List<BaseParam> rawParams = db.select("select key,val from user_param where proId=? and userId=?",
