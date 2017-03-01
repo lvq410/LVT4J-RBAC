@@ -7,12 +7,12 @@ import javax.servlet.http.HttpServletResponse;
 
 abstract class RbacBaseFilter {
 
+    protected static final int CacheCapacityDef = 1000;
+    
     protected static final int HttpStatus_OK = 200;
     protected static final int HttpStatus_Forbidden = 403;
     
-    protected static final String ContentType_Html = "text/html;charset=UTF-8";
-    
-    protected String proId;
+    protected static final String ContentType_Html = "text/html;charset=utf-8";
     
     protected AbstractProductAuth productAuth;
     
@@ -52,19 +52,29 @@ abstract class RbacBaseFilter {
         request.setAttribute("rbac", productAuth.getUserAuth(userId));
     }
     
-    /** 用户未登陆,向response写入未登录提示 */
-    protected void onNotLogin(HttpServletRequest request,
+    /**
+     * 重写此方法以进行用户未登陆处理<br>
+     * 默认向response写入未登录提示<br>
+     * @return 可继续访问返回true,拦截返回false
+     */
+    protected boolean onNotLogin(HttpServletRequest request,
             HttpServletResponse response) throws IOException {
         String content = "用户未登陆!";
         responeWriteFobiddenContent(response, content);
+        return false;
     }
-    /** 用户无权访问时,向response写入提示信息 */
-    protected void onNotAllowAccess(HttpServletRequest request,
+    /**
+     * 重写此方法以进行用户无权访问处理<br>
+     * 默认向response写入提示信息<br>
+     * @return 可继续访问返回true,拦截返回false
+     */
+    protected boolean onNotAllowAccess(HttpServletRequest request,
             HttpServletResponse response) throws IOException {
         String userId = getUserId(request, response);
         String uri = request.getRequestURI();
         String content = "用户["+userId+"]无权访问URI["+uri+"]";
         responeWriteFobiddenContent(response, content);
+        return false;
      }
     /** 用户没有指定授权项时,向response写入提示信息 */
     protected void onNotPermitted(HttpServletRequest request,
@@ -84,8 +94,4 @@ abstract class RbacBaseFilter {
         response.getWriter().close();
     }
     
-    public void setProId(String proId){
-        this.proId = proId;
-        productAuth = new ProductAuthImp(proId);
-    }
 }

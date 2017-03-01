@@ -26,4 +26,9 @@ public class Consts {
     public static final Class<?>[] SupportHandlerMethodTypes = new Class<?>[]{
         JSONObject.class, TPager.class, String[].class};
     
+    /** 各种错误码 */
+    public static final class Err {
+        public static final int NotFound = 404;
+    }
+    
 }

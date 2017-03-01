@@ -1,5 +1,10 @@
 package com.lvt4j.rbac;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -14,6 +19,14 @@ public abstract class RbacInterceptor extends RbacBaseFilter implements HandlerI
         
         // TODO 授权项
         return false;
+    }
+    
+    @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface Permission{
+
+        String[] value();
+        
     }
     
 }

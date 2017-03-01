@@ -1,6 +1,5 @@
 package com.lvt4j.rbac;
 
-import java.util.Set;
 
 /**
  * 产品下用户的配置项、访问项、授权项<br>
@@ -10,9 +9,11 @@ import java.util.Set;
 abstract class AbstractProductAuth{
     
     /** 产品id */
-    String proId;
+    protected String proId;
     /** 用户配置项缓存 */
-    LruCache<String, UserAuth> userAuths;
+    protected LruCache<String, UserAuth> userAuths;
+    /** 游客权限 */
+    protected UserAuth visitorAuth;
     
     protected AbstractProductAuth(String proId, int cacheCapacity){
         if(proId==null)return;
@@ -20,11 +21,11 @@ abstract class AbstractProductAuth{
         userAuths = new LruCache<String, UserAuth>(cacheCapacity);
     }
     
-    /** 查询用户权限,若userId为空,返回游客权限 */
+    /** 查询用户权限,若userId为空,或用户未在权限中心注册,返回游客权限 */
     public UserAuth getUserAuth(String userId){
         UserAuth userAuth = userAuths.get(userId);
         if(userAuth!=null) return userAuth;
-        synchronized (userAuths) {
+        synchronized (this) {
             userAuth = userAuths.get(userId);
             if(userAuth!=null) return userAuth;
             userAuth = loadUserAuth(userId);
@@ -38,18 +39,18 @@ abstract class AbstractProductAuth{
     
     /** 用户是否有权限访问指定uri */
     public boolean allowAccess(String userId, String uri) {
-        Set<String> access = getUserAuth(userId).access;
-        for(String pattern : access)
-            if(uri.matches(pattern)) return true;
-        return false;
+        return getUserAuth(userId).allowAccess(uri);
     }
     /** 用户是否有指定授权项的权限 */
     public boolean permit(String userId, String permissionId) {
-        return getUserAuth(userId).permission.contains(permissionId);
+        return getUserAuth(userId).permit(permissionId);
     }
     
     public void clear() {
         userAuths.clear();
+        visitorAuth = null;
     }
+    
+    public void destory() {}
     
 }

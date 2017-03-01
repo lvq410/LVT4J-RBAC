@@ -826,7 +826,11 @@ public class EditController {
     }
     
     private void productNotify(@NonNull String... proIds) {
-        for(String proId : proIds)
+        for(String proId : proIds){
+            db.executeSQL("update product set lastModify=? where id=?",
+                    System.currentTimeMillis(), proId).execute();
             productAuthCache.invalidate(proId);
+        }
+        
     }
 }

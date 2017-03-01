@@ -1,5 +1,7 @@
 package com.lvt4j.rbac;
 
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -121,6 +123,13 @@ public class ProductAuthImp extends AbstractProductAuth{
                 +")", proId, proId, proId).execute2Basic(String.class));
         
         return visitorAuth;
+    }
+    
+    public byte[] userAuthSerialize(String userId) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+        oos.writeObject(getUserAuth(userId));
+        return baos.toByteArray();
     }
     
 }
