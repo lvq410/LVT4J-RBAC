@@ -14,10 +14,10 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * 配置参数:<br>
  * 1.proId(必须):在授权中心注册的产品ID<br>
- * 2.cacheCapacity(非必须):最大为多少用户缓存权限<br>
- * 3.rbacCenterAddress(必须):授权中心服务地址,[host](:[port])形式<br>
+ * 2.cacheCapacity(非必须):最大为多少用户缓存权限,默认{@link com.lvt4j.rbac.RbacBaseFilter#CacheCapacityDef CacheCapacityDef}<br>
+ * 3.rbacCenterAddr(非必须):授权中心服务地址,[host](:[port])形式,默认{@link com.lvt4j.rbac.RbacBaseFilter#RbacCenterAddrDef RbacCenterAddrDef}<br>
+ * 4.rbacCenterSyncInterval(非必须):与授权中心服务同步时间间隔,单位分钟,默认{@link com.lvt4j.rbac.RbacBaseFilter.RbacCenterSyncIntervalDef RbacCenterSyncIntervalDef}
  * @author lichenxi
- *
  */
 public abstract class RbacFilter extends RbacBaseFilter implements Filter {
 
@@ -27,9 +27,11 @@ public abstract class RbacFilter extends RbacBaseFilter implements Filter {
         if(strIsEmpty(proId)) throw new IllegalArgumentException("产品ID必须配置!");
         String cacheCapacityStr = config.getInitParameter("cacheCapacity");
         int cacehCapacity = strIsEmpty(cacheCapacityStr)?CacheCapacityDef:Integer.parseInt(cacheCapacityStr);
-        String rbacCenterAddress = config.getInitParameter("rbacCenterAddress");
-        if(strIsEmpty(rbacCenterAddress)) throw new IllegalArgumentException("授权中心服务地址必须配置!");
-        productAuth = new ProductAuthImp(proId, cacehCapacity, rbacCenterAddress);
+        String rbacCenterAddr = config.getInitParameter("rbacCenterAddr");
+        rbacCenterAddr = strIsEmpty(rbacCenterAddr)?RbacCenterAddrDef:rbacCenterAddr;
+        String rbacCenterSyncIntervalStr = config.getInitParameter("rbacCenterSyncInterval");
+        int rbacCenterSyncInterval = strIsEmpty(rbacCenterSyncIntervalStr)?RbacCenterSyncIntervalDef:Integer.parseInt(rbacCenterSyncIntervalStr);
+        productAuth = new ProductAuth4Client(proId, cacehCapacity, rbacCenterAddr, rbacCenterSyncInterval);
     }
 
     @Override

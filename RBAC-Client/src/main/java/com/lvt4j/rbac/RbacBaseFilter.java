@@ -7,15 +7,20 @@ import javax.servlet.http.HttpServletResponse;
 
 abstract class RbacBaseFilter {
 
+    /** 默认产品用户权限缓存容量:1000个用户的权限 */
     protected static final int CacheCapacityDef = 1000;
+    /** 默认授权中心地址:127.0.0.1:80 */
+    protected static final String RbacCenterAddrDef = "127.0.0.1:80";
+    /** 默认与授权中心同步时间间隔:5分钟 */
+    protected static final int RbacCenterSyncIntervalDef = 5;
     
     protected static final int HttpStatus_OK = 200;
     protected static final int HttpStatus_Forbidden = 403;
-    
     protected static final String ContentType_Html = "text/html;charset=utf-8";
     
     protected AbstractProductAuth productAuth;
     
+    /** 至少需要实现用户ID获取的方法,若用户未登陆,返回null */
     protected abstract String getUserId(HttpServletRequest request, HttpServletResponse response);
     
     /**
