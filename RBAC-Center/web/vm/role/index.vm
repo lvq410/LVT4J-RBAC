@@ -20,22 +20,21 @@
     <input name="oldId" type="hidden"/>
     <div class="form-group">
         <label class="col-xs-3 control-label">ID：</label>
-        <div class="col-xs-9">
-            <input name="id" data-required data-regex="^[a-zA-Z]+[a-zA-Z0-9_]*$"
-                data-err="角色ID不能为空,且必须以字母开头,只能由字母数字和下划线组成"
-                type="text" class="form-control" placeholder="角色ID"/>
+        <div class="col-xs-9" title="角色ID,建议以字母数字和下划线组成">
+            <input name="id" data-required data-err="角色ID不能为空"
+                type="text" class="form-control" placeholder="角色ID,建议以字母数字和下划线组成"/>
         </div>
     </div>
     <div class="form-group">
         <label class="col-xs-3 control-label">名称：</label>
-        <div class="col-xs-9">
+        <div class="col-xs-9" title="角色名称，短名称">
             <input name="name" data-required data-err="角色名称不能为空"
                 type="text" class="form-control" placeholder="角色名称，短名称"/>
         </div>
     </div>
     <div class="form-group">
         <label class="col-xs-3 control-label">描述：</label>
-        <div class="col-xs-9">
+        <div class="col-xs-9" title="角色描述">
             <textarea name="des" data-required data-err="角色描述不能为空"
                 type="text" class="form-control" style="min-height:150px;" placeholder="角色描述"></textarea>
         </div>
@@ -73,14 +72,22 @@
 <div class="col-xs-12"><div class="widget-box">
 <div class="widget-header">
     <h4 class="widget-title">角色列表</h4>
-    <div class="widget-toolbar">
-        <div class="input-group" style="width:200px;">
-            <input id="keyword" type="text" class="form-control" style="height:22px;margin-top:7px;" placeholder="请输入关键词">
-            <span class="input-group-btn">
-                <button type="button" class="btn btn-purple btn-minier" onclick="loadRoles()">
-                    搜索<i class="ace-icon fa fa-search"></i>
-                </button>
-            </span>
+    <div class="widget-toolbar" style="line-height:28px;">
+        <div class="display:inline-block" style="width:150px;display:inline-block;padding-top:3px;vertical-align:top;">
+            <select id="qAccess" onchange="loadRoles()" widget="select2" url="/edit/access/list.json" allow-clear="true" placeholder="请选择访问项" style="width:100%"></select>
+        </div>
+        <div class="display:inline-block" style="width:150px;display:inline-block;padding-top:3px;vertical-align:top;">
+            <select id="qPermission" onchange="loadRoles()" widget="select2" url="/edit/permission/list.json" allow-clear="true" placeholder="请选择授权项" style="width:100%"></select>
+        </div>
+        <div style="width:200px;display:inline-block;">
+            <div class="input-group" style="width:200px;">
+                <input id="keyword" type="text" class="form-control" style="height:22px;margin-top:8px;" placeholder="请输入关键词">
+                <span class="input-group-btn">
+                    <button type="button" class="btn btn-purple btn-minier" onclick="loadRoles()" style="margin-top:8px;">
+                        搜索<i class="ace-icon fa fa-search"></i>
+                    </button>
+                </span>
+            </div>
         </div>
     </div>
 </div>
@@ -88,11 +95,11 @@
 <table class="table table-striped table-bordered table-hover table-condensed" style="margin-bottom:0;">
     <thead>
         <tr>
-            <td style="width:30%;" title="角色的ID">ID</td>
-            <td title="角色的名称">名称</td>
-            <td title="角色拥有的访问项">访问项</td>
-            <td title="角色拥有的授权项">授权项</td>
-            <td style="width:88px;">
+            <td title="角色的ID" style="min-width:100px;">ID</td>
+            <td title="角色的名称" style="min-width:100px;">名称</td>
+            <td title="角色拥有的访问项" style="width:300px;">访问项</td>
+            <td title="角色拥有的授权项" style="width:300px;">授权项</td>
+            <td style="width:88px;min-width:88px;">
                 <button onclick="addRole()" title="增加一个新角色" type="button" class="btn btn-primary btn-minier">新增</button>
             </td>
         </tr>

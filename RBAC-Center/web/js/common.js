@@ -68,13 +68,33 @@ function q(url, data, callback, waitingMsg, jsonp) {
 }
 
 /** 只展示一个元素,其他隐藏 */
-function slideOne(allEleIds, showEleId){
+var Slider = [];
+function slideOne(allEleIds, showEleId, callback){
+    if(callback) Slider.push({callback:callback});
+    var ele = $('#'+showEleId);
+    if(ele.length>0) Slider.push({ele:ele,isShow:true});
+    allEleIds = Tarr.remove(allEleIds, showEleId);
     for(var i = 0; i < allEleIds.length; i++){
-        var eleId = allEleIds[i];
-        $('#'+eleId).slideUp();
+        ele = $('#'+allEleIds[i]);
+        if(ele.length==0) continue;
+        Slider.push({ele:ele,isShow:false});
     }
-    if(showEleId) $('#'+showEleId).slideDown().scrollToMe();
+    innerSlideOne();
 }
+function innerSlideOne(){
+    var slider = Slider.pop();
+    if(!slider) return;
+    if(slider.callback)
+        return slider.callback();
+    if(slider.isShow) {
+        slider.ele.slideDown(function(){
+            $(this).scrollToMe(innerSlideOne);
+        });
+    } else {
+        slider.ele.slideUp(innerSlideOne);
+    }
+}
+
 
 function onCurProIdChange(){
     if(curPro && curPro.id==$('#curProId').val()) return;

@@ -1,6 +1,8 @@
 package com.lvt4j.rbac;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -13,6 +15,9 @@ public class UserAuth implements Serializable{
     public static final String ReqAttr = "rbac";
     
     private static final long serialVersionUID = 1L;
+    
+    private static final Map<String, String> emptyMap = new HashMap<String, String>(0);
+    private static final Set<String> emptySet = new HashSet<String>(0);
     
     /** 用户ID */
     public String userId;
@@ -38,4 +43,17 @@ public class UserAuth implements Serializable{
         return permissions.contains(permissionId);
     }
     
+    void setAuth(UserAuth auth) {
+        if(auth==null) {
+            params = emptyMap;
+            roles = emptySet;
+            accesses = emptySet;
+            permissions = emptySet;
+        } else {
+            params = auth.params;
+            roles = auth.roles;
+            accesses = auth.accesses;
+            permissions = auth.permissions;
+        }
+    }
 }

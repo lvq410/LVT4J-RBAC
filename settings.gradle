@@ -1,4 +1,5 @@
 include 'RBAC-Client'
 include 'RBAC-Center'
+include 'RBAC-Test'
 
 rootProject.name = 'RBAC'

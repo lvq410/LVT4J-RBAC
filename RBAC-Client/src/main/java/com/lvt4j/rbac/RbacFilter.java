@@ -12,12 +12,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * 配置参数:<br>
+ * 权限拦截器，配置参数:<br>
  * 1.proId(必须):在授权中心注册的产品ID<br>
- * 2.cacheCapacity(非必须):最大为多少用户缓存权限,默认{@link com.lvt4j.rbac.RbacBaseFilter#CacheCapacityDef CacheCapacityDef}<br>
- * 3.rbacCenterAddr(非必须):授权中心服务地址,[host](:[port])形式,默认{@link com.lvt4j.rbac.RbacBaseFilter#RbacCenterAddrDef RbacCenterAddrDef}<br>
- * 4.rbacCenterSyncInterval(非必须):与授权中心服务同步时间间隔,单位分钟,默认{@link com.lvt4j.rbac.RbacBaseFilter.RbacCenterSyncIntervalDef RbacCenterSyncIntervalDef}
- * @author lichenxi
+ * 2.cacheCapacity(非必须):最大为多少用户缓存权限,默认{@link com.lvt4j.rbac.RbacBaseFilter#CacheCapacityDef 1000个}<br>
+ * 3.rbacCenterProtocol(非必须):与授权中心同步的协议,http/https,默认{@link com.lvt4j.rbac.RbacBaseFilter#RbacCenterProtocolDef http}<br>
+ * 4.rbacCenterAddr(非必须):授权中心服务地址,[host](:[port])形式,默认{@link com.lvt4j.rbac.RbacBaseFilter#RbacCenterAddrDef 127.0.0.1:80}<br>
+ * 5.rbacCenterSyncInterval(非必须):与授权中心服务同步时间间隔,单位分钟,默认{@link com.lvt4j.rbac.RbacBaseFilter.RbacCenterSyncIntervalDef 5分钟}<br>
+ * 6.rbacCenterSyncTimeout(非必须):与授权中心同步超时时间,单位毫秒,默认{@link com.lvt4j.rbac.RbacBaseFilter.RbacCenterSyncTimeoutDef 200ms}
+ * @author LV
  */
 public abstract class RbacFilter extends RbacBaseFilter implements Filter {
 
@@ -27,11 +29,16 @@ public abstract class RbacFilter extends RbacBaseFilter implements Filter {
         if(strIsEmpty(proId)) throw new IllegalArgumentException("产品ID必须配置!");
         String cacheCapacityStr = config.getInitParameter("cacheCapacity");
         int cacehCapacity = strIsEmpty(cacheCapacityStr)?CacheCapacityDef:Integer.parseInt(cacheCapacityStr);
+        String rbacCenterProtocol = config.getInitParameter("rbacCenterProtocol");
+        rbacCenterProtocol = strIsEmpty(rbacCenterProtocol)?RbacCenterProtocolDef:rbacCenterProtocol;
         String rbacCenterAddr = config.getInitParameter("rbacCenterAddr");
         rbacCenterAddr = strIsEmpty(rbacCenterAddr)?RbacCenterAddrDef:rbacCenterAddr;
         String rbacCenterSyncIntervalStr = config.getInitParameter("rbacCenterSyncInterval");
         int rbacCenterSyncInterval = strIsEmpty(rbacCenterSyncIntervalStr)?RbacCenterSyncIntervalDef:Integer.parseInt(rbacCenterSyncIntervalStr);
-        productAuth = new ProductAuth4Client(proId, cacehCapacity, rbacCenterAddr, rbacCenterSyncInterval);
+        String rbacCenterSyncTimeoutStr = config.getInitParameter("rbacCenterSyncTimeout");
+        int rbacCenterSyncTimeout = strIsEmpty(rbacCenterSyncTimeoutStr)?RbacCenterSyncTimeoutDef:Integer.parseInt(rbacCenterSyncTimeoutStr);
+        productAuth = new ProductAuth4Client(proId, cacehCapacity,
+                rbacCenterProtocol, rbacCenterAddr, rbacCenterSyncInterval, rbacCenterSyncTimeout);
     }
 
     @Override
@@ -58,8 +65,4 @@ public abstract class RbacFilter extends RbacBaseFilter implements Filter {
         productAuth.destory();
     }
 
-    private boolean strIsEmpty(String str) {
-        return str==null || str.isEmpty();
-    }
-    
 }

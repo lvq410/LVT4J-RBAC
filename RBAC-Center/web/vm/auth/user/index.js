@@ -4,6 +4,9 @@ function loadUsers() {
         {
             proId: curPro.id,
             keyword: $('#keyword').val(),
+            roleId: $('#qRole').val(),
+            accessPattern: $('#qAccess').val(),
+            permissionId: $('#qPermission').val(),
             pager: $('#usersPager').pagerSerialize()
         },
         function(users){
@@ -19,18 +22,21 @@ function editUserAuth(btn) {
     $('#userId').val(user.id);
     $('#userName').html(user.name);
     $('#userDes').html(user.des.replace(/\n/g, '<br>'));
-    $('#params').html($tpl(tpl_userParams)(user.auth.params, user.auth.userParams));
+    $('#params').html($tpl(tpl_userParams)(user.params));
     $('#role').select2Clear();
-    $('#roles').html($tpl(tpl_roles)(user.auth.userRoles, true));
+    $('#roles').html($tpl(tpl_roles)(user.roles, true));
     $('#access').select2Clear();
-    $('#accesses').html($tpl(tpl_accesses)(user.auth.userAccesses, true));
+    $('#accesses').html($tpl(tpl_accesses)(user.accesses, true));
     $('#permission').select2Clear();
-    $('#permissions').html($tpl(tpl_permissions)(user.auth.userPermissions, true));
-    $('#allRoles').html($tpl(tpl_roles)(user.auth.allRoles, false));
-    $('#allAccesses').html($tpl(tpl_accesses)(user.auth.allAccesses, false));
-    $('#allPermissions').html($tpl(tpl_permissions)(user.auth.allPermissions, false));
+    $('#permissions').html($tpl(tpl_permissions)(user.permissions, true));
+    $('#allRoles').html($tpl(tpl_roles)(user.allRoles, false));
+    $('#allAccesses').html($tpl(tpl_accesses)(user.allAccesses, false));
+    $('#allPermissions').html($tpl(tpl_permissions)(user.allPermissions, false));
     
-    $('#editUserAuthDiv').slideDown().scrollToMe();
+    $('#editUserAuthDiv').slideDown(function () {
+        $('#editUserAuthDiv').scrollToMe();
+    });
+    onRAPChange();
 }
 
 function onRAPChange() {
@@ -72,18 +78,13 @@ function tpl_users(users) {
     if(!users) return;
     for (var i = 0; i < users.length; i++) {
         var user = users[i];
-        var rowspan = Math.max(1, user.auth.params.length);
-        var userParams = user.auth.userParams;
-        var params = Tarr.clone(user.auth.params);
+        var rowspan = Math.max(1, user.params.length);
+        var params = Tarr.clone(user.params);
         if(params.length==0) params.push({});
-        for (var j = 0; j < params.length; j++) {
-            var param = params[j];
-            param.val = userParams[param.key];
-        }
-        var param = params[0];
         /*<tr data="{Tigh(user)}" title="{Tigh(user.des)}">
             <td rowspan="{rowspan}">{Tigh(user.id)}</td>
             <td rowspan="{rowspan}">{Tigh(user.name)}</td>*/
+        var param = params[0];
         if(param.key){
             /*<td class="msg-tooltiper">
                 {Tigh(param.name)}
@@ -93,7 +94,7 @@ function tpl_users(users) {
                 </div>
             </td>
             <td class="msg-tooltiper">
-                /*{Tigh(param.val).replace(/\n/g, '<br>')}
+                {Tigh(param.val).replace(/\n/g, '<br>')}
                 <div class="tooltip-msg">
                     <strong>key:</strong>{Tigh(param.key)}<br>
                     {Tigh(param.des).replace(/\n/g, '<br>')}
@@ -103,9 +104,9 @@ function tpl_users(users) {
             /*<td></td>
             <td></td>*/
         }
-            /*<td rowspan="{rowspan}">{$tpl(tpl_roles)(user.auth.allRoles)}</td>
-            <td rowspan="{rowspan}">{$tpl(tpl_accesses)(user.auth.allAccesses)}</td>
-            <td rowspan="{rowspan}">{$tpl(tpl_permissions)(user.auth.allPermissions)}</td>
+            /*<td rowspan="{rowspan}">{$tpl(tpl_roles)(user.roles)}</td>
+            <td rowspan="{rowspan}">{$tpl(tpl_accesses)(user.accesses)}</td>
+            <td rowspan="{rowspan}">{$tpl(tpl_permissions)(user.permissions)}</td>
             <td rowspan="{rowspan}"><button onclick="editUserAuth(this)" type="button" class="btn btn-info btn-minier">更改</button></td>
         </tr>*/
         for (var j = 1; j < params.length; j++) {
@@ -129,17 +130,16 @@ function tpl_users(users) {
         }
     }
 }
-function tpl_userParams(params, userParams) {
+function tpl_userParams(params) {
     if (!params) return;
     for (var i = 0; i < params.length; i++) {
         var param = params[i];
-        var val = userParams[param.key];
         /*<div class="form-group">
             <label class="col-xs-3 control-label">
                 <span title="{Tigh(param.key)}">{Tigh(param.name)}：</span>
             </label>
             <div class="col-xs-9 msg-tooltiper">
-                <textarea name="{Tigh(param.key)}" class="form-control" placeholder="{Tigh(param.des)}">{Tigh(val)}</textarea>
+                <textarea name="{Tigh(param.key)}" class="form-control" placeholder="{Tigh(param.des)}">{Tigh(param.val)}</textarea>
                 <div class="tooltip-msg">{Tigh(param.des).replace(/\n/g, '<br>')}</div>
             </div>
         </div>*/

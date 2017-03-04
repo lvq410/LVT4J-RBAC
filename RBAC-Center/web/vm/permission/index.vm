@@ -20,22 +20,21 @@
     <input name="oldId" type="hidden"/>
     <div class="form-group">
         <label class="col-xs-3 control-label">ID：</label>
-        <div class="col-xs-9">
-            <input name="id" data-required data-regex="^[a-zA-Z]+[a-zA-Z0-9_]*$"
-                data-err="授权项ID不能为空,且必须以字母开头,只能由字母数字和下划线组成"
-                type="text" class="form-control" placeholder="授权项ID"/>
+        <div class="col-xs-9" title="授权项ID,建议以字母数字下划线组成">
+            <input name="id" data-required data-err="授权项ID不能为空"
+                type="text" class="form-control" placeholder="授权项ID,建议以字母数字下划线组成"/>
         </div>
     </div>
     <div class="form-group">
         <label class="col-xs-3 control-label">名称：</label>
-        <div class="col-xs-9">
+        <div class="col-xs-9" title="授权项名称，短名称">
             <input name="name" data-required data-err="授权项名称不能为空"
                 type="text" class="form-control" placeholder="授权项名称，短名称"/>
         </div>
     </div>
     <div class="form-group">
         <label class="col-xs-3 control-label">描述：</label>
-        <div class="col-xs-9">
+        <div class="col-xs-9" title="授权项描述">
             <textarea name="des" data-required data-err="授权项描述不能为空"
                 type="text" class="form-control" style="min-height:150px;" placeholder="授权项描述"></textarea>
         </div>

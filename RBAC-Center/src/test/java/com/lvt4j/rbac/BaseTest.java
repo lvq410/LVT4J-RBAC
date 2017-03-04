@@ -9,7 +9,7 @@ import org.springframework.test.context.web.WebAppConfiguration;
 
 /**
  * Junit测试继承此类
- * @author lichenxi
+ * @author LV
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes={Main.class})

@@ -20,22 +20,21 @@
     <input name="oldId" type="hidden"/>
     <div class="form-group">
         <label class="col-xs-3 control-label">ID：</label>
-        <div class="col-xs-9">
-            <input name="id" data-required data-regex="^[a-zA-Z]+[a-zA-Z0-9_]*$"
-                data-err="产品ID不能为空,且必须以字母开头,只能由字母数字和下划线组成"
-                type="text" class="form-control" placeholder="与其他产品区分的唯一ID"/>
+        <div class="col-xs-9" title="与其他产品区分的唯一ID,尽量由字母数字和下划线组成">
+            <input name="id" data-required data-err="产品ID不能为空"
+                type="text" class="form-control" placeholder="与其他产品区分的唯一ID,尽量由字母数字和下划线组成"/>
         </div>
     </div>
     <div class="form-group">
         <label class="col-xs-3 control-label">名称：</label>
-        <div class="col-xs-9">
+        <div class="col-xs-9" title="产品名称，短名称">
             <input name="name" data-required data-err="产品名称不能为空"
                 type="text" class="form-control" placeholder="产品名称，短名称"/>
         </div>
     </div>
     <div class="form-group">
         <label class="col-xs-3 control-label">描述：</label>
-        <div class="col-xs-9">
+        <div class="col-xs-9" title="产品描述">
             <textarea name="des" data-required data-err="产品描述不能为空"
                 type="text" class="form-control" style="min-height:150px;" placeholder="产品描述"></textarea>
         </div>

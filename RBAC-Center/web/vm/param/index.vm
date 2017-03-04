@@ -20,22 +20,21 @@
     <input name="oldKey" type="hidden"/>
     <div class="form-group">
         <label class="col-xs-3 control-label">key：</label>
-        <div class="col-xs-9">
-            <input name="key" data-required data-regex="^[a-zA-Z][a-zA-Z0-9_]*$"
-                data-err="配置项key不能为空,且必须以字母开头,以字母数字下划线组成"
-                type="text" class="form-control" placeholder="与其他配置项区分的key,同时也是配置数据的key"/>
+        <div class="col-xs-9" title="配置数据的key,建议以字母数字下划线组成">
+            <input name="key" data-required data-err="配置项key不能为空"
+                type="text" class="form-control" placeholder="配置数据的key,建议以字母数字下划线组成"/>
         </div>
     </div>
     <div class="form-group">
         <label class="col-xs-3 control-label">名称：</label>
-        <div class="col-xs-9">
+        <div class="col-xs-9" title="配置项名称，短名称">
             <input name="name" data-required data-err="配置项名称不能为空"
                 type="text" class="form-control" placeholder="配置项名称，短名称"/>
         </div>
     </div>
     <div class="form-group">
         <label class="col-xs-3 control-label">描述：</label>
-        <div class="col-xs-9">
+        <div class="col-xs-9" title="配置项描述">
             <textarea name="des" data-required data-err="配置项描述不能为空"
                 type="text" class="form-control" style="min-height:150px;" placeholder="配置项描述"></textarea>
         </div>
@@ -50,7 +49,7 @@
 <div class="widget-header">
     <h4 class="widget-title">配置项列表</h4>
 </div>
-<div id="paramsDiv" class="widget-body" style="display:none;"><div class="widget-main" style="padding-bottom:52px;">
+<div id="paramsDiv" class="widget-body" style="display:none;"><div class="widget-main">
 <table class="table table-striped table-bordered table-hover table-condensed" style="margin-bottom:0;">
     <thead>
         <tr>

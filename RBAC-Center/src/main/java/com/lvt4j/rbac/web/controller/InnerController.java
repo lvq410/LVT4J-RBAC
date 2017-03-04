@@ -1,15 +1,18 @@
 package com.lvt4j.rbac.web.controller;
 
-import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.zip.GZIPOutputStream;
+
+import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.lvt4j.basic.TBaseDataConvert;
-import com.lvt4j.basic.TStream;
 import com.lvt4j.rbac.ProductAuth4Center;
 import com.lvt4j.rbac.UserAuth;
 import com.lvt4j.rbac.service.ProductAuthCache;
@@ -22,15 +25,19 @@ public class InnerController{
     ProductAuthCache productAuthCache;
     
     @RequestMapping("/proLastModify")
-    public byte[] proModify(
-            @RequestParam String proId) {
+    public void proLastModify(
+            HttpServletResponse response,
+            @RequestParam String proId) throws Exception {
         ProductAuth4Center productAuth = productAuthCache.get(proId);
-        if(productAuth==null) return TBaseDataConvert.long2ByteS(0L);
-        return TBaseDataConvert.long2ByteS(productAuth.product.lastModify);
+        long lastModify = productAuth==null?0L:productAuth.product.lastModify;
+        Map<String, Object> rst = new HashMap<String, Object>();
+        rst.put("lastModify", lastModify);
+        mapCompress2Stream(rst, response.getOutputStream());
     }
     
     @RequestMapping("/userAuth")
-    public byte[] userAuth(
+    public void userAuth(
+            HttpServletResponse response,
             @RequestParam String proId,
             @RequestParam(required=false) String userId) throws Exception {
         UserAuth userAuth = null;
@@ -49,11 +56,17 @@ public class InnerController{
                 userAuth.exist = origUserAuth.exist;
             }
         }
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(baos);
-        oos.writeObject(userAuth);
-        byte[] bytes = baos.toByteArray();
-        return TStream.compress(bytes);
+        Map<String, Object> rst = new HashMap<String, Object>();
+        rst.put("lastModify", productAuth==null?0L:productAuth.product.lastModify);
+        rst.put("userAuth", userAuth);
+        mapCompress2Stream(rst, response.getOutputStream());
+    }
+    
+    private void mapCompress2Stream(Map<String, Object> map, OutputStream out) throws Exception {
+        GZIPOutputStream zipOut = new GZIPOutputStream(out);
+        ObjectOutputStream oos = new ObjectOutputStream(zipOut);
+        oos.writeObject(map);
+        oos.close();
     }
     
 }

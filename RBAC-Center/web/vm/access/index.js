@@ -28,15 +28,20 @@ function editAccess(btn) {
 }
 
 function testPattern() {
-    try {
-        if(new RegExp($('#pattern').val()).test($('#testPatternUri').val())) {
-            $('#testPatternRst').removeClass('text-danger').addClass('text-info').text('匹配');
-        } else {
-            $('#testPatternRst').removeClass('text-info').addClass('text-danger').text('不匹配');
-        }
-    } catch (e) {
-        $('#testPatternRst').removeClass('text-info').addClass('text-danger').text('pattern异常!');
-    }
+    q('/edit/access/patternMatch.json',
+        {
+            pattern: $('#pattern').val(),
+            uri: $('#testPatternUri').val()
+        },
+        function(match){
+            if(match) {
+                $('#testPatternRst').removeClass('text-danger').addClass('text-info').text('匹配');
+            } else {
+                $('#testPatternRst').removeClass('text-info').addClass('text-danger').text('不匹配');
+            }
+        },
+        '验证uri匹配pattern中'
+    );
 }
 
 function editAccessSave() {

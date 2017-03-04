@@ -1,18 +1,19 @@
 package com.lvt4j.rbac.data.bean;
 
-import com.lvt4j.basic.TDB.Table;
-import com.lvt4j.rbac.data.bean.base.BaseParam;
-
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+
+import com.lvt4j.basic.TDB.Col;
+import com.lvt4j.basic.TDB.Table;
 
 @Data
-@EqualsAndHashCode(callSuper=true)
 @Table("user_permission")
-public class UserPermission extends BaseParam{
-
+public class UserPermission{
+    @Col(id=true, idSeq=0)
     public String proId;
-    public String userId;
-    public String permissionId;
     
+    @Col(id=true, idSeq=1)
+    public String userId;
+    
+    @Col(id=true, idSeq=2)
+    public String permissionId;
 }

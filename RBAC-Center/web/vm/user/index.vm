@@ -20,21 +20,21 @@
     <input name="oldId" type="hidden"/>
     <div class="form-group">
         <label class="col-xs-3 control-label">ID：</label>
-        <div class="col-xs-9">
+        <div class="col-xs-9" title="与其他用户区分的唯一ID">
             <input name="id" data-required data-err="用户ID不能为空"
                 type="text" class="form-control" placeholder="与其他用户区分的唯一ID"/>
         </div>
     </div>
     <div class="form-group">
         <label class="col-xs-3 control-label">名称：</label>
-        <div class="col-xs-9">
+        <div class="col-xs-9" title="用户名称，短名称">
             <input name="name" data-required data-err="用户名称不能为空"
                 type="text" class="form-control" placeholder="用户名称，短名称"/>
         </div>
     </div>
     <div class="form-group">
         <label class="col-xs-3 control-label">描述：</label>
-        <div class="col-xs-9">
+        <div class="col-xs-9" title="用户描述">
             <textarea name="des" data-required data-err="用户描述不能为空"
                 type="text" class="form-control" style="min-height:150px;" placeholder="用户描述"></textarea>
         </div>

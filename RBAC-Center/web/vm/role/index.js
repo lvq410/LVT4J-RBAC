@@ -4,6 +4,8 @@ function loadRoles(){
         {
             proId: curPro.id,
             keyword: $('#keyword').val(),
+            accessPattern: $('#qAccess').val(),
+            permissionId: $('#qPermission').val(),
             pager: $('#rolesPager').pagerSerialize()
         },
         function(roles){
@@ -21,7 +23,9 @@ function addRole() {
     $('#accesses').empty();
     $('#permission').select2Clear();
     $('#permissions').empty();
-    $('#editRoleDiv').slideDown().scrollToMe();
+    $('#editRoleDiv').slideDown(function () {
+        $('#editRoleDiv').scrollToMe();
+    });
 }
 
 function editRole(btn) {
@@ -29,10 +33,12 @@ function editRole(btn) {
     role.oldId = role.id;
     $('#editRoleDiv').formData(role);
     $('#access').select2Clear();
-    $('#accesses').html($tpl(tpl_accesses)(role.auth.accesses, true));
+    $('#accesses').html($tpl(tpl_accesses)(role.accesses, true));
     $('#permission').select2Clear();
-    $('#permissions').html($tpl(tpl_permissions)(role.auth.permissions, true));
-    $('#editRoleDiv').slideDown().scrollToMe();
+    $('#permissions').html($tpl(tpl_permissions)(role.permissions, true));
+    $('#editRoleDiv').slideDown(function () {
+        $('#editRoleDiv').scrollToMe();
+    });
 }
 
 function editRoleSave() {
@@ -78,8 +84,8 @@ function tpl_roles(roles) {
         /*<tr data="{Tigh(role)}" title="{Tigh(role.des)}">
             <td>{Tigh(role.id)}</td>
             <td>{Tigh(role.name)}</td>
-            <td>{$tpl(tpl_accesses)(role.auth.accesses)}</td>
-            <td>{$tpl(tpl_permissions)(role.auth.permissions)}</td>
+            <td>{$tpl(tpl_accesses)(role.accesses)}</td>
+            <td>{$tpl(tpl_permissions)(role.permissions)}</td>
             <td>
                 <button onclick="editRole(this)" type="button" class="btn btn-info btn-minier">编辑</button>
                 <button onclick="delRole(this)" type="button" class="btn btn-danger btn-minier">删除</button>

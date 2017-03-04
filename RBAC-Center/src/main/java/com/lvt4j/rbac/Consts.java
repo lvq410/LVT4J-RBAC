@@ -9,7 +9,7 @@ import com.lvt4j.basic.TPager;
 
 /**
  * 各种全局常量
- * @author lichenxi
+ * @author LV
  */
 public class Consts {
     

@@ -1,23 +1,26 @@
 package com.lvt4j.rbac.data.bean;
 
-import java.io.Serializable;
-
-import com.lvt4j.basic.TDB.Table;
-
 import lombok.Data;
+
+import com.lvt4j.basic.TDB.Col;
+import com.lvt4j.basic.TDB.Table;
+import com.lvt4j.rbac.web.controller.EditController.ColLike;
 
 /**
  * 产品
- * @author lichenxi
+ * @author LV
  */
 @Data
 @Table("product")
-public class Product implements Serializable {
-    private static final long serialVersionUID = 1L;
-    
+public class Product {
+    @Col(id=true)
+    @ColLike
     public String id;
-    public String name;
-    public String des;
-    public long lastModify;
     
+    @ColLike
+    public String name;
+    
+    public String des;
+    
+    public long lastModify;
 }

@@ -1,8 +1,9 @@
 package com.lvt4j.rbac.web.controller;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class IndexController{
@@ -12,10 +13,10 @@ public class IndexController{
         return "index";
     }
     
-    @RequestMapping("/view")
+    @RequestMapping("/view/**")
     public String view(
-            @RequestParam String path){
-        return path;
+            HttpServletRequest request){
+        return request.getRequestURI().replaceFirst("/view/", "");
     }
     
 }

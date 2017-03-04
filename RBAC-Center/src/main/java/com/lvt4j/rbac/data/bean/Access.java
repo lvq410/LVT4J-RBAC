@@ -1,23 +1,27 @@
 package com.lvt4j.rbac.data.bean;
 
-import java.io.Serializable;
-
-import com.lvt4j.basic.TDB.Table;
-
 import lombok.Data;
+
+import com.lvt4j.basic.TDB.Col;
+import com.lvt4j.basic.TDB.Table;
+import com.lvt4j.rbac.web.controller.EditController.ColLike;
 
 /**
  * 访问项
- * @author lichenxi
+ * @author LV
  */
 @Data
 @Table("access")
-public class Access implements Serializable {
-    private static final long serialVersionUID = 1L;
-    
-    
+public class Access {
+    @Col(id=true, idSeq=0)
     public String proId;
+    
+    @Col(id=true, idSeq=1)
+    @ColLike
     public String pattern;
+    
+    @ColLike
     public String name;
+    
     public String des;
 }

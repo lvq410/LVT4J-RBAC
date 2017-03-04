@@ -16,3 +16,10 @@
 /RBAC-Client/bin/
 /RBAC-Client/build/
 /RBAC-Client/repos/
+
+/RBAC-Test/.settings/
+/RBAC-Test/.project
+/RBAC-Test/.classpath
+/RBAC-Test/bin/
+/RBAC-Test/build/
+/RBAC-Test/repos/

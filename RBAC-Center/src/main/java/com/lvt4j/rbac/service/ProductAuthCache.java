@@ -11,7 +11,7 @@ import com.lvt4j.rbac.data.bean.Product;
 
 /**
  *
- * @author lichenxi
+ * @author LV
  */
 @Service
 public class ProductAuthCache {
@@ -28,7 +28,7 @@ public class ProductAuthCache {
     /** 获取指定产品的权限,若产品不存在,返回null */
     public ProductAuth4Center get(String proId) {
         ProductAuth4Center productAuth = caches.get(proId);
-        if(productAuth!=null) return productAuth;
+        if(productAuth!=null) return Absent==productAuth?null:productAuth;
         synchronized (caches) {
             productAuth = caches.get(proId);
             if(productAuth!=null) return Absent==productAuth?null:productAuth;
@@ -48,6 +48,10 @@ public class ProductAuthCache {
     
     public void invalidate(String proId) {
         caches.remove(proId);
+    }
+    
+    public void clear() {
+        caches.clear();
     }
     
 }

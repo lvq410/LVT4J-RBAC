@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * velocity的配置
- * @author lichenxi
+ * @author LV
  */
 @Configuration
 @SuppressWarnings("deprecation")

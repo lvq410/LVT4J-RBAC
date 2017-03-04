@@ -22,7 +22,7 @@ import com.lvt4j.spring.ControllerConfig;
 
 /**
  * MVC配置
- * @author lichenxi
+ * @author LV
  */
 @Configuration
 @EnableAutoConfiguration(exclude=DataSourceAutoConfiguration.class)
@@ -41,7 +41,7 @@ public class SpringConfig extends WebMvcConfigurerAdapter {
     @Bean
     public TDB db(@Autowired DataSource dataSource) {
         TDB db = new TDB(dataSource);
-        db.openPrintSQL();
+//        db.openPrintSQL();
         Consts.DB = db;
         return db;
     }
