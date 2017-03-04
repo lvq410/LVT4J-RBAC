@@ -4,6 +4,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.ModelAndView;
 
 /**
  * 权限拦截器，配置参数:<br>
@@ -51,6 +52,9 @@ public abstract class RbacInterceptor extends RbacBaseFilter implements HandlerI
         if(productAuth!=null) productAuth.destory();
         super.finalize();
     }
+    
+    @Override public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView)throws Exception{}
+    @Override public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)throws Exception{}
     
     public void setProId(String proId){this.proId=proId;}
     public void setCacehCapacity(int cacehCapacity){this.cacehCapacity = cacehCapacity;}

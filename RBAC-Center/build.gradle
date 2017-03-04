@@ -3,6 +3,12 @@ apply plugin: 'org.springframework.boot'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
+tasks.withType(JavaCompile) {    
+    options.encoding = 'UTF-8'  
+}
+
+File appFolder = project.projectDir
+
 jar {
     baseName 'rbac-center'
     archiveName 'rbac-center.jar'
@@ -20,7 +26,7 @@ sourceSets {
             srcDir 'src/main/java'
         }
         resources {
-            srcDir 'src/main/java'
+            srcDir 'res'
         }
     }
     test {
@@ -42,13 +48,29 @@ dependencies {
     compile group: 'commons-io', name: 'commons-io', version: '2.5'
     compile group: 'commons-beanutils', name: 'commons-beanutils', version: '1.9.3'
     compile group: 'net.sf.json-lib', name: 'json-lib', version: '2.4', classifier:'jdk15'
+    //compile group: 'org.springframework', name: 'spring-context-support', version: '4.3.3.RELEASE'
     compile group: 'org.springframework', name: 'spring-web', version: '4.3.3.RELEASE'
     compile group: 'org.springframework', name: 'spring-webmvc', version: '4.3.3.RELEASE'
     testCompile group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: '1.4.2.RELEASE'
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: '1.4.2.RELEASE'
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version: '1.4.2.RELEASE'
     compile group: 'org.springframework.boot', name: 'spring-boot-starter-velocity', version: '1.4.2.RELEASE'
-    compile group: 'org.springframework.boot', name: 'spring-boot-devtools', version: '1.4.2.RELEASE'
+    //compile group: 'org.springframework.boot', name: 'spring-boot-devtools', version: '1.4.2.RELEASE'
     compile group: 'org.apache.velocity', name: 'velocity', version: '1.7'
     compile group: 'org.xerial', name: 'sqlite-jdbc', version: '3.16.1'
+}
+
+task configDev(type: Copy) {
+    from "config/dev/application.properties"
+    into "config"
+}
+task configRelease(type: Copy) {
+    copy{
+        from "config/release/application.properties"
+        into "config"
+    }
+    copy{
+        from 'config/release/application.properties'
+        into 'res/config/release'
+    }
 }

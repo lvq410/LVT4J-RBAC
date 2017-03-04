@@ -19,27 +19,10 @@
     <ul class="nav nav-list" style="top:0px;">
         #foreach($Nav in $Navs)
             <li class="#if($navs.get(0)==$Nav.get('n')) open #end">
-                <a href="$Nav.get('h')"#if(!$Nav.get('l').isEmpty()) class="dropdown-toggle" #end>
+                <a href="$Nav.get('h')">
                     <i class="menu-icon fa $Nav.get('i')"></i>
                     <span class="menu-text">$Nav.get('n')</span>
-                    #if(!$Nav.get('l').isEmpty()) 
-                    <b class="arrow fa fa-angle-down"></b>
-                    #end
                 </a>
-                #if(!$Nav.get('l').isEmpty()) 
-                    <b class="arrow"></b>
-                    <ul class="submenu nav-hide">
-                        #foreach($SubNav in $Nav.get('l'))
-                            <li class="#if($navs.size()>1 && $navs.get(1)==$SubNav.get('n')) active #end">
-                                <a href="$SubNav.get('h')">
-                                    <i class="menu-icon fa fa-caret-right"></i>
-                                    $SubNav.get('n')
-                                </a>
-                                <b class="arrow"></b>
-                            </li>
-                        #end
-                    </ul>
-                #end
             </li>
         #end
     </ul>

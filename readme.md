@@ -25,7 +25,7 @@ LVT4J-RBAC的使用方式不是高度集成到需要权限控制的项目中，�
 注意LVT4J-RBAC并不负责处理计算用户ID，因此查询用户权限需要各项目自己提供用户的ID
 ###引入RBAC-Client的jar包
 ####加入client的jar依赖
-
+**TODO**
 ####使用Spring的`HandlerInterceptor`
 RBAC-Client可使用`org.springframework.web.servlet.HandlerInterceptor`的方式来拦截用户访问和注入用户权限信息。要使用RBAC-Client，需要继承`com.lvt4j.rbac.RbacInterceptor`类，并实现其方法`getUserId`，同时配置文件中声明其产品ID。
 <pre>

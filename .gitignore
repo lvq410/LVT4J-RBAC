@@ -9,6 +9,9 @@
 /RBAC-Center/lib/
 /RBAC-Center/build/
 /RBAC-Center/rbac.db
+/RBAC-Center/config/application.properties
+/RBAC-Center/res/config/
+
 
 /RBAC-Client/.settings/
 /RBAC-Client/.project
