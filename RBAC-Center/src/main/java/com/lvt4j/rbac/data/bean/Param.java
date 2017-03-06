@@ -1,30 +1,25 @@
 package com.lvt4j.rbac.data.bean;
 
-import lombok.Data;
-
-import com.lvt4j.basic.TDB.Col;
 import com.lvt4j.basic.TDB.NotCol;
 import com.lvt4j.basic.TDB.Table;
-import com.lvt4j.rbac.web.controller.EditController.ColLike;
+import com.lvt4j.rbac.data.BaseModel;
 
 /**
  * 配置项
  * @author LV
  */
-@Data
 @Table("param")
-public class Param {
-    @Col(id=true, idSeq=0)
-    public String proId;
+public class Param extends BaseModel{
     
-    @Col(id=true, idSeq=1)
-    @ColLike
+    @Unique(seq=0)
+    public int proAId;
+    
+    @Like
+    @Unique(seq=1)
     public String key;
     
-    @ColLike
+    @Like
     public String name;
-    
-    public String des;
     
     @NotCol
     public String val;

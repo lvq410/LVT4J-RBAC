@@ -1,27 +1,22 @@
 package com.lvt4j.rbac.data.bean;
 
-import lombok.Data;
-
-import com.lvt4j.basic.TDB.Col;
 import com.lvt4j.basic.TDB.Table;
-import com.lvt4j.rbac.web.controller.EditController.ColLike;
+import com.lvt4j.rbac.data.BaseModel;
 
 /**
  * 访问项
  * @author LV
  */
-@Data
 @Table("access")
-public class Access {
-    @Col(id=true, idSeq=0)
-    public String proId;
+public class Access extends BaseModel {
     
-    @Col(id=true, idSeq=1)
-    @ColLike
+    @Unique
+    public int proAId;
+    
+    @Like
     public String pattern;
     
-    @ColLike
+    @Like
     public String name;
     
-    public String des;
 }

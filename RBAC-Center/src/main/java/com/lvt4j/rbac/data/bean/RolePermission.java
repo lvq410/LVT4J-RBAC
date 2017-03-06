@@ -8,12 +8,12 @@ import com.lvt4j.basic.TDB.Table;
 @Data
 @Table("role_permission")
 public class RolePermission{
+
     @Col(id=true, idSeq=0)
-    public String proId;
+    public int roleAId;
     
     @Col(id=true, idSeq=1)
-    public String roleId;
+    public int permissionAId;
     
-    @Col(id=true, idSeq=2)
-    public String permissionId;
+    public int seq;
 }

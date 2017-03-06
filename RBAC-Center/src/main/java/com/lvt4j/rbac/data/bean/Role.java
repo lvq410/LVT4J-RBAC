@@ -16,10 +16,12 @@ import com.lvt4j.rbac.web.controller.EditController.ColLike;
 @Data
 @Table("role")
 public class Role {
-    @Col(id=true, idSeq=0)
-    public String proId;
     
-    @Col(id=true, idSeq=1)
+    @Col(id=true, autoId=true)
+    public Integer aId;
+    
+    public int proAId;
+    
     @ColLike
     public String id;
     
@@ -27,6 +29,8 @@ public class Role {
     public String name;
     
     public String des;
+    
+    public Integer seq;
     
     @NotCol
     public List<Access> accesses;

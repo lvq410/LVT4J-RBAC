@@ -8,12 +8,12 @@ import lombok.Data;
 @Data
 @Table("role_access")
 public class RoleAccess{
+    
     @Col(id=true, idSeq=0)
-    public String proId;
+    public int roleAId;
     
     @Col(id=true, idSeq=1)
-    public String roleId;
+    public int accessAId;
     
-    @Col(id=true, idSeq=2)
-    public String accessPattern;
+    public int seq;
 }

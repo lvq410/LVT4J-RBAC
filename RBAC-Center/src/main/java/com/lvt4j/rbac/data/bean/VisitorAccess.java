@@ -8,9 +8,12 @@ import lombok.Data;
 @Data
 @Table("visitor_access")
 public class VisitorAccess{
+    
     @Col(id=true, idSeq=0)
-    public String proId;
+    public int proAId;
     
     @Col(id=true, idSeq=1)
-    public String accessPattern;
+    public int accessAId;
+    
+    public int seq;
 }

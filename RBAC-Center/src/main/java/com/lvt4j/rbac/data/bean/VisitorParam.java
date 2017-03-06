@@ -8,11 +8,9 @@ import lombok.Data;
 @Data
 @Table("visitor_param")
 public class VisitorParam{
-    @Col(id=true, idSeq=0)
-    public String proId;
     
     @Col(id=true, idSeq=1)
-    public String key;
+    public int paramAId;
     
     public String val;
 }

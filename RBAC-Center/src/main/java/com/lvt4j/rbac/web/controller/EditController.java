@@ -7,6 +7,9 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+
+import javax.servlet.http.HttpSession;
 
 import net.sf.json.JSONObject;
 
@@ -18,10 +21,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.lvt4j.basic.TCollection.TAutoMap;
+import com.lvt4j.basic.TCollection.TAutoMap.ValueBuilder;
 import com.lvt4j.basic.TDB;
 import com.lvt4j.basic.TDB.Table;
 import com.lvt4j.basic.TPager;
 import com.lvt4j.basic.TReflect;
+import com.lvt4j.rbac.ProductAuth4Center;
+import com.lvt4j.rbac.data.BaseModel;
 import com.lvt4j.rbac.data.bean.Access;
 import com.lvt4j.rbac.data.bean.Param;
 import com.lvt4j.rbac.data.bean.Permission;
@@ -39,6 +46,7 @@ import com.lvt4j.rbac.data.bean.VisitorParam;
 import com.lvt4j.rbac.data.bean.VisitorPermission;
 import com.lvt4j.rbac.data.bean.VisitorRole;
 import com.lvt4j.rbac.service.ProductAuthCache;
+import com.lvt4j.rbac.web.DBInterceptor.Transaction;
 import com.lvt4j.spring.JsonResult;
 
 
@@ -54,207 +62,168 @@ public class EditController {
     TDB db;
     
     @Autowired
+    Lock editLock;
+    
+    @Autowired
     ProductAuthCache productAuthCache;
+    
+    TAutoMap<Class<? extends BaseModel>, TAutoMap<Integer, BaseModel>> beanCache = new TAutoMap<Class<? extends BaseModel>, TAutoMap<Integer, BaseModel>>(
+            new ValueBuilder<Class<? extends BaseModel>, TAutoMap<Integer, BaseModel>>(){
+        private static final long serialVersionUID = 1L;
+        @Override
+        public TAutoMap<Integer, BaseModel> build(Class<? extends BaseModel> modelCls){
+            return new TAutoMap<Integer, BaseModel>(new ValueBuilder<Integer, BaseModel>(){
+                private static final long serialVersionUID = 1L;
+                @Override
+                public BaseModel build(Integer aId){
+                    return db.get(modelCls, aId).execute();
+                }
+            });
+        }
+    });
     
     @RequestMapping("/curProSet")
     public JsonResult curProSet(
-            @RequestParam String curProId) {
+            HttpSession session,
+            @RequestParam int proAId){
+        session.setAttribute("curPro", beanCache.get(Product.class).get(proAId));
         return JsonResult.success();
     }
     
     @RequestMapping("/product/list")
     public JsonResult productList(
             @RequestParam(required=false) String keyword,
-            @RequestParam TPager pager) {
-        return JsonResult.success(
-                list(Product.class, null, keyword, pager));
+            @RequestParam TPager pager){
+        return JsonResult.success(list(Product.class, null, keyword, pager));
     }
     @RequestMapping("/product/set")
+    @Transaction
     public JsonResult productSet(
-            @RequestParam(required=false) String oldId,
-            Product product) {
-        db.beginTransaction();
-        if(oldId==null) {
-            if(db.exist(product).execute())
-                return JsonResult.fail("产品["+product.id+"]已存在，请另取ID!");
-            db.insert(product).execute();
-            productNotify(product.id);
-        } else {
-            if(!db.exist(Product.class, oldId).execute())
-                return JsonResult.fail("产品["+oldId+"]不存在,请刷新页面或重新查询!");
-            if(!oldId.equals(product.id)
-                    && db.exist(product).execute())
-                return JsonResult.fail("产品["+product.id+"]已存在，请另取ID!");
-            db.update(product, oldId).execute();
-            if(oldId!=product.id) productNotify(oldId);
-            productNotify(product.id);
-        }
+            Product product)throws Exception{
+        if(unique(product)) return JsonResult.fail("产品[" + product.id + "]已存在，请另取ID!");
+        set(product);
+        productNotify(product.aId);
         return JsonResult.success();
     }
     @RequestMapping("/product/del")
+    @Transaction
     public JsonResult productDel(
-            @RequestParam String id) {
-        db.beginTransaction();
-        if(!db.exist(Product.class, id).execute())
-            return JsonResult.fail("不存在产品["+id+"],请刷新页面或重新查询!");
-        db.delete(Product.class, id).execute();
-        productNotify(id);
+            @RequestParam int aId){
+        del(Product.class, aId);
+        productNotify(aId);
         return JsonResult.success();
     }
+    @RequestMapping("/product/sort")
+    @Transaction
+    public JsonResult productDel(
+            @RequestParam int aId){
+        del(Product.class, aId);
+        productNotify(aId);
+        return JsonResult.success();
+    }
+    
     
     @RequestMapping("/user/list")
     public JsonResult userList(
             @RequestParam(required=false) String keyword,
-            @RequestParam TPager pager) {
-        return JsonResult.success(
-                list(User.class, null, keyword, pager));
+            @RequestParam TPager pager){
+        return JsonResult.success(list(User.class, null, keyword, pager));
     }
     @RequestMapping("/user/set")
+    @Transaction
     public JsonResult userSet(
-            @RequestParam(required=false) String oldId,
-            User user){
-        db.beginTransaction();
-        if(oldId==null) {
-            if(db.exist(user).execute())
-                return JsonResult.fail("用户["+user.id+"]已存在，请另取ID!");
-            db.insert(user).execute();
-        } else {
-            if(!db.exist(User.class, oldId).execute())
-                return JsonResult.fail("用户["+oldId+"]不存在,请刷新页面或重新查询!");
-            if(!oldId.equals(user.id)
-                    && db.exist(user).execute())
-                return JsonResult.fail("用户["+user.id+"]已存在，请另取ID!");
-            db.update(user, oldId).execute();
-            productNotify(userProducts(user.id));
-        }
+            User user)throws Exception{
+        if(unique(user)) return JsonResult.fail("用户["+user.id+"]已存在，请另取ID!");
+        set(user);
         return JsonResult.success();
     }
     @RequestMapping("/user/del")
+    @Transaction
     public JsonResult userDel(
-            @RequestParam String id){
-        db.beginTransaction();
-        if(!db.exist(User.class, id).execute()) 
-            return JsonResult.fail("不存在用户["+id+"],请刷新页面或重新查询!");
-        String[] userProducts = userProducts(id);
-        db.delete(User.class, id).execute();
+            @RequestParam int aId){
+        Integer[] userProducts = userProducts(aId);
+        del(User.class, aId);
         productNotify(userProducts);
         return JsonResult.success();
     }
-    private String[] userProducts(String userId) {
-        List<String> list = db.select("select proId from user_param where userId=? "
-                    +"union select proId from user_role where userId=? "
-                    +"union select proId from user_access where userId=? "
-                    +"union select proId from user_permission where userId=?",
-                    userId, userId, userId, userId).execute2Basic(String.class);
-        return list.toArray(new String[list.size()]);
+    private Integer[] userProducts(int userAId){
+        return db.select("select proAId from user_param where userAId=? "
+                    +"union select proAId from user_role where userAId=? "
+                    +"union select proAId from user_access where userAId=? "
+                    +"union select proAId from user_permission where userAId=?",
+                    userAId, userAId, userAId, userAId).execute2Basic(Integer.class)
+                    .toArray(new Integer[]{});
     }
     
     @RequestMapping("/param/list")
     public JsonResult paramList(
-            @RequestParam String proId){
-        return JsonResult.success(
-                list(Param.class, proId, null, null));
+            @RequestParam int proAId){
+        return JsonResult.success(list(Param.class, proAId, null, null));
     }
     @RequestMapping("/param/set")
+    @Transaction
     public JsonResult paramSet(
-            @RequestParam(required=false) String oldKey,
-            Param param){
-        db.beginTransaction();
-        if(oldKey==null) {
-            if(db.exist(param).execute())
-                return JsonResult.fail("产品["+param.proId+"]下配置项["
-                    +param.key+"]已存在,请另取key!");
-            db.insert(param).execute();
-        } else {
-            if(!db.exist(Param.class, param.proId, oldKey).execute())
-                return JsonResult.fail("产品["+param.proId+"]下配置项["
-                    +oldKey+"]不存在,请刷新页面或重新查询!");
-            if(!oldKey.equals(param.key)
-                    && db.exist(param).execute())
-                return JsonResult.fail("产品["+param.proId+"]下配置项["
-                            +param.key+"]已存在,请另取key!");
-            db.update(param, param.proId, oldKey).execute();
-        }
-        productNotify(param.proId);
+            Param param)throws Exception{
+        if(unique(param)) return JsonResult.fail("配置项["+param.key+"]已存在,请另取key!");
+        set(param);
+        productNotify(param.proAId);
         return JsonResult.success();
     }
     @RequestMapping("/param/del")
+    @Transaction
     public JsonResult paramDel(
-            @RequestParam String proId,
-            @RequestParam String key){
-        db.beginTransaction();
-        if(!db.exist(Param.class, proId, key).execute())
-            return JsonResult.fail("产品["+proId+"]下配置项["
-                +key+"]不存在,请刷新页面或重新查询!");
-        db.delete(Param.class, proId, key).execute();
-        productNotify(proId);
+            @RequestParam int proAId,
+            @RequestParam int aId){
+        del(Param.class, aId);
+        productNotify(proAId);
         return JsonResult.success();
     }
     
     @RequestMapping("/access/list")
     public JsonResult accessList(
-            @RequestParam String proId,
+            @RequestParam int proAId,
             @RequestParam(required=false) String keyword,
             @RequestParam TPager pager){
-        return JsonResult.success(
-                list(Access.class, proId, keyword, pager));
+        return JsonResult.success(list(Access.class, proAId, keyword, pager));
     }
     @RequestMapping("/access/patternMatch")
     public JsonResult accessPatternMatch(
             @RequestParam String pattern,
-            @RequestParam String uri) {
+            @RequestParam String uri){
         return JsonResult.success(uri.matches(pattern));
     }
     @RequestMapping("/access/set")
+    @Transaction
     public JsonResult accessSet(
-            @RequestParam(required=false) String oldPattern,
-            Access access){
-        db.beginTransaction();
-        if(oldPattern==null) {
-            if(db.exist(access).execute())
-                return JsonResult.fail("产品["+access.proId+"]下访问项["
-                    +access.pattern+"]已存在,请另取pattern!");
-            db.insert(access).execute();
-        } else {
-            if(!db.exist(Access.class, access.proId, oldPattern).execute())
-                return JsonResult.fail("产品["+access.proId+"]下访问项["
-                    +oldPattern+"]不存在,请刷新页面或重新查询!");
-            if(!oldPattern.equals(access.pattern)
-                    && db.exist(access).execute())
-                return JsonResult.fail("产品["+access.proId+"]下访问项["
-                            +access.pattern+"]已存在,请另取pattern!");
-            db.update(access, access.proId, oldPattern).execute();
-        }
-        productNotify(access.proId);
+            Access access)throws Exception{
+        if(unique(access)) return JsonResult.fail("访问项["+access.pattern+"]已存在,请另取pattern!");
+        set(access);
+        productNotify(access.proAId);
         return JsonResult.success();
     }
     @RequestMapping("/access/del")
+    @Transaction
     public JsonResult accessDel(
-            @RequestParam String proId,
-            @RequestParam String pattern){
-        db.beginTransaction();
-        if(!db.exist(Access.class, proId, pattern).execute())
-            return JsonResult.fail("产品["+proId+"]下访问项["
-                +pattern+"]不存在,请刷新页面或重新查询!");
-        db.delete(Access.class, proId, pattern).execute();
-        productNotify(proId);
+            @RequestParam int proAId,
+            @RequestParam int aId){
+        del(Access.class, aId);
+        productNotify(proAId);
         return JsonResult.success();
     }
     
     @RequestMapping("/permission/list")
     public JsonResult permissionList(
-            @RequestParam String proId,
+            @RequestParam int proAId,
             @RequestParam(required=false) String keyword,
             @RequestParam TPager pager){
-        return JsonResult.success(
-                list(Permission.class, proId, keyword, pager));
+        return JsonResult.success(list(Permission.class, proAId, keyword, pager));
     }
     @RequestMapping("/permission/set")
+    @Transaction
     public JsonResult permissionSet(
-            @RequestParam(required=false) String oldId,
             Permission permission){
         db.beginTransaction();
-        if(oldId==null) {
+        if(oldId==null){
             if(db.exist(permission).execute())
                 return JsonResult.fail("产品["+permission.proId+"]下授权项["
                     +permission.id+"]已存在,请另取ID!");
@@ -274,7 +243,7 @@ public class EditController {
     }
     @RequestMapping("/permission/del")
     public JsonResult permissionDel(
-            @RequestParam String proId,
+            @RequestParam int proAId,
             @RequestParam String id){
         db.beginTransaction();
         if(!db.exist(Permission.class, proId, id).execute())
@@ -287,7 +256,7 @@ public class EditController {
     
     @RequestMapping("/role/list")
     public JsonResult roleList(
-            @RequestParam String proId,
+            @RequestParam int proAId,
             @RequestParam(required=false) String keyword,
             @RequestParam(required=false) String accessPattern,
             @RequestParam(required=false) String permissionId,
@@ -301,12 +270,12 @@ public class EditController {
             args.add(proId);
             args.add(accessPattern);
         }
-        if(StringUtils.isNotEmpty(permissionId)) {
+        if(StringUtils.isNotEmpty(permissionId)){
             sql.append("and id in (select roleId from role_permission where proId=? and permissionId=?)");
             args.add(proId);
             args.add(permissionId);
         }
-        if(StringUtils.isNotEmpty(keyword)) {
+        if(StringUtils.isNotEmpty(keyword)){
             keyword = '%'+keyword+'%';
             sql.append("and (id like ? or name like ?)");
             args.add(keyword);
@@ -336,7 +305,7 @@ public class EditController {
             @RequestParam(required=false) String[] accessPatterns,
             @RequestParam(required=false) String[] permissionIds){
         db.beginTransaction();
-        if(oldId==null) {
+        if(oldId==null){
             if(db.exist(role).execute())
                 return JsonResult.fail("产品["+role.proId+"]下角色["+role.id+"]已存在,请另取ID!");
             db.insert(role).execute();
@@ -350,7 +319,7 @@ public class EditController {
         }
         //访问项修改
         db.executeSQL("delete from role_access where proId=? and roleId=?", role.proId, role.id).execute();
-        if(accessPatterns!=null) {
+        if(accessPatterns!=null){
             RoleAccess roleAccess = new RoleAccess();
             roleAccess.proId = role.proId;
             roleAccess.roleId = role.id;
@@ -361,7 +330,7 @@ public class EditController {
         }
         //授权项修改
         db.executeSQL("delete from role_permission where proId=? and roleId=?", role.proId, role.id).execute();
-        if(permissionIds!=null) {
+        if(permissionIds!=null){
             RolePermission rolePermission = new RolePermission();
             rolePermission.proId = role.proId;
             rolePermission.roleId = role.id;
@@ -375,7 +344,7 @@ public class EditController {
     }
     @RequestMapping("/role/del")
     public JsonResult roleDel(
-            @RequestParam String proId,
+            @RequestParam int proAId,
             @RequestParam String id){
         if(!db.exist(Role.class, proId, id).execute())
             return JsonResult.fail("产品["+proId+"]下角色["+id+"]不存在,请刷新页面或重新查询!");
@@ -386,7 +355,7 @@ public class EditController {
     
     @RequestMapping("/auth/visitor/get")
     public JsonResult authVisitorGet(
-            @RequestParam String proId){
+            @RequestParam int proAId){
         List<Param> params = db.select("select P.*,VP.val from param P "
                 + "left join visitor_param VP on P.key=VP.key "
                 + "where P.proId=? and VP.proId=?",
@@ -426,7 +395,7 @@ public class EditController {
     }
     @RequestMapping("/auth/visitor/set")
     public JsonResult authVisitorSet(
-            @RequestParam String proId,
+            @RequestParam int proAId,
             @RequestParam(value="params",required=false) JSONObject params,
             @RequestParam(required=false) String[] roleIds,
             @RequestParam(required=false) String[] accessPatterns,
@@ -445,7 +414,7 @@ public class EditController {
         }
         //角色修改
         db.executeSQL("delete from visitor_role where proId=?", proId).execute();
-        if(ArrayUtils.isNotEmpty(roleIds)) {
+        if(ArrayUtils.isNotEmpty(roleIds)){
             VisitorRole visitorRole = new VisitorRole();
             visitorRole.proId = proId;
             for(String roleId: roleIds){
@@ -455,7 +424,7 @@ public class EditController {
         }
         //访问项修改
         db.executeSQL("delete from visitor_access where proId=?", proId).execute();
-        if(ArrayUtils.isNotEmpty(accessPatterns)) {
+        if(ArrayUtils.isNotEmpty(accessPatterns)){
             VisitorAccess visitorAccess = new VisitorAccess();
             visitorAccess.proId = proId;
             for(String accessPattern: accessPatterns){
@@ -465,7 +434,7 @@ public class EditController {
         }
         //授权项修改
         db.executeSQL("delete from visitor_permission where proId=?", proId).execute();
-        if(ArrayUtils.isNotEmpty(permissionIds)) {
+        if(ArrayUtils.isNotEmpty(permissionIds)){
             VisitorPermission visitorPermission = new VisitorPermission();
             visitorPermission.proId = proId;
             for(String permissionId: permissionIds){
@@ -478,10 +447,10 @@ public class EditController {
     }
     @RequestMapping("/auth/visitor/cal")
     public JsonResult authVisitorCal(
-            @RequestParam String proId,
+            @RequestParam int proAId,
             @RequestParam(required=false) String[] roleIds,
             @RequestParam(required=false) String[] accessPatterns,
-            @RequestParam(required=false) String[] permissionIds) {
+            @RequestParam(required=false) String[] permissionIds){
         StringBuilder allRoleSql = new StringBuilder();
         List<Object> allRoleArgs = new LinkedList<Object>();
         if(ArrayUtils.isNotEmpty(roleIds)){
@@ -539,12 +508,12 @@ public class EditController {
     
     @RequestMapping("/auth/user/list")
     public JsonResult authUserList(
-            @RequestParam String proId,
+            @RequestParam int proAId,
             @RequestParam(required=false) String keyword,
             @RequestParam(required=false) String roleId,
             @RequestParam(required=false) String accessPattern,
             @RequestParam(required=false) String permissionId,
-            @RequestParam TPager pager) {
+            @RequestParam TPager pager){
         StringBuilder sql = new StringBuilder("select * from user ");
         StringBuilder whereClause = new StringBuilder();
         List<Object> args = new LinkedList<Object>();
@@ -558,18 +527,18 @@ public class EditController {
             args.add(proId);
             args.add(accessPattern);
         }
-        if(StringUtils.isNotEmpty(permissionId)) {
+        if(StringUtils.isNotEmpty(permissionId)){
             whereClause.append("and id in (select userId from user_permission where proId=? and permissionId=?)");
             args.add(proId);
             args.add(permissionId);
         }
-        if(StringUtils.isNotEmpty(keyword)) {
+        if(StringUtils.isNotEmpty(keyword)){
             keyword = '%'+keyword+'%';
             whereClause.append("and (id like ? or name like ?)");
             args.add(keyword);
             args.add(keyword);
         }
-        if(whereClause.length()!=0) {
+        if(whereClause.length()!=0){
             whereClause.replace(0, 3, "");
             whereClause.insert(0, "where");
         }
@@ -577,7 +546,7 @@ public class EditController {
         args.add(pager.getStart());
         args.add(pager.getSize());
         List<User> users = db.select(sql.toString(), args.toArray()).execute2Model(User.class);
-        for (User user : users) {
+        for (User user : users){
             user.params = db.select("select P.*,UP.val "
                 + "from param P left join user_param UP on P.proId=UP.proId and UP.userId=? and P.key=UP.key "
                 + "where P.proId=?",
@@ -596,7 +565,7 @@ public class EditController {
     }
     @RequestMapping("/auth/user/set")
     public JsonResult authUserSet(
-            @RequestParam String proId,
+            @RequestParam int proAId,
             @RequestParam String userId,
             @RequestParam(value="params",required=false) JSONObject params,
             @RequestParam(required=false) String[] roleIds,
@@ -619,7 +588,7 @@ public class EditController {
         //角色修改
         db.executeSQL("delete from user_role where proId=? and userId=?",
                 proId, userId).execute();
-        if(roleIds!=null) {
+        if(roleIds!=null){
             UserRole userRole = new UserRole();
             userRole.proId = proId;
             userRole.userId = userId;
@@ -631,7 +600,7 @@ public class EditController {
         //访问项修改
         db.executeSQL("delete from user_access where proId=? and userId=?",
                 proId, userId).execute();
-        if(accessPatterns!=null) {
+        if(accessPatterns!=null){
             UserAccess userAccess = new UserAccess();
             userAccess.proId = proId;
             userAccess.userId = userId;
@@ -643,7 +612,7 @@ public class EditController {
         //授权项修改
         db.executeSQL("delete from user_permission where proId=? and userId=?",
                 proId, userId).execute();
-        if(permissionIds!=null) {
+        if(permissionIds!=null){
             UserPermission userPermission = new UserPermission();
             userPermission.proId = proId;
             userPermission.userId = userId;
@@ -657,10 +626,10 @@ public class EditController {
     }
     @RequestMapping("/auth/user/cal")
     public JsonResult authUserCal(
-            @RequestParam String proId,
+            @RequestParam int proAId,
             @RequestParam(required=false) String[] roleIds,
             @RequestParam(required=false) String[] accessPatterns,
-            @RequestParam(required=false) String[] permissionIds) {
+            @RequestParam(required=false) String[] permissionIds){
         StringBuilder allRoleSql = new StringBuilder();
         List<Object> allRoleArgs = new LinkedList<Object>();
         if(ArrayUtils.isNotEmpty(roleIds)){
@@ -733,55 +702,90 @@ public class EditController {
                 .dataPut("allPermissions", allPermissions);
     }
     
-    private void productNotify(String... proIds) {
-        if(proIds==null) {
+    private void productNotify(Integer... proAIds){
+        if(proIds==null){
             db.executeSQL("update product set lastModify=?",
                     System.currentTimeMillis()).execute();
             productAuthCache.clear();
             return;
         }
-        for(String proId : proIds){
+        for(int proAId : proIds){
             db.executeSQL("update product set lastModify=? where id=?",
                     System.currentTimeMillis(), proId).execute();
             productAuthCache.invalidate(proId);
         }
     }
     
-    private <E> List<E> list(Class<E> modelCls, String proId, String keyword, TPager pager) {
-        StringBuilder sql = new StringBuilder("select * from ").append(modelCls.getAnnotation(Table.class).value());
-        StringBuilder whereClause = new StringBuilder();
+    private <E> List<E> list(Class<E> modelCls, Integer proAId, String keyword, TPager pager){
+        StringBuilder sql = new StringBuilder("select * from ")
+            .append(modelCls.getAnnotation(Table.class).value()).append(" where seq>0 ");
         List<Object> args = new LinkedList<Object>();
-        if(StringUtils.isNotEmpty(proId)){
-            whereClause.append("and proId=? ");
-            args.add(proId);
+        if(proAId!=null){
+            sql.append("and proAId=? ");
+            args.add(proAId);
         }
-        if(StringUtils.isNotEmpty(keyword)) {
+        if(StringUtils.isNotEmpty(keyword)){
             keyword = '%'+keyword+'%';
-            whereClause.append("and (");
+            sql.append("and (");
             boolean first = true;
-            for (Field field : TReflect.allField(modelCls)) {
-                if(!field.isAnnotationPresent(ColLike.class)) continue;
-                if(!first) whereClause.append("or ");
-                whereClause.append(field.getName()).append(" like ? ");
+            for(Field field : BaseModel.likeFields(modelCls)){
+                if(!first) sql.append("or ");
+                sql.append(field.getName()).append(" like ? ");
                 args.add(keyword);
                 first = false;
             }
-            whereClause.append(") ");
+            sql.append(") ");
         }
-        if(whereClause.length()>0) {
-            whereClause.replace(0, 3, "");
-            whereClause.insert(0, " where");
-        }
-        sql.append(whereClause);
-        if(pager!=null) {
-            sql.append(" limit ?,?");
+        sql.append("order by seq ");
+        if(pager!=null){
+            sql.append("limit ?,?");
             args.add(pager.getStart());
             args.add(pager.getSize());
         }
         return db.select(sql.toString(), args.toArray()).execute2Model(modelCls);
     }
-    
-    @Target(ElementType.FIELD)
-    @Retention(RetentionPolicy.RUNTIME)
-    public @interface ColLike {}
+
+    /**
+     * 用unique索引,判断一个基本Bean是否冲突<br>
+     * 若是一个旧model,若与缓存的一致,则不冲突<br>
+     * 否则若根据unique索引能找到,则冲突<br>
+     */
+    private boolean unique(BaseModel model)throws Exception{
+        Class<?> modelCls = model.getClass();
+        BaseModel oldBaseBean = beanCache.get(modelCls).get(model.aId);
+        if(oldBaseBean!=null){
+            boolean equalOld = true;
+            for(Field field : BaseModel.uniqueFields(modelCls)){
+                if(field.get(oldBaseBean).equals(field.get(model))) continue;
+                equalOld = false;
+                break;
+            }
+            if(equalOld) return false;
+        }
+        
+        StringBuilder sql = new StringBuilder("select count(*)<>0 from ")
+            .append(modelCls.getAnnotation(Table.class).value()).append(" where ");
+        List<Object> args = new LinkedList<Object>();
+        boolean first = true;
+        for (Field field : BaseModel.uniqueFields(modelCls)){
+            if(!first) sql.append("and ");
+            sql.append(field.getName()).append("=? ");
+            args.add(field.get(model));
+            first = false;
+        }
+        return db.select(sql.toString(), args.toArray()).execute2BasicOne(boolean.class);
+    }
+    private void set(BaseModel model){
+        if(model.aId==null){
+            db.insert(model).execute();
+            model.seq = model.aId;
+        }
+        db.update(model).execute();
+        beanCache.get(model.getClass()).remove(model.aId);
+    }
+    private void del(Class<?> modelCls, int aId){
+        db.delete(modelCls, aId).execute();
+        beanCache.get(modelCls).remove(aId);
+    }
+
 }

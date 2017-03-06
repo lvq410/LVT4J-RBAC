@@ -8,12 +8,13 @@ import com.lvt4j.basic.TDB.Table;
 @Data
 @Table("user_role")
 public class UserRole{
+    
     @Col(id=true, idSeq=0)
-    public String proId;
+    public int userAId;
     
     @Col(id=true, idSeq=1)
-    public String userId;
+    public int proAId;
     
     @Col(id=true, idSeq=2)
-    public String roleId;
+    public int roleAId;
 }

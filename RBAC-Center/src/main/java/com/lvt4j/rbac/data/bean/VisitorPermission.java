@@ -8,9 +8,12 @@ import com.lvt4j.basic.TDB.Table;
 @Data
 @Table("visitor_permission")
 public class VisitorPermission{
+    
     @Col(id=true, idSeq=0)
-    public String proId;
+    public int proAId;
     
     @Col(id=true, idSeq=1)
-    public String permissionId;
+    public int permissionAId;
+    
+    public int seq;
 }

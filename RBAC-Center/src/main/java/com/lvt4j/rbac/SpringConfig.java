@@ -3,6 +3,8 @@ package com.lvt4j.rbac;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.sql.DataSource;
 
@@ -54,6 +56,11 @@ public class SpringConfig extends WebMvcConfigurerAdapter {
     }
     
     @Bean
+    public ReentrantLock editLock(){
+        return new ReentrantLock();
+    }
+    
+    @Bean
     public ControllerConfig controllerConfig() {
         ControllerConfig controllerConfig = new ControllerConfig();
         controllerConfig.setPropertyEditorSupportClses(Consts.SupportHandlerMethodTypes);
@@ -64,7 +71,6 @@ public class SpringConfig extends WebMvcConfigurerAdapter {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(authInterceptor()).addPathPatterns("", "/", "/edit/**", "/view/**");
         registry.addInterceptor(dbInterceptor()).addPathPatterns("/edit/**");
-        registry.addInterceptor(curProInterceptor()).addPathPatterns("/edit/**");
     }
     
     @Bean

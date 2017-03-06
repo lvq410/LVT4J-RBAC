@@ -9,11 +9,11 @@ import lombok.Data;
 @Table("user_access")
 public class UserAccess{
     @Col(id=true, idSeq=0)
-    public String proId;
+    public int userAId;
     
     @Col(id=true, idSeq=1)
-    public String userId;
+    public int proAId;
     
     @Col(id=true, idSeq=2)
-    public String accessPattern;
+    public int accessAId;
 }
