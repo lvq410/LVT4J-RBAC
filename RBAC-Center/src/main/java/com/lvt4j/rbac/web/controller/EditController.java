@@ -5,17 +5,25 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 
 import javax.servlet.http.HttpSession;
 
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,10 +33,16 @@ import com.lvt4j.basic.TCollection.TAutoMap;
 import com.lvt4j.basic.TCollection.TAutoMap.ValueBuilder;
 import com.lvt4j.basic.TDB;
 import com.lvt4j.basic.TDB.Table;
+import com.lvt4j.basic.TCollection;
 import com.lvt4j.basic.TPager;
 import com.lvt4j.basic.TReflect;
+import com.lvt4j.rbac.Consts.Err;
+import com.lvt4j.rbac.Consts;
 import com.lvt4j.rbac.ProductAuth4Center;
-import com.lvt4j.rbac.data.BaseModel;
+import com.lvt4j.rbac.data.Transaction;
+import com.lvt4j.rbac.data.base.BaseModel;
+import com.lvt4j.rbac.data.base.ProCtrlModel;
+import com.lvt4j.rbac.data.base.SeqModel;
 import com.lvt4j.rbac.data.bean.Access;
 import com.lvt4j.rbac.data.bean.Param;
 import com.lvt4j.rbac.data.bean.Permission;
@@ -46,7 +60,7 @@ import com.lvt4j.rbac.data.bean.VisitorParam;
 import com.lvt4j.rbac.data.bean.VisitorPermission;
 import com.lvt4j.rbac.data.bean.VisitorRole;
 import com.lvt4j.rbac.service.ProductAuthCache;
-import com.lvt4j.rbac.web.DBInterceptor.Transaction;
+import com.lvt4j.spring.ControllerConfig;
 import com.lvt4j.spring.JsonResult;
 
 
@@ -65,17 +79,20 @@ public class EditController {
     Lock editLock;
     
     @Autowired
+    ControllerConfig controllerConfig;
+    
+    @Autowired
     ProductAuthCache productAuthCache;
     
-    TAutoMap<Class<? extends BaseModel>, TAutoMap<Integer, BaseModel>> beanCache = new TAutoMap<Class<? extends BaseModel>, TAutoMap<Integer, BaseModel>>(
-            new ValueBuilder<Class<? extends BaseModel>, TAutoMap<Integer, BaseModel>>(){
+    TAutoMap<Class<?>, TAutoMap<Integer, Object>> modelCache = new TAutoMap<Class<?>, TAutoMap<Integer, Object>>(
+            new ValueBuilder<Class<?>, TAutoMap<Integer, Object>>(){
         private static final long serialVersionUID = 1L;
         @Override
-        public TAutoMap<Integer, BaseModel> build(Class<? extends BaseModel> modelCls){
-            return new TAutoMap<Integer, BaseModel>(new ValueBuilder<Integer, BaseModel>(){
+        public TAutoMap<Integer, Object> build(Class<?> modelCls){
+            return new TAutoMap<Integer, Object>(new ValueBuilder<Integer, Object>(){
                 private static final long serialVersionUID = 1L;
                 @Override
-                public BaseModel build(Integer aId){
+                public Object build(Integer aId){
                     return db.get(modelCls, aId).execute();
                 }
             });
@@ -86,171 +103,60 @@ public class EditController {
     public JsonResult curProSet(
             HttpSession session,
             @RequestParam int proAId){
-        session.setAttribute("curPro", beanCache.get(Product.class).get(proAId));
+        session.setAttribute("curPro", modelCache.get(Product.class).get(proAId));
         return JsonResult.success();
     }
     
-    @RequestMapping("/product/list")
-    public JsonResult productList(
+    @RequestMapping("/base/list")
+    public JsonResult baseList(
+            @RequestParam String modelName,
+            @RequestParam Integer proAId,
             @RequestParam(required=false) String keyword,
             @RequestParam TPager pager){
-        return JsonResult.success(list(Product.class, null, keyword, pager));
+        return JsonResult.success(list(Consts.AllBaseModelCls.get(modelName), proAId, keyword, pager));
     }
-    @RequestMapping("/product/set")
+    @RequestMapping("/base/set")
     @Transaction
-    public JsonResult productSet(
-            Product product)throws Exception{
-        if(unique(product)) return JsonResult.fail("产品[" + product.id + "]已存在，请另取ID!");
-        set(product);
-        productNotify(product.aId);
+    public JsonResult baseSet(
+            @RequestParam String modelName,
+            Map<String, String> modelData)throws Exception{
+        BeanWrapper beanWrapper = new BeanWrapperImpl(Consts.AllBaseModelCls.get(modelName));
+        controllerConfig.registerCustomEditors(beanWrapper);
+        beanWrapper.setPropertyValues(modelData);
+        BaseModel model = (BaseModel)beanWrapper.getWrappedInstance();
+        if(unique(model)) return JsonResult.fail(Err.Duplicate);
+        set(model);
         return JsonResult.success();
     }
-    @RequestMapping("/product/del")
+    @RequestMapping("/base/del")
+    @Transaction
+    public JsonResult baseDel(
+            @RequestParam String modelName,
+            @RequestParam int aId){
+        Class<?> modelCls = Consts.AllBaseModelCls.get(modelName);
+        del(modelCls, aId);
+        return JsonResult.success();
+    }
+    @RequestMapping("/base/sort")
     @Transaction
     public JsonResult productDel(
-            @RequestParam int aId){
-        del(Product.class, aId);
-        productNotify(aId);
-        return JsonResult.success();
-    }
-    @RequestMapping("/product/sort")
-    @Transaction
-    public JsonResult productDel(
-            @RequestParam int aId){
-        del(Product.class, aId);
-        productNotify(aId);
-        return JsonResult.success();
-    }
-    
-    
-    @RequestMapping("/user/list")
-    public JsonResult userList(
-            @RequestParam(required=false) String keyword,
-            @RequestParam TPager pager){
-        return JsonResult.success(list(User.class, null, keyword, pager));
-    }
-    @RequestMapping("/user/set")
-    @Transaction
-    public JsonResult userSet(
-            User user)throws Exception{
-        if(unique(user)) return JsonResult.fail("用户["+user.id+"]已存在，请另取ID!");
-        set(user);
-        return JsonResult.success();
-    }
-    @RequestMapping("/user/del")
-    @Transaction
-    public JsonResult userDel(
-            @RequestParam int aId){
-        Integer[] userProducts = userProducts(aId);
-        del(User.class, aId);
-        productNotify(userProducts);
-        return JsonResult.success();
-    }
-    private Integer[] userProducts(int userAId){
-        return db.select("select proAId from user_param where userAId=? "
-                    +"union select proAId from user_role where userAId=? "
-                    +"union select proAId from user_access where userAId=? "
-                    +"union select proAId from user_permission where userAId=?",
-                    userAId, userAId, userAId, userAId).execute2Basic(Integer.class)
-                    .toArray(new Integer[]{});
-    }
-    
-    @RequestMapping("/param/list")
-    public JsonResult paramList(
-            @RequestParam int proAId){
-        return JsonResult.success(list(Param.class, proAId, null, null));
-    }
-    @RequestMapping("/param/set")
-    @Transaction
-    public JsonResult paramSet(
-            Param param)throws Exception{
-        if(unique(param)) return JsonResult.fail("配置项["+param.key+"]已存在,请另取key!");
-        set(param);
-        productNotify(param.proAId);
-        return JsonResult.success();
-    }
-    @RequestMapping("/param/del")
-    @Transaction
-    public JsonResult paramDel(
-            @RequestParam int proAId,
-            @RequestParam int aId){
-        del(Param.class, aId);
-        productNotify(proAId);
-        return JsonResult.success();
-    }
-    
-    @RequestMapping("/access/list")
-    public JsonResult accessList(
-            @RequestParam int proAId,
-            @RequestParam(required=false) String keyword,
-            @RequestParam TPager pager){
-        return JsonResult.success(list(Access.class, proAId, keyword, pager));
-    }
-    @RequestMapping("/access/patternMatch")
-    public JsonResult accessPatternMatch(
-            @RequestParam String pattern,
-            @RequestParam String uri){
-        return JsonResult.success(uri.matches(pattern));
-    }
-    @RequestMapping("/access/set")
-    @Transaction
-    public JsonResult accessSet(
-            Access access)throws Exception{
-        if(unique(access)) return JsonResult.fail("访问项["+access.pattern+"]已存在,请另取pattern!");
-        set(access);
-        productNotify(access.proAId);
-        return JsonResult.success();
-    }
-    @RequestMapping("/access/del")
-    @Transaction
-    public JsonResult accessDel(
-            @RequestParam int proAId,
-            @RequestParam int aId){
-        del(Access.class, aId);
-        productNotify(proAId);
-        return JsonResult.success();
-    }
-    
-    @RequestMapping("/permission/list")
-    public JsonResult permissionList(
-            @RequestParam int proAId,
-            @RequestParam(required=false) String keyword,
-            @RequestParam TPager pager){
-        return JsonResult.success(list(Permission.class, proAId, keyword, pager));
-    }
-    @RequestMapping("/permission/set")
-    @Transaction
-    public JsonResult permissionSet(
-            Permission permission){
-        db.beginTransaction();
-        if(oldId==null){
-            if(db.exist(permission).execute())
-                return JsonResult.fail("产品["+permission.proId+"]下授权项["
-                    +permission.id+"]已存在,请另取ID!");
-            db.insert(permission).execute();
-        } else {
-            if(!db.exist(Permission.class, permission.proId, oldId).execute())
-                return JsonResult.fail("产品["+permission.proId+"]下授权项["
-                    +oldId+"]不存在,请刷新页面或重新查询!");
-            if(!oldId.equals(permission.id)
-                    && db.exist(permission).execute())
-                return JsonResult.fail("产品["+permission.proId+"]下授权项["
-                            +permission.id+"]已存在,请另取ID!");
-            db.update(permission, permission.proId, oldId).execute();
+            @RequestParam String modelName,
+            @RequestParam("aId") int[] aIds){
+        Class<?> modelCls = Consts.AllBaseModelCls.get(modelName);
+        List<Integer> seqs = new ArrayList<Integer>(aIds.length);
+        List<Integer> aIdsList = new ArrayList<Integer>(aIds.length);
+        for(int aId : aIds){
+            aIdsList.add(aId);
+            if(seqs.contains(aId)) return JsonResult.fail(Err.NotFound);
+            SeqModel model = (SeqModel)modelCache.get(modelCls).get(aId);
+            if(model==null) return JsonResult.fail(Err.NotFound);
+            seqs.add(model.seq);
         }
-        productNotify(permission.proId);
-        return JsonResult.success();
-    }
-    @RequestMapping("/permission/del")
-    public JsonResult permissionDel(
-            @RequestParam int proAId,
-            @RequestParam String id){
-        db.beginTransaction();
-        if(!db.exist(Permission.class, proId, id).execute())
-            return JsonResult.fail("产品["+proId+"]下授权项["
-                +id+"]不存在,请刷新页面或重新查询!");
-        db.delete(Permission.class, proId, id).execute();
-        productNotify(proId);
+        if(!TCollection.isEqual(aIdsList, seqs)) return JsonResult.fail(Err.NotFound);
+        for(int i = 0; i < aIds.length; i++){
+            db.executeSQL("update "+modelCls.getAnnotation(Table.class).value()+" set seq=? where aId=?",
+                    seqs.get(i), aIds[i]).execute();
+        }
         return JsonResult.success();
     }
     
@@ -702,19 +608,7 @@ public class EditController {
                 .dataPut("allPermissions", allPermissions);
     }
     
-    private void productNotify(Integer... proAIds){
-        if(proIds==null){
-            db.executeSQL("update product set lastModify=?",
-                    System.currentTimeMillis()).execute();
-            productAuthCache.clear();
-            return;
-        }
-        for(int proAId : proIds){
-            db.executeSQL("update product set lastModify=? where id=?",
-                    System.currentTimeMillis(), proId).execute();
-            productAuthCache.invalidate(proId);
-        }
-    }
+
     
     private <E> List<E> list(Class<E> modelCls, Integer proAId, String keyword, TPager pager){
         StringBuilder sql = new StringBuilder("select * from ")
@@ -728,7 +622,7 @@ public class EditController {
             keyword = '%'+keyword+'%';
             sql.append("and (");
             boolean first = true;
-            for(Field field : BaseModel.likeFields(modelCls)){
+            for(Field field : Consts.LikeFields.get(modelCls)){
                 if(!first) sql.append("or ");
                 sql.append(field.getName()).append(" like ? ");
                 args.add(keyword);
@@ -750,13 +644,14 @@ public class EditController {
      * 若是一个旧model,若与缓存的一致,则不冲突<br>
      * 否则若根据unique索引能找到,则冲突<br>
      */
-    private boolean unique(BaseModel model)throws Exception{
-        Class<?> modelCls = model.getClass();
-        BaseModel oldBaseBean = beanCache.get(modelCls).get(model.aId);
-        if(oldBaseBean!=null){
+    private boolean unique(Object rawModel)throws Exception{
+        Class<?> modelCls = rawModel.getClass();
+        BaseModel model = (BaseModel)rawModel;
+        BaseModel oldBaseModel = (BaseModel)modelCache.get(modelCls).get(model.aId);
+        if(oldBaseModel!=null){
             boolean equalOld = true;
-            for(Field field : BaseModel.uniqueFields(modelCls)){
-                if(field.get(oldBaseBean).equals(field.get(model))) continue;
+            for(Field field : Consts.UniqueFields.get(modelCls)){
+                if(field.get(oldBaseModel).equals(field.get(model))) continue;
                 equalOld = false;
                 break;
             }
@@ -767,7 +662,7 @@ public class EditController {
             .append(modelCls.getAnnotation(Table.class).value()).append(" where ");
         List<Object> args = new LinkedList<Object>();
         boolean first = true;
-        for (Field field : BaseModel.uniqueFields(modelCls)){
+        for (Field field : Consts.UniqueFields.get(modelCls)){
             if(!first) sql.append("and ");
             sql.append(field.getName()).append("=? ");
             args.add(field.get(model));
@@ -781,11 +676,47 @@ public class EditController {
             model.seq = model.aId;
         }
         db.update(model).execute();
-        beanCache.get(model.getClass()).remove(model.aId);
+        if(model instanceof Product){
+            productNotify(model.aId);
+        } else if (model instanceof ProCtrlModel) {
+            productNotify(((ProCtrlModel)model).proAId);
+        }
+        modelCache.get(model.getClass()).remove(model.aId);
     }
     private void del(Class<?> modelCls, int aId){
-        db.delete(modelCls, aId).execute();
-        beanCache.get(modelCls).remove(aId);
+        BaseModel model = (BaseModel)modelCache.get(modelCls).get(aId);
+        if(model==null) return;
+        if(User.class==modelCls){
+            productNotify(db.select(
+                    "select distinct P.proAId from user_param UP inner join param P on UP.paramAId=P.aId where userAId=? "
+                    +"union select distinct proAId from user_role where userAId=? "
+                    +"union select distinct proAId from user_access where userAId=? "
+                    +"union select distinct proAId from user_permission where userAId=?",
+                    aId, aId, aId, aId).execute2Basic(Integer.class)
+                    .toArray(new Integer[]{}));
+        }
+        db.delete(model).execute();
+        if(model instanceof Product){
+            productNotify(model.aId);
+        } else if (model instanceof ProCtrlModel) {
+            productNotify(((ProCtrlModel)model).proAId);
+        }
+        modelCache.get(modelCls).remove(aId);
     }
-
+    private void productNotify(Integer... proAIds){
+        if(proAIds==null){
+            db.executeSQL("update product set lastModify=?",
+                    System.currentTimeMillis()).execute();
+            productAuthCache.clear();
+            modelCache.get(Product.class).clear();
+            return;
+        }
+        for(int proAId : proAIds){
+            db.executeSQL("update product set lastModify=? where aId=?",
+                    System.currentTimeMillis(), proAId).execute();
+            // TODO
+            //productAuthCache.invalidate(proAId);
+            modelCache.get(Product.class).remove(proAId);
+        }
+    }
 }

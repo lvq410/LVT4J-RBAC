@@ -13,9 +13,6 @@ public class UserParam{
     public int userAId;
     
     @Col(id=true, idSeq=1)
-    public int proAId;
-    
-    @Col(id=true, idSeq=2)
     public int paramAId;
     
     public String val;

@@ -1,4 +1,4 @@
-package com.lvt4j.rbac.data;
+package com.lvt4j.rbac.data.base;
 
 /**
  * 

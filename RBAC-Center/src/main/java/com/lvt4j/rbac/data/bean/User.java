@@ -4,7 +4,9 @@ import java.util.List;
 
 import com.lvt4j.basic.TDB.NotCol;
 import com.lvt4j.basic.TDB.Table;
-import com.lvt4j.rbac.data.BaseModel;
+import com.lvt4j.rbac.data.Like;
+import com.lvt4j.rbac.data.Unique;
+import com.lvt4j.rbac.data.base.BaseModel;
 
 /**
  * 用户
@@ -16,9 +18,6 @@ public class User extends BaseModel {
     @Like
     @Unique
     public String id;
-    
-    @Like
-    public String name;
     
     @NotCol
     public List<Param> params;

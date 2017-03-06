@@ -1,9 +1,8 @@
 package com.lvt4j.rbac.web;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.servlet.http.HttpServletRequest;
@@ -11,12 +10,15 @@ import javax.servlet.http.HttpServletResponse;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.lvt4j.basic.TArr;
 import com.lvt4j.basic.TDB;
+import com.lvt4j.rbac.data.Transaction;
 
 @Slf4j
 public class DBInterceptor implements HandlerInterceptor {
@@ -63,9 +65,5 @@ public class DBInterceptor implements HandlerInterceptor {
             log.error("释放编辑锁异常!", e);
         }
     }
-
-    @Target(ElementType.METHOD)
-    @Retention(RetentionPolicy.RUNTIME)
-    public @interface Transaction{}
     
 }

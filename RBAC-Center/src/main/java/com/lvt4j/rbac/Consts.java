@@ -1,12 +1,22 @@
 package com.lvt4j.rbac;
 
 import java.io.File;
-import java.util.concurrent.locks.ReentrantLock;
+import java.lang.reflect.Field;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import net.sf.json.JSONObject;
 
 import com.lvt4j.basic.TDB;
+import com.lvt4j.basic.TDB.Table;
 import com.lvt4j.basic.TPager;
+import com.lvt4j.basic.TReflect;
+import com.lvt4j.basic.TScan;
+import com.lvt4j.rbac.data.Like;
+import com.lvt4j.rbac.data.Unique;
 
 /**
  * 各种全局常量
@@ -29,15 +39,59 @@ public class Consts {
     public static final String DBFileName = "rbac.db";
     public static TDB DB;
     
+    public static final Map<String, Class<?>> AllBaseModelCls = new HashMap<String, Class<?>>();
+    public static final Map<Class<?>, List<Field>> LikeFields = new HashMap<Class<?>, List<Field>>();
+    public static final Map<Class<?>, List<Field>> UniqueFields = new HashMap<Class<?>, List<Field>>();
+    
     public static final Class<?>[] SupportHandlerMethodTypes = new Class<?>[]{
-        JSONObject.class, TPager.class, String[].class};
+        JSONObject.class, TPager.class, String[].class, int[].class};
     
     /** velocity的模板文件相对路径 */
     public static final String VelocityTplContextPath = "web/vm/";
     
     /** 各种错误码 */
-    public static final class Err {
+    public static final class Err{
         public static final int NotFound = 404;
+        public static final int Duplicate = 501;
+    }
+    
+    static{
+        try{
+            for(Class<?> modelCls : TScan.scanClass(BasePackage+"data.model")){
+                AllBaseModelCls.put(modelCls.getAnnotation(Table.class).value(), modelCls);
+                List<Field> likeFields = new LinkedList<Field>();
+                for(Field field : TReflect.allField(modelCls)){
+                    if(!field.isAnnotationPresent(Like.class)) continue;
+                    likeFields.add(field);
+                }
+                LikeFields.put(modelCls, likeFields);
+                List<FieldSorter> fieldSorters = new LinkedList<FieldSorter>();
+                for(Field field : TReflect.allField(modelCls)){
+                    Unique unique = field.getAnnotation(Unique.class);
+                    if(unique==null) continue;
+                    FieldSorter fieldSorter = new FieldSorter();
+                    fieldSorter.field = field;
+                    fieldSorter.seq = unique.seq();
+                    fieldSorters.add(fieldSorter);
+                }
+                Collections.sort(fieldSorters);
+                List<Field> uniqueFields = new LinkedList<Field>();
+                for(FieldSorter fieldSorter : fieldSorters) uniqueFields.add(fieldSorter.field);
+                UniqueFields.put(modelCls, uniqueFields);
+            }
+        }catch(Exception e){
+            throw new RuntimeException("初始化扫描数据库model包异常!", e);
+        }
+    }
+    
+    static class FieldSorter implements Comparable<FieldSorter>{
+        Field field;
+        int seq;
+
+        @Override
+        public int compareTo(FieldSorter o){
+            return Integer.compare(seq, o.seq);
+        }
     }
     
 }
