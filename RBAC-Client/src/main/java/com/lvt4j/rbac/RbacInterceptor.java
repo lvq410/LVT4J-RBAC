@@ -99,7 +99,7 @@ public abstract class RbacInterceptor extends RbacBaseFilter implements HandlerI
             HttpServletResponse response,
             String userId, String uri, String[] permissionIds)throws Exception{
         StringBuilder content = new StringBuilder();
-        content.append(strIsEmpty(userId)?"用户<strong>"+userId+"</strong>":"<strong>游客</strong>");
+        content.append(strIsEmpty(userId)?"<strong>游客</strong>":("用户<strong>"+userId+"</strong>"));
         content.append("无权访问<strong>").append(uri).append("</strong><br>");
         content.append("原因为没有以下权限之一<br>");
         for(String permissionId : permissionIds)

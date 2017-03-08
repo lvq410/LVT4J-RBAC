@@ -74,7 +74,10 @@ tbody td{
     max-width: none !important;
 }
 .ui-tooltip-content{
-    overflow: hidden !important;
+    word-break:break-all !important;
+    overflow-y: hidden !important;
+    max-width:600px;
+    max-height:300px;
 }
 
 .tooltip-msg{
@@ -83,4 +86,12 @@ tbody td{
 
 input[type=checkbox].ace.ace-switch.ace-switch-5+.lbl::before {
     content: "\662F\a0\a0\a0\a0\a0\a0\a0\a0\a0\a0\a0\5426";
+}
+
+.auth-name{
+    max-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    vertical-align: bottom;
 }

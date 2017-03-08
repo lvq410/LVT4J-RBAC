@@ -284,8 +284,9 @@ public class Dao{
             for(Class<? extends Model> authModelCls : AllAuthModelCls)
                 authCal(authCalRst, authModelCls, modelAuthAutoIdsGet("visitor", authModelCls, proAutoId, null), "游客");
         }
-        for(Class<? extends Model> authModelCls : AllAuthModelCls)
-            authCal(authCalRst, authModelCls, roleAutoIds, "");
+        authCal(authCalRst, Role.class, roleAutoIds, "");
+        authCal(authCalRst, Access.class, accessAutoIds, "");
+        authCal(authCalRst, Permission.class, permissionAutoIds, "");
         return authCalRst;
     }
     public AuthCalRst authCal(int proAutoId, Integer userAutoId)throws Exception{

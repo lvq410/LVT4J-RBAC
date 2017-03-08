@@ -21,6 +21,11 @@ jar {
 }
 
 sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+    }
     res {
         resources {
             srcDir 'res'

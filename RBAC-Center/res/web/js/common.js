@@ -134,7 +134,7 @@ function tpl_auths(auths, type) {
         var auth = auths[i];
         /*<span data="{Tigh(auth)}" class="badge badge-{getBadge(auth.autoId)} msg-tooltiper" style="cursor:{cursor};"*/
             if(type==2){/* title="点我选择" onclick="widget_auth_choose(this)"*/}/*>*/
-            /*{Tigh(auth.name)}*/
+            /*<span class="auth-name">{Tigh(auth.name)}</span>*/
             if(type==1) {
                 /*<input name data-type="int" value="{Tigh(auth.autoId)}" type="hidden"/>
                 <i onclick="removeAuth(this)"
@@ -142,6 +142,7 @@ function tpl_auths(auths, type) {
             }
             /*<div class="tooltip-msg">
                 <strong>{Tigh(Tfnn(auth.id, auth.pattern))}</strong><br>
+                {Tigh(auth.name)}<br>
                 {Tigh(auth.des).replace(/\n/g, '<br>')}
             </div>
         </span>*/
