@@ -30,7 +30,7 @@
     <script src="/js/common.js"></script>
     <script src="/js/widget.js"></script>
     <script>
-        var curPro = #if($curPro){id:'${curPro.id}',name:'${curPro.name}'}#else null#end;
+        var curPro = #if($curPro) {autoId:$curPro.autoId,name:'$curPro.name'} #else null;#end
     </script>
 </head>
 

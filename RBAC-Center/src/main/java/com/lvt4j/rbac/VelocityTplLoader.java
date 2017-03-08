@@ -6,6 +6,9 @@
  */
 package com.lvt4j.rbac;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 import org.apache.commons.collections.ExtendedProperties;
@@ -29,7 +32,15 @@ public class VelocityTplLoader extends ResourceLoader{
         if(is!=null) return is;
         if(source.charAt(0)=='/') source = source.substring(1);
         source = Consts.VelocityTplContextPath+source;
-        return ClassLoader.getResourceAsStream(source);
+        is = ClassLoader.getResourceAsStream(source);
+        if(is!=null) return is;
+        File file = new File(Consts.ResFolder, source);
+        if(!file.exists()) return null;
+        try{
+            return new FileInputStream(file);
+        }catch(FileNotFoundException ignore){
+            return null;
+        }
     }
 
     @Override

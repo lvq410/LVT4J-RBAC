@@ -22,7 +22,7 @@ import com.lvt4j.rbac.web.TestInterceptor;
 public class SpringConfig extends WebMvcConfigurerAdapter {
 
     boolean isTestFilter = false;
-    String proId = "pro10";
+    String proId = "pro0";
     
     @Override
     public void addInterceptors(InterceptorRegistry registry) {

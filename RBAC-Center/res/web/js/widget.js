@@ -18,7 +18,32 @@ function widget_tooltiper_init(){
     });
 }
 
-
+/**
+ * 排序器初始化<br>
+ * 以属性widget="sortabler"标识<br>
+ * 可配置的html属性:<br>
+ * ⊙sortable-connect-with:默认无<br>
+ * ⊙sortable-handle:默认无<br>
+ * ⊙sortable-items:默认无<br>
+ * ⊙sortable-cancel:默认无<br>
+ */
+function widget_sortabler_init() {
+    $('[widget=sortabler]').each(function() {
+        var widget = $(this);
+        if(widget.data('widget-init')) return;
+        widget.data('widget-init', true);
+        var option = {};
+        var connectWith = widget.attr('sortable-connect-with');
+        if(connectWith!=null) option.connectWith = connectWith;
+        var handle = widget.attr('sortable-handle');
+        if(handle!=null) option.handle = handle;
+        var items = widget.attr('sortable-items');
+        if(items!=null) option.items = items;
+        var cancel = widget.attr('sortable-cancel');
+        if(cancel!=null) option.cancel = cancel;
+        widget.sortable(option);
+    });
+}
 
 /**
  * 选择器初始化<br>
@@ -93,7 +118,7 @@ function widget_select2_init() {
 };
 function widget_select2Result(obj){
     return {
-        id:Tfnn(obj.id, obj.pattern),
+        id:obj.autoId,
         text:obj.name,
         data:obj
     };
@@ -140,20 +165,21 @@ jQuery.fn.select2Set = function(data){
  * 必须的html属性:<br>
  * ⊙onpage:翻页后的回调脚本<br>
  * 可配置的html属性:<br>
- * ⊙show-page-size:是否显示每页个数,默认是<br>
+ * ⊙show-go:是否显示跳转按钮,默认false<br>
+ * ⊙show-page-size:是否显示每页个数,默认false<br>
  * ⊙page-size:每页个数,默认10<br>
  */
 function widget_pager_init() {
     $('[widget=pager]').each(function(){
         var widget = $(this);
         if(widget.data('widget-init')) return;
-        var showPageSize = widget.attr('show-page-size');
-        if(!showPageSize) showPageSize = true;
+        var showGo = widget.attr('show-go')=='true';
+        var showPageSize = widget.attr('show-page-size')=='true';
         var pageSize = LVT.int(widget.attr('page-size'), 10);
         var pagerDiv = $('<div widget="pager">'+
                 '<div class="pager-ele pager-btn pager-prev">←</div>'+
                 '<div class="pager-ele">第<input class="pager-page-no" type="text" value="1">页</div>'+
-                '<div class="pager-ele pager-btn pager-go">go</div>'+
+                '<div'+(showGo?'':' style="display:none;"')+' class="pager-ele pager-btn pager-go">go</div>'+
                 '<div'+(showPageSize?'':' style="display:none;"')+' class="pager-ele">'
                     +'每页<input class="pager-page-size" type="text" value="'+pageSize+'">个</div>'+
                 '<div class="pager-ele pager-btn pager-next">→</div>'+
@@ -213,11 +239,75 @@ jQuery.fn.pagerSerialize = function(){
     }
 }
 
+/**
+ * 权限选择器初始化
+ * 必须是div元素,以属性widget="auth-chooser"标识<br>
+ * 必须的html属性:<br>
+ * ⊙auth-model:权限类型<br>
+ */
+function widget_auth_chooser_init() {
+    $('[widget=auth-chooser]').each(function() {
+        var widget = $(this);
+        if(widget.data('widget-init')) return;
+        var authModel = widget.attr('auth-model');
+        var chooserDiv = 
+        $('<div class="auth-chooser-box col-xs-12" style="border:1px solid #d5d5d5;padding:0;">'
+            +'<div class="col-xs-8 auth-chooser-rst" style="border-right:1px solid #d5d5d5;"></div>'
+            +'<div class="col-xs-4" style="border-left:1px solid #d5d5d5;min-height:80px;margin-left:-1px;">'
+                +'<div class="input-group" style="width:100%;">'
+                    +'<input type="text" class="form-control q-auth-keyword" style="height:22px;margin-top:8px;" placeholder="请输入关键词">'
+                    +'<span class="input-group-btn">'
+                        +'<button type="button" class="btn btn-purple btn-minier" onclick="widget_auth_load(this, &quot;'+authModel+'&quot;)" style="margin-top:8px;">'
+                            +'搜索<i class="ace-icon fa fa-search"></i>'
+                        +'</button>'
+                    +'</span>'
+                +'</div>'
+                +'<div class="q-auths" style="border-top:1px solid #d5d5d5;margin-top:10px;"></div>'
+                +'<div class="pull-right q-auths-pager" widget="pager" show-go="true" onpage="widget_auth_load(this, &quot;'+authModel+'&quot;)"></div>'
+            +'</div>'
+        +'</div>');
+        widget.attr('widget', 'sortabler');
+        widget.addClass('auth-chooser-rst-box');
+        widget.before(chooserDiv);
+        chooserDiv.find('.auth-chooser-rst').append(widget);
+        chooserDiv.find('button').click();
+        widget_sortabler_init();
+        widget_pager_init();
+        chooserDiv.data('widget-init', true);
+    });
+}
+function widget_auth_load(btn, authModelName) {
+    if(!curPro) return;
+    var box = $(btn).closest('.auth-chooser-box');
+    q('/edit/'+authModelName+'/list.json',
+        {
+            proAutoId: curPro.autoId,
+            keyword: box.find('.q-auth-keyword').val(),
+            pager: box.find('.q-auths-pager').pagerSerialize()
+        },
+        function(auths){
+            box.find('.q-auths').html($tpl(tpl_auths)(auths, 2));
+        },
+        '加载权限中'
+    );
+}
+function widget_auth_choose(authBadge) {
+    var chooserDiv = $(authBadge).closest('.auth-chooser-box');
+    var chooserRst = chooserDiv.find('.auth-chooser-rst-box');
+    var choosedAuths = chooserRst.formData();
+    var auth = $(authBadge).attrData();
+    if(Tarr.contains(choosedAuths, auth.autoId)) return;
+    chooserRst.append($tpl(tpl_auths)([auth], 1));
+    if(window.onAuthChange) onAuthChange();
+}
+
 /** 初始化所有部件 */
 function widget_init() {
     widget_tooltiper_init();
+    widget_sortabler_init();
     widget_select2_init();
     widget_pager_init();
+    widget_auth_chooser_init();
 }
 
 $(document).ready(widget_init);

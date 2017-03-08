@@ -17,12 +17,12 @@ import org.springframework.test.context.web.WebAppConfiguration;
 import com.lvt4j.basic.TDB;
 import com.lvt4j.basic.TDB.Table;
 import com.lvt4j.basic.TScan;
-import com.lvt4j.rbac.data.bean.Access;
-import com.lvt4j.rbac.data.bean.Param;
-import com.lvt4j.rbac.data.bean.Permission;
-import com.lvt4j.rbac.data.bean.Product;
-import com.lvt4j.rbac.data.bean.Role;
-import com.lvt4j.rbac.data.bean.User;
+import com.lvt4j.rbac.data.model.Access;
+import com.lvt4j.rbac.data.model.Param;
+import com.lvt4j.rbac.data.model.Permission;
+import com.lvt4j.rbac.data.model.Product;
+import com.lvt4j.rbac.data.model.Role;
+import com.lvt4j.rbac.data.model.User;
 import com.lvt4j.rbac.web.controller.EditController;
 
 

@@ -33,13 +33,7 @@
     <div class="form-group">
         <label class="col-xs-3 control-label">拥有角色：</label>
         <div class="col-xs-9">
-            <div class="input-group" style="width:100%">
-                <select id="role" widget="select2" url="/edit/role/list.json" placeholder="请选择角色" style="width:100%"></select>
-                <span class="input-group-btn">
-                    <button type="button" class="btn btn-purple btn-sm" onclick="addRole()" style="height:28px;line-height:13px;">添加</button>
-                </span>
-            </div>
-            <div id="roles" name="roleIds" data-type="arr" style="border:1px solid #d5d5d5;min-height:34px;"></div>
+            <div id="roles" auth-model="role" name="roleAutoIds" data-type="arr" widget="auth-chooser"></div>
         </div>
     </div>
     <div class="form-group">
@@ -52,13 +46,7 @@
             </span>
         </label>
         <div class="col-xs-9">
-            <div class="input-group" style="width:100%">
-                <select id="access" widget="select2" url="/edit/access/list.json" placeholder="请选择访问项" style="width:100%"></select>
-                <span class="input-group-btn">
-                    <button type="button" class="btn btn-purple btn-sm" onclick="addAccess()" style="height:28px;line-height:13px;">添加</button>
-                </span>
-            </div>
-            <div id="accesses" name="accessPatterns" data-type="arr" style="border:1px solid #d5d5d5;min-height:34px;"></div>
+            <div id="accesses" auth-model="access" name="accessAutoIds" data-type="arr" widget="auth-chooser"></div>
         </div>
     </div>
     <div class="form-group">
@@ -71,13 +59,7 @@
             </span>
         </label>
         <div class="col-xs-9">
-            <div class="input-group" style="width:100%">
-                <select id="permission" widget="select2" url="/edit/permission/list.json" placeholder="请选择授权项" style="width:100%"></select>
-                <span class="input-group-btn">
-                    <button type="button" class="btn btn-purple btn-sm" onclick="addPermission()" style="height:28px;line-height:13px;">添加</button>
-                </span>
-            </div>
-            <div id="permissions" name="permissionIds" data-type="arr" style="border:1px solid #d5d5d5;min-height:34px;"></div>
+            <div id="permissions" auth-model="permission" name="permissionAutoIds" data-type="arr" widget="auth-chooser"></div>
         </div>
     </div>
     <div class="form-group">
@@ -92,7 +74,15 @@
             </span>
         </label>
         <div class="col-xs-9">
-            <div id="allAccesses" style="border:1px solid #d5d5d5;min-height:34px;"></div>
+            <table class="table table-striped table-bordered table-hover table-condensed" style="margin-bottom:0;">
+                <thead>
+                    <tr>
+                        <td style="width:150px;">权限来自</td>
+                        <td>权限</td>
+                    </tr>
+                </thead>
+                <tbody id="allAccesses"></tbody>
+            </table>
         </div>
     </div>
     <div class="form-group">
@@ -107,7 +97,15 @@
             </span>
         </label>
         <div class="col-xs-9">
-            <div id="allPermissions" style="border:1px solid #d5d5d5;min-height:34px;"></div>
+            <table class="table table-striped table-bordered table-hover table-condensed" style="margin-bottom:0;">
+                <thead>
+                    <tr>
+                        <td style="width:150px;">权限来自</td>
+                        <td>权限</td>
+                    </tr>
+                </thead>
+                <tbody id="allPermissions"></tbody>
+            </table>
         </div>
     </div>
     <button type="button" class="btn btn-purple btn-block" onclick="editVisitorAuthSave()">保存</button>

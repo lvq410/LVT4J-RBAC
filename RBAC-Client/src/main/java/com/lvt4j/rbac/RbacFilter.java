@@ -19,6 +19,11 @@ import javax.servlet.http.HttpServletResponse;
  * 4.rbacCenterAddr(非必须):授权中心服务地址,[host](:[port])形式,默认{@link com.lvt4j.rbac.RbacBaseFilter#RbacCenterAddrDef 127.0.0.1:80}<br>
  * 5.rbacCenterSyncInterval(非必须):与授权中心服务同步时间间隔,单位分钟,默认{@link com.lvt4j.rbac.RbacBaseFilter.RbacCenterSyncIntervalDef 5分钟}<br>
  * 6.rbacCenterSyncTimeout(非必须):与授权中心同步超时时间,单位毫秒,默认{@link com.lvt4j.rbac.RbacBaseFilter.RbacCenterSyncTimeoutDef 200ms}
+ * 权限验证处理逻辑:<br>
+ * 1.读取并向request的attribute:{@link com.lvt4j.rbac.UserAuth.ReqAttr "rbac"}写入用户权限信息<br>
+ * 2.判断用户是否登陆,若未登陆且{@link com.lvt4j.rbac.RbacBaseFilter#onNoLogin onNotLogin}为false,则不通过验证;否则进行下一步<br>
+ * 3.根据用户权限信息中拥有的访问项判断当前请求uri用户是否可访问<br>
+ *   　若不能访问并且{@link com.lvt4j.rbac.RbacBaseFilter#onNotAllowAccess onNotAllowAccess}为false,则不通过验证;否则进行下一步<br>
  * @author LV
  */
 public abstract class RbacFilter extends RbacBaseFilter implements Filter {
@@ -52,11 +57,11 @@ public abstract class RbacFilter extends RbacBaseFilter implements Filter {
         HttpServletRequest request = (HttpServletRequest) rawRequest;
         HttpServletResponse response = (HttpServletResponse) rawResponse;
         String userId = getUserId(request, response);
+        request.setAttribute(UserAuth.ReqAttr, productAuth.getUserAuth(userId));
         if(strIsEmpty(userId) && !onNotLogin(request, response)) return;
         String uri = request.getRequestURI();
         if(!productAuth.allowAccess(userId, uri)
-                && !onNotAllowAccess(request, response)) return;
-        request.setAttribute(UserAuth.ReqAttr, productAuth.getUserAuth(userId));
+                && !onNotAllowAccess(request, response, userId, uri)) return;
         chain.doFilter(rawRequest, rawResponse);
     }
 

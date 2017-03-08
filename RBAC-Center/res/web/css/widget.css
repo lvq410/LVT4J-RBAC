@@ -1,3 +1,9 @@
+.sortabler-handler{
+    text-align: center !important;
+    vertical-align: middle !important;
+    cursor: move !important;
+}
+
 .pager{
     color: #2283c5;
     margin: 10px 0;

@@ -1,6 +1,7 @@
 package com.lvt4j.rbac;
 
 import java.io.IOException;
+import java.io.OutputStream;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -29,9 +30,14 @@ abstract class RbacBaseFilter {
     /** 至少需要实现用户ID获取的方法,若用户未登陆,返回null */
     protected abstract String getUserId(HttpServletRequest request, HttpServletResponse response);
     
+    /** 获取用户权限信息 */
+    public UserAuth getUserAuth(String userId){
+        return productAuth.getUserAuth(userId);
+    }
+    
     /**
-     * 重写此方法以进行用户未登陆(即游客)处理<br>
-     * 默认游客可以继续访问
+     * 用户未登陆(即游客)处理,默认游客可以继续访问<br>
+     * 重写此方法以进行用户未登陆时处理以及向response返回自定义信息
      * @return 可继续访问返回true,拦截返回false
      */
     protected boolean onNotLogin(HttpServletRequest request,
@@ -45,24 +51,25 @@ abstract class RbacBaseFilter {
      * @return 可继续访问返回true,拦截返回false
      */
     protected boolean onNotAllowAccess(HttpServletRequest request,
-            HttpServletResponse response) throws IOException {
-        String userId = getUserId(request, response);
+            HttpServletResponse response,
+            String userId, String uri) throws IOException {
         StringBuilder content = new StringBuilder();
-        content.append((userId!=null &&!userId.isEmpty())?"用户<strong>"+userId+"</strong>":"<strong>游客</strong>");
-        String uri = request.getRequestURI();
+        content.append(strIsEmpty(userId)?"<strong>游客</strong>":("用户<strong>"+userId+"</strong>"));
         content.append("无权访问<strong>").append(uri).append("</strong>");
         responeWriteFobiddenContent(response, content.toString());
         return false;
      }
     
     /** response内写入禁止访问的提示信息 */
-    private void responeWriteFobiddenContent(HttpServletResponse response,
+    protected void responeWriteFobiddenContent(HttpServletResponse response,
             String content) throws IOException {
         response.setStatus(HttpStatus_Forbidden);
         response.setContentType(ContentType_Html);
-        response.setContentLength(content.getBytes().length);
-        response.getWriter().write(content);
-        response.getWriter().close();
+        byte[] data = content.getBytes();
+        response.setContentLength(data.length);
+        OutputStream out = response.getOutputStream();
+        out.write(data);
+        out.close();
     }
     boolean strIsEmpty(String str) {
         return str==null || str.isEmpty();

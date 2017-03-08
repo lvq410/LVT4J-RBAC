@@ -2,10 +2,11 @@ function loadRoles(){
     if(!curPro) return alert('请先选择当前产品!');
     q('/edit/role/list.json',
         {
-            proId: curPro.id,
+            proAutoId: curPro.autoId,
             keyword: $('#keyword').val(),
-            accessPattern: $('#qAccess').val(),
-            permissionId: $('#qPermission').val(),
+            accessAutoId: $('#qAccess').val(),
+            permissionAutoId: $('#qPermission').val(),
+            needAuth:true,
             pager: $('#rolesPager').pagerSerialize()
         },
         function(roles){
@@ -19,23 +20,35 @@ function loadRoles(){
 
 function addRole() {
     $('#editRoleDiv').formData({});
-    $('#access').select2Clear();
     $('#accesses').empty();
-    $('#permission').select2Clear();
     $('#permissions').empty();
     $('#editRoleDiv').slideDown(function () {
         $('#editRoleDiv').scrollToMe();
     });
 }
 
+function sortRole() {
+    var autoIds = [];
+    $('#roles tr').each(function(){
+        autoIds.push($(this).attrData().autoId);
+    });
+    if(autoIds.length==0) return alert('无排序内容!');
+    q('/edit/role/sort.json',
+        {
+            autoIds: autoIds,
+        },
+        function(){
+            alert('保存排序成功!');
+        },
+        '保存排序中'
+    );
+}
+
 function editRole(btn) {
     var role = $(btn).closest('tr').attrData();
-    role.oldId = role.id;
     $('#editRoleDiv').formData(role);
-    $('#access').select2Clear();
-    $('#accesses').html($tpl(tpl_accesses)(role.accesses, true));
-    $('#permission').select2Clear();
-    $('#permissions').html($tpl(tpl_permissions)(role.permissions, true));
+    $('#accesses').html($tpl(tpl_auths)(role.accesses, 1));
+    $('#permissions').html($tpl(tpl_auths)(role.permissions, 1));
     $('#editRoleDiv').slideDown(function () {
         $('#editRoleDiv').scrollToMe();
     });
@@ -44,7 +57,7 @@ function editRole(btn) {
 function editRoleSave() {
     var role = $('#editRoleDiv').formData();
     if(!role) return;
-    role.proId = curPro.id;
+    role.proAutoId = curPro.autoId;
     q('/edit/role/set.json',
         role,
         function(){
@@ -60,8 +73,8 @@ function delRole(btn) {
     if(!confirm('确定要删除角色\nID:'+role.id+'\n名称:'+role.name+'\n吗?')) return;
     q('/edit/role/del.json',
         {
-            proId:curPro.id,
-            id:role.id
+            proAutoId:curPro.autoId,
+            autoId:role.autoId
         },
         function() {
             alert('删除成功!');
@@ -82,10 +95,11 @@ function tpl_roles(roles) {
     for (var i = 0; i < roles.length; i++) {
         var role = roles[i];
         /*<tr data="{Tigh(role)}" title="{Tigh(role.des)}">
-            <td>{Tigh(role.id)}</td>
-            <td>{Tigh(role.name)}</td>
-            <td>{$tpl(tpl_accesses)(role.accesses)}</td>
-            <td>{$tpl(tpl_permissions)(role.permissions)}</td>
+            <td class="sortabler-handler"><i class="ace-icon fa fa-arrows-v"></i></td>
+            <td><div class="list-ele">{Tigh(role.id)}</td>
+            <td><div class="list-ele">{Tigh(role.name)}</td>
+            <td><div class="list-ele">{$tpl(tpl_auths)(role.accesses, 0)}</td>
+            <td><div class="list-ele">{$tpl(tpl_auths)(role.permissions, 0)}</td>
             <td>
                 <button onclick="editRole(this)" type="button" class="btn btn-info btn-minier">编辑</button>
                 <button onclick="delRole(this)" type="button" class="btn btn-danger btn-minier">删除</button>

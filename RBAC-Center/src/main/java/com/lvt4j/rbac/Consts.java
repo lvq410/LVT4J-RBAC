@@ -16,7 +16,9 @@ import com.lvt4j.basic.TPager;
 import com.lvt4j.basic.TReflect;
 import com.lvt4j.basic.TScan;
 import com.lvt4j.rbac.data.Like;
+import com.lvt4j.rbac.data.Model;
 import com.lvt4j.rbac.data.Unique;
+import com.lvt4j.rbac.service.Dao;
 
 /**
  * 各种全局常量
@@ -38,10 +40,11 @@ public class Consts {
     /** 数据库文件名 */
     public static final String DBFileName = "rbac.db";
     public static TDB DB;
+    public static Dao Dao;
     
-    public static final Map<String, Class<?>> AllBaseModelCls = new HashMap<String, Class<?>>();
-    public static final Map<Class<?>, List<Field>> LikeFields = new HashMap<Class<?>, List<Field>>();
-    public static final Map<Class<?>, List<Field>> UniqueFields = new HashMap<Class<?>, List<Field>>();
+    public static final Map<String, Class<? extends Model>> AllBaseModelCls = new HashMap<String, Class<? extends Model>>();
+    public static final Map<Class<? extends Model>, List<Field>> LikeFields = new HashMap<Class<? extends Model>, List<Field>>();
+    public static final Map<Class<? extends Model>, List<Field>> UniqueFields = new HashMap<Class<? extends Model>, List<Field>>();
     
     public static final Class<?>[] SupportHandlerMethodTypes = new Class<?>[]{
         JSONObject.class, TPager.class, String[].class, int[].class};
@@ -50,14 +53,16 @@ public class Consts {
     public static final String VelocityTplContextPath = "web/vm/";
     
     /** 各种错误码 */
-    public static final class Err{
+    public static final class ErrCode{
         public static final int NotFound = 404;
         public static final int Duplicate = 501;
     }
     
     static{
         try{
-            for(Class<?> modelCls : TScan.scanClass(BasePackage+"data.model")){
+            for(Class<?> cls : TScan.scanClass(BasePackage+".data.model")){
+                @SuppressWarnings("unchecked")
+                Class<? extends Model> modelCls = (Class<? extends Model>)cls;
                 AllBaseModelCls.put(modelCls.getAnnotation(Table.class).value(), modelCls);
                 List<Field> likeFields = new LinkedList<Field>();
                 for(Field field : TReflect.allField(modelCls)){

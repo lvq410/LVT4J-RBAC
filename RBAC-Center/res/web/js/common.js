@@ -40,7 +40,10 @@ function q(url, data, callback, waitingMsg, jsonp) {
             if (rst.err==0) {
                 callback(rst.data, rst.msg);
             } else {
-                var msg = 'err:'+rst.err+'\nmsg:'+rst.msg;
+                var msg = 'err:'+rst.err+'\nmsg:';
+                if(501==rst.err) msg += 'ID或pattern冲突,请另选新值填写!';
+                if(404==rst.err) msg += '部分数据已移除,请刷新页面重试!';
+                if(rst.msg) msg+=rst.msg;
                 if(rst.stack) {
                     for (var i = 0; i < rst.stack.length; i++) {
                         msg += '\n'+rst.stack[i]
@@ -97,10 +100,10 @@ function innerSlideOne(){
 
 
 function onCurProIdChange(){
-    if(curPro && curPro.id==$('#curProId').val()) return;
-    q('/edit/curProSet',
+    if(curPro && curPro.autoId==$('#curProId').val()) return;
+    q('/edit/curProSet.json',
         {
-            curProId:$('#curProId').val()
+            proAutoId:$('#curProId').val()
         },
         function() {
             alert('当前产品切换成功,正在刷新页面!');
@@ -123,96 +126,62 @@ function onready(){
 
 $(document).ready(onready);
 
-function addAccess() {
-    var access = $('#access').data('select2:data');
-    if(!access) return alert('请先选择访问项!');
-    var accessPatterns = $('#accesses').formData();
-    if(Tarr.contains(accessPatterns, access.pattern))
-        return alert('已有访问项['+access.name+']!');
-    $('#accesses').append($tpl(tpl_accesses)([access], true));
-    if(window.onRAPChange) onRAPChange();
-}
-function tpl_accesses(accesses, removable) {
-    if(!accesses) return '';
-    for (var i = 0; i < accesses.length; i++) {
-        var access = accesses[i];
-        /*<span class="badge badge-{getBadge(access.pattern)} msg-tooltiper" style="cursor:default;">
-            {Tigh(access.name)}*/
-            if(removable) {
-                /*<input name value="{Tigh(access.pattern)}" type="hidden"/>
-                <i onclick="removeRAP(this)"
+/** type 0:展示用;1:编辑用;2选择用: */
+function tpl_auths(auths, type) {
+    if(!auths) return '';
+    var cursor = {0:'default',1:'move',2:'pointer'}[type];
+    for (var i = 0; i < auths.length; i++) {
+        var auth = auths[i];
+        /*<span data="{Tigh(auth)}" class="badge badge-{getBadge(auth.autoId)} msg-tooltiper" style="cursor:{cursor};"*/
+            if(type==2){/* title="点我选择" onclick="widget_auth_choose(this)"*/}/*>*/
+            /*{Tigh(auth.name)}*/
+            if(type==1) {
+                /*<input name data-type="int" value="{Tigh(auth.autoId)}" type="hidden"/>
+                <i onclick="removeAuth(this)"
                     class="ace-icon fa fa-close" style="cursor:pointer;"></i>*/
             }
             /*<div class="tooltip-msg">
-                <strong>pattern:</strong>{Tigh(access.pattern)}<br>
-                {Tigh(access.des).replace(/\n/g, '<br>')}
+                <strong>{Tigh(Tfnn(auth.id, auth.pattern))}</strong><br>
+                {Tigh(auth.des).replace(/\n/g, '<br>')}
             </div>
         </span>*/
     }
 }
-
-function addPermission() {
-    var permission = $('#permission').data('select2:data');
-    if(!permission) return alert('请先选择授权项!');
-    var permissionIds = $('#permissions').formData();
-    if(Tarr.contains(permissionIds, permission.id))
-        return alert('已有授权项['+permission.name+']!');
-    $('#permissions').append($tpl(tpl_permissions)([permission], true));
-    if(window.onRAPChange) onRAPChange();
-}
-function tpl_permissions(permissions, removable) {
-    if(!permissions) return '';
-    for (var i = 0; i < permissions.length; i++) {
-        var permission = permissions[i];
-        /*<span class="badge badge-{getBadge(permission.id)} msg-tooltiper" style="cursor:default;">
-            {Tigh(permission.name)}*/
-            if(removable) {
-                /*<input name value="{Tigh(permission.id)}" type="hidden"/>
-                <i onclick="removeRAP(this)"
-                    class="ace-icon fa fa-close" style="cursor:pointer;"></i>*/
-            }
-            /*<div class="tooltip-msg">
-                <strong>ID:</strong>{Tigh(permission.id)}<br>
-                {Tigh(permission.des).replace(/\n/g, '<br>')}
-            </div>
-        </span>*/
-    }
-}
-
-function addRole() {
-    var role = $('#role').data('select2:data');
-    if(!role) return alert('请先选择角色!');
-    var roles = $('#roles').formData();
-    if(Tarr.contains(roles, role.id))
-        return alert('已有角色['+role.name+']!');
-    $('#roles').append($tpl(tpl_roles)([role], true));
-    if(window.onRAPChange) onRAPChange();
-}
-function tpl_roles(roles, removable) {
-    if(!roles) return '';
-    for (var i = 0; i < roles.length; i++) {
-        var role = roles[i];
-        /*<span class="badge badge-{getBadge(role.id)} msg-tooltiper" style="cursor:default;">
-            {Tigh(role.name)}*/
-            if(removable) {
-                /*<input name value="{Tigh(role.id)}" type="hidden"/>
-                <i onclick="removeRAP(this)"
-                    class="ace-icon fa fa-close" style="cursor:pointer;"></i>*/;
-            }
-            /*<div class="tooltip-msg">
-                <strong>ID:</strong>{Tigh(role.id)}<br>
-                {Tigh(role.des).replace(/\n/g, '<br>')}
-            </div>
-        </span>*/
-    }
-}
-
-function removeRAP(btn) {
+function removeAuth(btn) {
     $(btn).closest('span').remove();
-    if(window.onRAPChange) onRAPChange();
+    if(window.onAuthChange) onAuthChange();
 }
 
 var BadgeClses = ['success','warning','danger','info','purple','pink','yellow'];
 function getBadge(key) {
     return BadgeClses[Math.abs(Tobj.hashCode(key))%BadgeClses.length];
+}
+
+function tpl_params(params){
+    if (!params) return;
+    for (var i=0; i<params.length; i++) {
+        var param = params[i];
+        /*<div class="form-group">
+            <label class="col-xs-3 control-label">
+                <span title="{Tigh(param.key)}">{Tigh(param.name)}：</span>
+            </label>
+            <div class="col-xs-9 msg-tooltiper">
+                <textarea name="{Tigh(param.autoId)}" autocomplete="off" class="form-control" placeholder="{Tigh(param.des)}">{Tigh(param.val)}</textarea>
+                <div class="tooltip-msg">{Tigh(param.des).replace(/\n/g, '<br>')}</div>
+            </div>
+        </div>*/
+    }
+}
+
+function tpl_allAuths(authDescs){
+    if(!authDescs) return '';
+    for(var i=0; i<authDescs.length; i++){
+        var authDesc = authDescs[i];
+        if(!authDesc.des) authDesc.des='单独分配';
+        if(authDesc.auths.length==0) continue;
+        /*<tr>
+            <td>{Tigh(authDesc.des)}</td>
+            <td>{$tpl(tpl_auths)(authDesc.auths, 0)}</td>
+        </tr>*/
+    }
 }

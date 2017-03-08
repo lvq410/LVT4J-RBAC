@@ -2,7 +2,7 @@ function loadParams(){
     if(!curPro) return alert('请先选择当前产品!');
     q('/edit/param/list.json',
         {
-            proId: curPro.id
+            proAutoId: curPro.autoId
         },
         function(params){
             $('#params').html($tpl(tpl_params)(params));
@@ -18,6 +18,23 @@ function addParam() {
     $('#editParamDiv').slideDown().scrollToMe();
 }
 
+function sortParam() {
+    var autoIds = [];
+    $('#params tr').each(function(){
+        autoIds.push($(this).attrData().autoId);
+    });
+    if(autoIds.length==0) return alert('无排序内容!');
+    q('/edit/param/sort.json',
+        {
+            autoIds: autoIds,
+        },
+        function(){
+            alert('保存排序成功!');
+        },
+        '保存排序中'
+    );
+}
+
 function editParam(btn) {
     var param = $(btn).closest('tr').attrData();
     param.oldKey = param.key;
@@ -28,7 +45,7 @@ function editParam(btn) {
 function editParamSave() {
     var param = $('#editParamDiv').formData();
     if(!param) return;
-    param.proId = curPro.id;
+    param.proAutoId = curPro.autoId;
     q('/edit/param/set.json',
         param,
         function() {
@@ -44,8 +61,7 @@ function delParam(btn) {
     if(!confirm('确定要删除配置项\nkey:'+param.key+'\n名称:'+param.name+'\n吗?')) return;
     q('/edit/param/del.json',
         {
-            proId:curPro.id,
-            key:param.key
+            autoId:param.autoId
         },
         function(){
             alert('删除成功!');
@@ -66,8 +82,9 @@ function tpl_params(params) {
     for (var i = 0; i < params.length; i++) {
         var param = params[i];
         /*<tr data="{Tigh(param)}" title="{Tigh(param.des)}">
-            <td>{Tigh(param.key)}</td>
-            <td>{Tigh(param.name)}</td>
+            <td class="sortabler-handler"><i class="ace-icon fa fa-arrows-v"></i></td>
+            <td><div class="list-ele">{Tigh(param.key)}</div></td>
+            <td><div class="list-ele">{Tigh(param.name)}</div></td>
             <td>
                 <button onclick="editParam(this)" type="button" class="btn btn-info btn-minier">编辑</button>
                 <button onclick="delParam(this)" type="button" class="btn btn-danger btn-minier">删除</button>

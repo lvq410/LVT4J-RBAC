@@ -19,11 +19,12 @@ public class Main{
         System.out.println("App路径:"+Consts.AppFolder.getAbsolutePath());
         File dbFile = new File(Consts.AppFolder, Consts.DBFileName);
         File confFile = new File(Consts.ConfFolder, "application.properties");
-        boolean isInit = !dbFile.exists() || !Consts.ConfFolder.exists() || !confFile.exists();
-        if(isInit) {
-            TFile.write(dbFile, Main.class.getClassLoader().getResourceAsStream(Consts.DBFileName));
-            Consts.ConfFolder.mkdirs();
-            TFile.write(confFile, Main.class.getClassLoader().getResourceAsStream("/config/release/application.properties"));
+        if(!dbFile.exists() || !confFile.exists()) {
+            if(!dbFile.exists()) TFile.write(dbFile, Main.class.getClassLoader().getResourceAsStream(Consts.DBFileName));
+            if(!confFile.exists()){
+                Consts.ConfFolder.mkdirs();
+                TFile.write(confFile, Main.class.getClassLoader().getResourceAsStream("/config/release/application.properties"));
+            }
             System.out.println("初次启动，请检查配置文件，如修改服务端口等");
             System.exit(0);
         }

@@ -17,26 +17,32 @@
 <div class="widget-body"><div class="widget-main">
 <form class="form-horizontal">
     <p class="valid-err text-danger col-xs-9 col-xs-offset-3"></p>
-    <input name="oldKey" type="hidden"/>
+    <input name="autoId" data-type="int" type="hidden"/>
+    <input name="seq" data-type="int" type="hidden"/>
     <div class="form-group">
-        <label class="col-xs-3 control-label">key：</label>
-        <div class="col-xs-9" title="配置数据的key,建议以字母数字下划线组成">
-            <input name="key" data-required data-err="配置项key不能为空"
+        <label class="col-xs-3 control-label">
+            <span title="配置数据的key,建议以字母数字下划线组成">key：</span>
+        </label>
+        <div class="col-xs-9">
+            <input name="key" data-required data-err="配置项key不能为空" autocomplete="off"
                 type="text" class="form-control" placeholder="配置数据的key,建议以字母数字下划线组成"/>
         </div>
     </div>
     <div class="form-group">
-        <label class="col-xs-3 control-label">名称：</label>
-        <div class="col-xs-9" title="配置项名称，短名称">
-            <input name="name" data-required data-err="配置项名称不能为空"
+        <label class="col-xs-3 control-label">
+            <span title="配置项名称，短名称">名称：</span>
+        </label>
+        <div class="col-xs-9">
+            <input name="name" data-required data-err="配置项名称不能为空" autocomplete="off"
                 type="text" class="form-control" placeholder="配置项名称，短名称"/>
         </div>
     </div>
     <div class="form-group">
-        <label class="col-xs-3 control-label">描述：</label>
-        <div class="col-xs-9" title="配置项描述">
-            <textarea name="des" data-required data-err="配置项描述不能为空"
-                type="text" class="form-control" style="min-height:150px;" placeholder="配置项描述"></textarea>
+        <label class="col-xs-3 control-label">
+            <span title="配置项描述">描述：</span>
+        </label>
+        <div class="col-xs-9">
+            <textarea name="des" autocomplete="off" type="text" class="form-control" style="min-height:150px;" placeholder="配置项描述"></textarea>
         </div>
     </div>
     <button type="button" class="btn btn-purple btn-block" onclick="editParamSave()">保存</button>
@@ -53,14 +59,16 @@
 <table class="table table-striped table-bordered table-hover table-condensed" style="margin-bottom:0;">
     <thead>
         <tr>
+            <td style="width:15px;"></td>
             <td style="width:30%;" title="配置项的key">key</td>
             <td title="配置项的名称">名称</td>
             <td style="width:88px;">
                 <button onclick="addParam()" title="增加一个新配置项" type="button" class="btn btn-primary btn-minier">新增</button>
+                <button onclick="sortParam()" title="保存配置项排序" type="button" class="btn btn-warning btn-minier">排序</button>
             </td>
         </tr>
     </thead>
-    <tbody id="params"></tbody>
+    <tbody id="params" widget="sortabler" sortable-handle=".sortabler-handler"></tbody>
 </table>
 </div></div>##widget-body
 </div></div>##widget-box

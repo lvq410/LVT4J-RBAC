@@ -67,7 +67,7 @@ abstract class AbstractProductAuth{
             if(visitorAuth!=null) return visitorAuth;
             visitorAuth = loadUserAuth(null);
             if(visitorAuth==null) return null;
-            if(visitorAuth.params==null){ //权限数据为空,说明产品不存在了,打印警告并覆盖为空权限
+            if(visitorAuth.isEmpty()){ //权限数据为空,说明产品不存在了,打印警告并覆盖为空权限
                 System.err.println("产品["+proId+"]未在权限中心注册!");
                 visitorAuth.setAuth(null);
             }

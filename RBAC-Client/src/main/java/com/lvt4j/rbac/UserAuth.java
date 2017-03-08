@@ -56,4 +56,18 @@ public class UserAuth implements Serializable{
             permissions = auth.permissions;
         }
     }
+    
+    boolean isEmpty(){
+        return params==null
+                && roles==null
+                && accesses==null
+                && permissions==null;
+    }
+    
+    public String getUserId(){return userId;}
+    public boolean isExist(){return exist;}
+    public Map<String, String> getParams(){return params;}
+    public Set<String> getRoles(){return roles;}
+    public Set<String> getAccesses(){return accesses;}
+    public Set<String> getPermissions(){return permissions;}
 }

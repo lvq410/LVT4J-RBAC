@@ -2,7 +2,7 @@ function loadAccesses(){
     if(!curPro) return alert('请先选择当前产品!');
     q('/edit/access/list.json',
         {
-            proId: curPro.id,
+            proAutoId: curPro.autoId,
             keyword: $('#keyword').val(),
             pager: $('#accessesPager').pagerSerialize()
         },
@@ -17,13 +17,33 @@ function loadAccesses(){
 
 function addAccess() {
     $('#editAccessDiv').formData({});
+    $('#testPatternUri').val('');
+    $('#testPatternRst').text('');
     $('#editAccessDiv').slideDown().scrollToMe();
+}
+
+function sortAccess() {
+    var autoIds = [];
+    $('#accesses tr').each(function(){
+        autoIds.push($(this).attrData().autoId);
+    });
+    if(autoIds.length==0) return alert('无排序内容!');
+    q('/edit/access/sort.json',
+        {
+            autoIds: autoIds,
+        },
+        function(){
+            alert('保存排序成功!');
+        },
+        '保存排序中'
+    );
 }
 
 function editAccess(btn) {
     var access = $(btn).closest('tr').attrData();
-    access.oldPattern = access.pattern;
     $('#editAccessDiv').formData(access);
+    $('#testPatternUri').val('');
+    $('#testPatternRst').text('');
     $('#editAccessDiv').slideDown().scrollToMe();
 }
 
@@ -54,7 +74,7 @@ function editAccessSave() {
         $('#pattern').focusMe();
         return;
     }
-    access.proId = curPro.id;
+    access.proAutoId = curPro.autoId;
     q('/edit/access/set.json',
         access,
         function() {
@@ -70,8 +90,8 @@ function delAccess(btn) {
     if(!confirm('确定要删除访问项\npattern:'+access.pattern+'\n名称:'+access.name+'\n吗?')) return;
     q('/edit/access/del.json',
         {
-            proId:curPro.id,
-            pattern:access.pattern
+            proAutoId: curPro.autoId,
+            autoId: access.autoId
         },
         function(){
             alert('删除成功!');
@@ -92,8 +112,9 @@ function tpl_accesses(accesses) {
     for (var i = 0; i < accesses.length; i++) {
         var access = accesses[i];
         /*<tr data="{Tigh(access)}" title="{Tigh(access.des)}">
-            <td>{Tigh(access.pattern)}</td>
-            <td>{Tigh(access.name)}</td>
+            <td class="sortabler-handler"><i class="ace-icon fa fa-arrows-v"></i></td>
+            <td><div class="list-ele">{Tigh(access.pattern)}</div></td>
+            <td><div class="list-ele">{Tigh(access.name)}</div></td>
             <td>
                 <button onclick="editAccess(this)" type="button" class="btn btn-info btn-minier">编辑</button>
                 <button onclick="delAccess(this)" type="button" class="btn btn-danger btn-minier">删除</button>

@@ -3,10 +3,9 @@ package com.lvt4j.rbac.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.lvt4j.basic.TDB;
 import com.lvt4j.basic.TLruCache;
 import com.lvt4j.rbac.ProductAuth4Center;
-import com.lvt4j.rbac.data.bean.Product;
+import com.lvt4j.rbac.data.model.Product;
 
 
 /**
@@ -20,7 +19,7 @@ public class ProductAuthCache {
     private static final ProductAuth4Center Absent = new ProductAuth4Center(null);
     
     @Autowired
-    TDB db;
+    Dao dao;
     
     /** 所有产品缓存 */
     TLruCache<String, ProductAuth4Center> caches = new TLruCache<String, ProductAuth4Center>(1000);
@@ -32,7 +31,7 @@ public class ProductAuthCache {
         synchronized (caches) {
             productAuth = caches.get(proId);
             if(productAuth!=null) return Absent==productAuth?null:productAuth;
-            Product product = db.select("select * from product where id=?", proId).execute2ModelOne(Product.class);
+            Product product = dao.uniqueGet(Product.class, proId);
             productAuth = product==null?Absent:new ProductAuth4Center(product);
             caches.put(proId, productAuth);
             return Absent==productAuth?null:productAuth;
@@ -40,7 +39,7 @@ public class ProductAuthCache {
     }
     
     /** 获取指定产品的权限,若未缓存,返回null */
-    public ProductAuth4Center getIfPresetn(String proId) {
+    public ProductAuth4Center getIfPresent(String proId) {
         ProductAuth4Center productAuth = caches.get(proId);
         if(Absent==productAuth) return null;
         return productAuth;

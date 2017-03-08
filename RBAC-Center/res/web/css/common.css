@@ -26,6 +26,11 @@ tbody td{
     vertical-align: top !important;
 }
 
+.list-ele{
+    overflow-y: auto;
+    max-height: 70px;
+}
+
 .flex-container{
     display: -webkit-flex;
     display: flex;

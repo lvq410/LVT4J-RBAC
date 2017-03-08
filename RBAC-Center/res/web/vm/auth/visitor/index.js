@@ -2,34 +2,30 @@ function loadVisitorAuth() {
     if(!curPro) return alert('请先选择当前产品!');
     q('/edit/auth/visitor/get.json',
         {
-            proId: curPro.id,
+            proAutoId: curPro.autoId,
         },
         function(visitorAuth){
-            $('#params').html($tpl(tpl_visitorParams)(visitorAuth.params));
-            $('#roles').html($tpl(tpl_roles)(visitorAuth.roles, true));
-            $('#accesses').html($tpl(tpl_accesses)(visitorAuth.accesses, true));
-            $('#permissions').html($tpl(tpl_permissions)(visitorAuth.permissions, true));
-            $('#allAccesses').html($tpl(tpl_accesses)(visitorAuth.allAccesses, false));
-            $('#allPermissions').html($tpl(tpl_permissions)(visitorAuth.allPermissions, false));
+            $('#params').html($tpl(tpl_params)(visitorAuth.params));
+            $('#roles').html($tpl(tpl_auths)(visitorAuth.roles, 1));
+            $('#accesses').html($tpl(tpl_auths)(visitorAuth.accesses, 1));
+            $('#permissions').html($tpl(tpl_auths)(visitorAuth.permissions, 1));
             
-            $('#role').select2Clear();
-            $('#access').select2Clear();
-            $('#permission').select2Clear();
             $('#editVisitorAuthDiv').slideDown();
+            onAuthChange();
         },
         '加载游客权限中'
     );
 }
 
-function onRAPChange() {
+function onAuthChange() {
     var visitorAuth = $('#editVisitorAuthDiv').formData();
     if(!visitorAuth) visitorAuth={};
     visitorAuth.proId = curPro.id;
     q('/edit/auth/visitor/cal.json',
         visitorAuth,
         function(visitorAuth){
-            $('#allAccesses').html($tpl(tpl_accesses)(visitorAuth.allAccesses, false));
-            $('#allPermissions').html($tpl(tpl_permissions)(visitorAuth.allPermissions, false));
+            $('#allAccesses').html($tpl(tpl_allAuths)(visitorAuth.allAccesses));
+            $('#allPermissions').html($tpl(tpl_allAuths)(visitorAuth.allPermissions));
         },
         '计算游客最终权限中'
     );
@@ -38,7 +34,7 @@ function onRAPChange() {
 function editVisitorAuthSave() {
     var visitorAuth = $('#editVisitorAuthDiv').formData();
     if(!visitorAuth) visitorAuth={};
-    visitorAuth.proId = curPro.id;
+    visitorAuth.proAutoId = curPro.autoId;
     q('/edit/auth/visitor/set.json',
         visitorAuth,
         function() {
