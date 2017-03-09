@@ -93,7 +93,10 @@
                 <thead>
                     <tr>
                         <td style="width:150px;">权限来自</td>
-                        <td>权限</td>
+                        <td>
+                            权限
+                            <input type="text" class="a-auth-search" onkeyup="all_auth_search(this)" onchange="all_auth_search(this)" style="height:22px;" placeholder="搜索">
+                        </td>
                     </tr>
                 </thead>
                 <tbody id="allRoles"></tbody>
@@ -118,7 +121,10 @@
                 <thead>
                     <tr>
                         <td style="width:150px;">权限来自</td>
-                        <td>权限</td>
+                        <td>
+                            权限
+                            <input type="text" class="a-auth-search" onkeyup="all_auth_search(this)" onchange="all_auth_search(this)" style="height:22px;" placeholder="搜索">
+                        </td>
                     </tr>
                 </thead>
                 <tbody id="allAccesses"></tbody>
@@ -143,7 +149,10 @@
                 <thead>
                     <tr>
                         <td style="width:150px;">权限来自</td>
-                        <td>权限</td>
+                        <td>
+                            权限
+                            <input type="text" class="a-auth-search" onkeyup="all_auth_search(this)" onchange="all_auth_search(this)" style="height:22px;" placeholder="搜索">
+                        </td>
                     </tr>
                 </thead>
                 <tbody id="allPermissions"></tbody>

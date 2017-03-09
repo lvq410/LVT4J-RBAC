@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.lvt4j.basic.TPager;
-import com.lvt4j.rbac.Consts;
 import com.lvt4j.rbac.Consts.ErrCode;
 import com.lvt4j.rbac.data.Model;
 import com.lvt4j.rbac.data.Transaction;
@@ -70,7 +69,7 @@ public class EditController {
             @RequestParam(required=false) boolean needAuth,
             @RequestParam(required=false) String keyword,
             @RequestParam(required=false) TPager pager){
-        Class<?> modelCls = Consts.AllBaseModelCls.get(modelName);
+        Class<?> modelCls = Model.getModelCls(modelName);
         List<?> list = dao.list(modelName, proAutoId, roleAutoId, accessAutoId, permissionAutoId, keyword, pager);
         if(!needAuth || list.isEmpty()) return JsonResult.success(list);
         if(Role.class!=modelCls
@@ -98,7 +97,7 @@ public class EditController {
             @RequestParam Map<String, String> modelData,
             @RequestParam(required=false) int[] accessAutoIds,
             @RequestParam(required=false) int[] permissionAutoIds)throws Exception{
-        Class<? extends Model> modelCls = Consts.AllBaseModelCls.get(modelName);
+        Class<? extends Model> modelCls = Model.getModelCls(modelName);
         Model model = modelCls.newInstance();
         model.set(modelData);
         if(dao.isDuplicated(model)) return JsonResult.fail(ErrCode.Duplicate);
@@ -114,7 +113,7 @@ public class EditController {
     public JsonResult baseDel(
             @PathVariable String modelName,
             @RequestParam int autoId)throws Exception{
-        Class<? extends Model> modelCls = Consts.AllBaseModelCls.get(modelName);
+        Class<? extends Model> modelCls = Model.getModelCls(modelName);
         dao.del(modelCls, autoId);
         return JsonResult.success();
     }

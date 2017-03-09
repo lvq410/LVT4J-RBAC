@@ -26,6 +26,7 @@ function onAuthChange() {
         function(visitorAuth){
             $('#allAccesses').html($tpl(tpl_allAuths)(visitorAuth.allAccesses));
             $('#allPermissions').html($tpl(tpl_allAuths)(visitorAuth.allPermissions));
+            $('.a-auth-search').change();
         },
         '计算游客最终权限中'
     );

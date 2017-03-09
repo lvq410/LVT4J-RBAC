@@ -252,18 +252,20 @@ function widget_auth_chooser_init() {
         var authModel = widget.attr('auth-model');
         var chooserDiv = 
         $('<div class="auth-chooser-box col-xs-12" style="border:1px solid #d5d5d5;padding:0;">'
-            +'<div class="col-xs-8 auth-chooser-rst" style="border-right:1px solid #d5d5d5;"></div>'
+            +'<div class="col-xs-8 auth-chooser-rst" style="border-right:1px solid #d5d5d5;">'
+                +'<input type="text" class="form-control q-auth-search" onkeyup="widge_auth_search(this)" onchange="widge_auth_search(this)" style="height:22px;margin-top:8px;" placeholder="搜索">'
+            +'</div>'
             +'<div class="col-xs-4" style="border-left:1px solid #d5d5d5;min-height:80px;margin-left:-1px;">'
                 +'<div class="input-group" style="width:100%;">'
-                    +'<input type="text" class="form-control q-auth-keyword" style="height:22px;margin-top:8px;" placeholder="请输入关键词">'
+                    +'<input type="text" class="form-control q-auth-keyword" style="height:22px;margin-top:8px;" placeholder="请输入关键词"/>'
                     +'<span class="input-group-btn">'
                         +'<button type="button" class="btn btn-purple btn-minier" onclick="widget_auth_load(this, &quot;'+authModel+'&quot;)" style="margin-top:8px;">'
                             +'搜索<i class="ace-icon fa fa-search"></i>'
                         +'</button>'
                     +'</span>'
                 +'</div>'
-                +'<div class="q-auths" style="border-top:1px solid #d5d5d5;margin-top:10px;"></div>'
                 +'<div class="pull-right q-auths-pager" widget="pager" show-go="true" onpage="widget_auth_load(this, &quot;'+authModel+'&quot;)"></div>'
+                +'<div class="q-auths" style="border-top:1px solid #d5d5d5;margin-top:50px;padding-top:10px;margin-bottom:10px;"></div>'
             +'</div>'
         +'</div>');
         widget.attr('widget', 'sortabler');
@@ -299,6 +301,19 @@ function widget_auth_choose(authBadge) {
     if(Tarr.contains(choosedAuths, auth.autoId)) return;
     chooserRst.append($tpl(tpl_auths)([auth], 1));
     if(window.onAuthChange) onAuthChange();
+}
+function widge_auth_search(input) {
+    var chooser = $(input).next();
+    var keyword = $(input).val();
+    chooser.find('.badge').each(function(){
+        var authBadge = $(this);
+        if(!keyword) authBadge.show();
+        var auth = authBadge.attrData();
+        if(auth.id && auth.id.indexOf(keyword)!=-1) return authBadge.show();
+        if(auth.pattern && auth.pattern.indexOf(keyword)!=-1) return authBadge.show();
+        if(auth.name && auth.name.indexOf(keyword)!=-1) return authBadge.show();
+        authBadge.hide();
+    });
 }
 
 /** 初始化所有部件 */

@@ -1,6 +1,7 @@
 /.gradle/
 /.settings/
 .project
+.classpath
 
 /RBAC-Center/.settings/
 /RBAC-Center/.project

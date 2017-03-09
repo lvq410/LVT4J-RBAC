@@ -32,7 +32,7 @@
                         <span class="input-group-btn">
                             <button type="button" class="btn btn-purple btn-minier" onclick="testPattern()">检查匹配</button>
                         </span>
-                        <input id="testPatternUri" type="text" class="form-control" style="height:22px;" title="测试用uri" placeholder="请输入URI">
+                        <input id="testPatternUri" type="text" class="form-control" autocomplete="off" style="height:22px;" title="测试用uri" placeholder="请输入URI">
                     </div>
                 </div>
                 <div id="testPatternRst" class="text-info" style="line-height:22px;display:inline-block;vertical-align:top;"></div>

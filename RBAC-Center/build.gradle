@@ -3,8 +3,10 @@ apply plugin: 'org.springframework.boot'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-tasks.withType(JavaCompile) {    
-    options.encoding = 'UTF-8'  
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+compileJava {
+    options.bootClasspath = "$System.env.JAVA_HOME/jre/lib/rt.jar"
+    options.bootClasspath += "$File.pathSeparator$System.env.JAVA_HOME/jre/lib/jce.jar"
 }
 
 File appFolder = project.projectDir
@@ -25,19 +27,23 @@ sourceSets {
         java {
             srcDir 'src/main/java'
         }
-    }
-    res {
         resources {
             srcDir 'res'
+        }
+    }
+    eclipse {
+        java {
+            srcDir 'src/main/java'
+            srcDir 'src/test/java'
         }
     }
 }
 
 eclipse {
     classpath {
-        sourceSets -= [sourceSets.res] 
+        sourceSets = [sourceSets.eclipse] 
     }
- }
+}
 
 dependencies {
     compile project(':RBAC-Client')

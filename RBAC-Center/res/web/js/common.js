@@ -186,3 +186,17 @@ function tpl_allAuths(authDescs){
         </tr>*/
     }
 }
+
+function all_auth_search(input){
+    var tbl = $(input).closest('table');
+    var keyword = $(input).val();
+    tbl.find('.badge').each(function(){
+        var authBadge = $(this);
+        if(!keyword) authBadge.show();
+        var auth = authBadge.attrData();
+        if(auth.id && auth.id.indexOf(keyword)!=-1) return authBadge.show();
+        if(auth.pattern && auth.pattern.indexOf(keyword)!=-1) return authBadge.show();
+        if(auth.name && auth.name.indexOf(keyword)!=-1) return authBadge.show();
+        authBadge.hide();
+    });
+}

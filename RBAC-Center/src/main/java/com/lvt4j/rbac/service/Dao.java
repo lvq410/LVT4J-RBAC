@@ -60,7 +60,7 @@ public class Dao{
     public List<? extends Model> list(String modelName, Integer proAutoId,
             Integer roleAutoId, Integer accessAutoId, Integer permissionAutoId,
             String keyword, TPager pager){
-        Class<? extends Model> modelCls = Consts.AllBaseModelCls.get(modelName);
+        Class<? extends Model> modelCls = Model.getModelCls(modelName);
         StringBuilder sql = new StringBuilder("select * from ")
             .append(modelName).append(" where seq>=0 ");
         List<Object> args = new LinkedList<Object>();
@@ -84,7 +84,7 @@ public class Dao{
             keyword = '%'+keyword+'%';
             sql.append("and (");
             boolean first = true;
-            for(Field field : Consts.LikeFields.get(modelCls)){
+            for(Field field : Model.getLikeFields(modelCls)){
                 if(!first) sql.append("or ");
                 sql.append(field.getName()).append(" like ? ");
                 args.add(keyword);
@@ -114,7 +114,7 @@ public class Dao{
         Model oldModel = get(modelCls, (Integer)model.get("autoId"));
         if(oldModel!=null){
             boolean equalOld = true;
-            for(Field field : Consts.UniqueFields.get(modelCls)){
+            for(Field field : Model.getUniqueFields(modelCls)){
                 if(field.get(oldModel).equals(field.get(model))) continue;
                 equalOld = false;
                 break;
@@ -127,7 +127,7 @@ public class Dao{
             .append(modelCls.getAnnotation(Table.class).value()).append(" where ");
         List<Object> args = new LinkedList<Object>();
         boolean first = true;
-        for (Field field : Consts.UniqueFields.get(modelCls)){
+        for (Field field : Model.getUniqueFields(modelCls)){
             if(!first) sql.append("and ");
             sql.append(field.getName()).append("=? ");
             args.add(field.get(model));
@@ -140,7 +140,7 @@ public class Dao{
             .append(modelCls.getAnnotation(Table.class).value()).append(" where ");
         List<Object> args = new LinkedList<Object>();
         int i=0;
-        for (Field field : Consts.UniqueFields.get(modelCls)){
+        for (Field field : Model.getUniqueFields(modelCls)){
             if(i!=0) sql.append("and ");
             sql.append(field.getName()).append("=? ");
             args.add(uniqueVals[i++]);
@@ -164,7 +164,7 @@ public class Dao{
     }
     public void sort(String modelName, int[] autoIds)throws Exception{
         if(ArrayUtils.isEmpty(autoIds)) return;
-        Class<? extends Model> modelCls = Consts.AllBaseModelCls.get(modelName);
+        Class<? extends Model> modelCls = Model.getModelCls(modelName);
         List<Integer> seqs = new ArrayList<Integer>(autoIds.length);
         for(int autoId : autoIds){
             Model model = get(modelCls, autoId);
@@ -218,7 +218,7 @@ public class Dao{
         }
         db.executeSQL(sql.toString(), args.toArray()).execute();
         if(params==null || params.isEmpty()) return;
-        Class<? extends Model> paramCls = Consts.AllBaseModelCls.get(modelName+"_param");
+        Class<? extends Model> paramCls = Model.getModelCls(modelName+"_param");
         Model param = paramCls.newInstance();
         if(UserParam.class==paramCls) ((UserParam)param).userAutoId = autoId;
         param.set("proAutoId", proAutoId);
@@ -268,7 +268,7 @@ public class Dao{
         }
         db.executeSQL(sql.toString(), args.toArray()).execute();
         if(ArrayUtils.isEmpty(authAutoIds)) return;
-        Class<? extends Model> authCls = Consts.AllBaseModelCls.get(modelName+"_"+authModelName);
+        Class<? extends Model> authCls = Model.getModelCls(modelName+"_"+authModelName);
         Model auth = authCls.newInstance();
         auth.set(modelName+"AutoId", autoId);
         auth.set("proAutoId", proAutoId);
@@ -295,7 +295,7 @@ public class Dao{
             authCal(authCalRst, authModelCls, modelAuthAutoIdsGet("visitor", authModelCls, proAutoId, null), "游客");
         if(userAutoId==null) return authCalRst;
         for(Class<? extends Model> authModelCls : AllAuthModelCls)
-            authCal(authCalRst, authModelCls, modelAuthAutoIdsGet(User.class, authModelCls, proAutoId, null), "");
+            authCal(authCalRst, authModelCls, modelAuthAutoIdsGet(User.class, authModelCls, proAutoId, userAutoId), "");
         return authCalRst;
     }
     private void authCal(AuthCalRst authCalRst, Class<? extends Model> authModelCls, int[] authAutoIds, String from)throws Exception{

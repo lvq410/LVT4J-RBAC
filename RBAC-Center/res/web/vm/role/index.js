@@ -22,6 +22,7 @@ function addRole() {
     $('#editRoleDiv').formData({});
     $('#accesses').empty();
     $('#permissions').empty();
+    $('.q-auth-search').val('');
     $('#editRoleDiv').slideDown(function () {
         $('#editRoleDiv').scrollToMe();
     });
@@ -49,6 +50,7 @@ function editRole(btn) {
     $('#editRoleDiv').formData(role);
     $('#accesses').html($tpl(tpl_auths)(role.accesses, 1));
     $('#permissions').html($tpl(tpl_auths)(role.permissions, 1));
+    $('.q-auth-search').val('');
     $('#editRoleDiv').slideDown(function () {
         $('#editRoleDiv').scrollToMe();
     });

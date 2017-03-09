@@ -28,7 +28,8 @@ function editUserAuth(btn) {
     $('#roles').html($tpl(tpl_auths)(user.roles, 1));
     $('#accesses').html($tpl(tpl_auths)(user.accesses, 1));
     $('#permissions').html($tpl(tpl_auths)(user.permissions, 1));
-    
+    $('.q-auth-search').val('');
+    $('.a-auth-search').val('');
     $('#editUserAuthDiv').slideDown(function () {
         $('#editUserAuthDiv').scrollToMe();
     });
@@ -45,9 +46,7 @@ function onAuthChange() {
             $('#allRoles').html($tpl(tpl_allAuths)(userAuth.allRoles));
             $('#allAccesses').html($tpl(tpl_allAuths)(userAuth.allAccesses));
             $('#allPermissions').html($tpl(tpl_allAuths)(userAuth.allPermissions));
-//            $('#allRoles').html($tpl(tpl_roles)(userAuth.allRoles, false));
-//            $('#allAccesses').html($tpl(tpl_accesses)(userAuth.allAccesses, false));
-//            $('#allPermissions').html($tpl(tpl_permissions)(userAuth.allPermissions, false));
+            $('.a-auth-search').change();
         },
         '计算用户所有权限中'
     );
@@ -77,37 +76,31 @@ function tpl_users(users) {
     if(!users) return;
     for (var i = 0; i < users.length; i++) {
         var user = users[i];
-        var params = Tarr.clone(user.params);
-        if(params.length==0) params.push({});
         /*<tr data="{Tigh(user)}" title="{Tigh(user.des)}">
             <td><div class="list-ele">{Tigh(user.id)}</div></td>
             <td><div class="list-ele">{Tigh(user.name)}</div></td>*/
             /*<td colspan="2">
-                <div class="list-ele"><table class="table table-striped table-bordered table-hover table-condensed" style="margin:0;">
-                    <tbody>
-                        */
-        for (var j = 0; j < params.length; j++) {
-            var param = params[j];
-            /*<tr>
-                <td class="msg-tooltiper" style="width:94px;">
-                    {Tigh(param.name)}
-                    <div class="tooltip-msg">
-                        <strong>key:</strong>{Tigh(param.key)}<br>
-                        {Tigh(param.des).replace(/\n/g, '<br>')}
-                    </div>
-                </td>
-                <td class="msg-tooltiper">
-                    {Tigh(param.val).replace(/\n/g, '<br>')}
-                    <div class="tooltip-msg">
-                        <strong>key:</strong>{Tigh(param.key)}<br>
-                        {Tigh(param.des).replace(/\n/g, '<br>')}
-                    </div>
-                </td>
-            </tr>*/
-        }
-        /*
-                    </tbody>
-                </table></div>
+                <div class="list-ele"><table class="table table-striped table-bordered table-hover table-condensed" style="margin:0;"><tbody>*/
+                    for (var j = 0; j < user.params.length; j++) {
+                        var param = user.params[j];
+                        /*<tr>
+                            <td class="msg-tooltiper" style="width:94px;">
+                                {Tigh(param.name)}
+                                <div class="tooltip-msg">
+                                    <strong>key:</strong>{Tigh(param.key)}<br>
+                                    {Tigh(param.des).replace(/\n/g, '<br>')}
+                                </div>
+                            </td>
+                            <td class="msg-tooltiper">
+                                {Tigh(param.val).replace(/\n/g, '<br>')}
+                                <div class="tooltip-msg">
+                                    <strong>key:</strong>{Tigh(param.key)}<br>
+                                    {Tigh(param.des).replace(/\n/g, '<br>')}
+                                </div>
+                            </td>
+                        </tr>*/
+                    }
+            /*</tbody></table></div>
             </td>*/
             /*<td><div class="list-ele">{$tpl(tpl_auths)(user.roles, 0)}</div></td>
             <td><div class="list-ele">{$tpl(tpl_auths)(user.accesses, 0)}</div></td>
