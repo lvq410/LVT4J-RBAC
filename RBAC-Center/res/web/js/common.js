@@ -133,7 +133,7 @@ function tpl_auths(auths, type) {
     for (var i = 0; i < auths.length; i++) {
         var auth = auths[i];
         /*<span data="{Tigh(auth)}" class="badge badge-{getBadge(auth.autoId)} msg-tooltiper" style="cursor:{cursor};"*/
-            if(type==2){/* title="点我选择" onclick="widget_auth_choose(this)"*/}/*>*/
+            if(type==2){/* onclick="widget_auth_choose(this)"*/}/*>*/
             /*<span class="auth-name">{Tigh(auth.name)}</span>*/
             if(type==1) {
                 /*<input name data-type="int" value="{Tigh(auth.autoId)}" type="hidden"/>

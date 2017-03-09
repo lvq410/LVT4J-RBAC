@@ -92,10 +92,8 @@
             <table class="table table-striped table-bordered table-hover table-condensed" style="margin-bottom:0;">
                 <thead>
                     <tr>
-                        <td style="width:150px;">权限来自</td>
-                        <td>
-                            权限
-                            <input type="text" class="a-auth-search" onkeyup="all_auth_search(this)" onchange="all_auth_search(this)" style="height:22px;" placeholder="搜索">
+                        <td style="width:150px;">来自</td>
+                        <td><input type="text" class="a-auth-search" onkeyup="all_auth_search(this)" onchange="all_auth_search(this)" style="height:22px;" placeholder="搜索">
                         </td>
                     </tr>
                 </thead>
@@ -120,10 +118,8 @@
             <table class="table table-striped table-bordered table-hover table-condensed" style="margin-bottom:0;">
                 <thead>
                     <tr>
-                        <td style="width:150px;">权限来自</td>
-                        <td>
-                            权限
-                            <input type="text" class="a-auth-search" onkeyup="all_auth_search(this)" onchange="all_auth_search(this)" style="height:22px;" placeholder="搜索">
+                        <td style="width:150px;">来自</td>
+                        <td><input type="text" class="a-auth-search" onkeyup="all_auth_search(this)" onchange="all_auth_search(this)" style="height:22px;" placeholder="搜索">
                         </td>
                     </tr>
                 </thead>
@@ -148,10 +144,8 @@
             <table class="table table-striped table-bordered table-hover table-condensed" style="margin-bottom:0;">
                 <thead>
                     <tr>
-                        <td style="width:150px;">权限来自</td>
-                        <td>
-                            权限
-                            <input type="text" class="a-auth-search" onkeyup="all_auth_search(this)" onchange="all_auth_search(this)" style="height:22px;" placeholder="搜索">
+                        <td style="width:150px;">来自</td>
+                        <td><input type="text" class="a-auth-search" onkeyup="all_auth_search(this)" onchange="all_auth_search(this)" style="height:22px;" placeholder="搜索">
                         </td>
                     </tr>
                 </thead>
