@@ -1,4 +1,5 @@
 apply plugin: 'java'
+apply plugin: 'eclipse'
 
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
@@ -27,12 +28,9 @@ jar {
     from sourceSets.main.allSource
 }
 
-uploadArchives {
-    repositories {
-       flatDir {
-           dirs 'repos'
-       }
-    }
+repositories {
+    jcenter()
+    mavenCentral()
 }
 
 dependencies {
@@ -40,4 +38,10 @@ dependencies {
     compile('org.springframework:spring-webmvc:2.0'){
         exclude module: '*'
     }
+}
+
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+compileJava {
+    options.bootClasspath = "$System.env.JAVA_HOME/jre/lib/rt.jar"
+    options.bootClasspath += "$File.pathSeparator$System.env.JAVA_HOME/jre/lib/jce.jar"
 }

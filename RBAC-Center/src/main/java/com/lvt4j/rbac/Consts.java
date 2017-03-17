@@ -21,20 +21,17 @@ public class Consts {
     public static final File AppFolder = new File(System.getProperty("user.dir"));
     /** config文件夹 */
     public static final File ConfFolder = new File(AppFolder, "config");
-    /** res文件夹 */
-    public static final File ResFolder = new File(AppFolder, "res");
+    /** web文件夹 */
+    public static final File WebFolder = new File(AppFolder, "web");
+    /** vm文件夹 */
+    public static final File VMFolder = new File(WebFolder, "vm");
     
     
-    /** 数据库文件名 */
-    public static final String DBFileName = "rbac.db";
     public static TDB DB;
     public static Dao Dao;
     
     public static final Class<?>[] SupportHandlerMethodTypes = new Class<?>[]{
         JSONObject.class, TPager.class, String[].class, int[].class};
-    
-    /** velocity的模板文件相对路径 */
-    public static final String VelocityTplContextPath = "web/vm/";
     
     /** 各种错误码 */
     public static final class ErrCode{

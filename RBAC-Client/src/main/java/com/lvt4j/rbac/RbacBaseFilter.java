@@ -27,6 +27,11 @@ abstract class RbacBaseFilter {
     
     protected AbstractProductAuth productAuth;
     
+    /** 清除已缓存的用户权限信息 */
+    public void clearCache(){
+        productAuth.clear();
+    }
+    
     /** 至少需要实现用户ID获取的方法,若用户未登陆,返回null */
     protected abstract String getUserId(HttpServletRequest request, HttpServletResponse response);
     

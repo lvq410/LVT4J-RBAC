@@ -70,8 +70,9 @@ public abstract class RbacInterceptor extends RbacBaseFilter implements HandlerI
         Class<?> handlerCls = handleObject.getClass();
         if(!"org.springframework.web.method.HandlerMethod".equals(handlerCls.getName())) return false;
         try{
-            Method method = handlerCls.getDeclaredMethod("hasMethodAnnotation", Class.class);
-            return (Boolean)method.invoke(handleObject, RbacIgnore.class);
+            Method method = handlerCls.getDeclaredMethod("getMethodAnnotation", Class.class);
+            RbacIgnore rbacIgnore = (RbacIgnore)method.invoke(handleObject, RbacIgnore.class);
+            return rbacIgnore!=null;
         }catch(Exception ingore){}
         return false;
     }

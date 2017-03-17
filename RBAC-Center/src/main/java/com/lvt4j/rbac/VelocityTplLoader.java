@@ -1,15 +1,12 @@
-/**
- * @(#)VelocityTplLoader.java, 2017年3月4日. 
- * 
- * Copyright 2017 Yodao, Inc. All rights reserved.
- * YODAO PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
- */
 package com.lvt4j.rbac;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+
+import lombok.extern.slf4j.Slf4j;
 
 import org.apache.commons.collections.ExtendedProperties;
 import org.apache.velocity.exception.ResourceNotFoundException;
@@ -19,6 +16,7 @@ import org.apache.velocity.runtime.resource.loader.ResourceLoader;
 /**
  * @author LV
  */
+@Slf4j
 public class VelocityTplLoader extends ResourceLoader{
 
     private static final ClassLoader ClassLoader = VelocityTplLoader.class.getClassLoader();
@@ -30,27 +28,34 @@ public class VelocityTplLoader extends ResourceLoader{
             throws ResourceNotFoundException {
         InputStream is = ClassLoader.getResourceAsStream(source);
         if(is!=null) return is;
-        if(source.charAt(0)=='/') source = source.substring(1);
-        source = Consts.VelocityTplContextPath+source;
-        is = ClassLoader.getResourceAsStream(source);
-        if(is!=null) return is;
-        File file = new File(Consts.ResFolder, source);
-        if(!file.exists()) return null;
+        if(!source.isEmpty() && source.charAt(0)=='/') source = source.substring(1);
+        File vmFile = new File(Consts.VMFolder, source);
         try{
-            return new FileInputStream(file);
-        }catch(FileNotFoundException ignore){
-            return null;
+            return new FileInputStream(vmFile);
+        }catch(FileNotFoundException e){
+            log.error("无法加载vm资源:{}", source, e);
+            return load404();
         }
     }
 
+    private InputStream load404() {
+        File vmFile = new File(Consts.VMFolder, "404.vm");
+        try{
+            return new FileInputStream(vmFile);
+        }catch(FileNotFoundException e){
+            log.error("无法加载404.vm", e);
+            return new ByteArrayInputStream("404".getBytes());
+        }
+    }
+    
     @Override
     public boolean isSourceModified(Resource resource) {
-        return Config.isDebug;
+        return true;
     }
 
     @Override
     public long getLastModified(Resource resource) {
-        return Config.isDebug?System.currentTimeMillis():0;
+        return System.currentTimeMillis();
     }
 
 }

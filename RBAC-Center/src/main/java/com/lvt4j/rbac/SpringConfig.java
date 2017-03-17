@@ -1,6 +1,5 @@
 package com.lvt4j.rbac;
 
-import java.io.File;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.sql.DataSource;
@@ -33,7 +32,7 @@ public class SpringConfig extends WebMvcConfigurerAdapter {
     @Bean
     public SQLiteDataSource dataSource() throws Throwable {
         SQLiteDataSource dataSource = new SQLiteDataSource();
-        dataSource.setUrl("jdbc:sqlite:"+Consts.DBFileName);
+        dataSource.setUrl("jdbc:sqlite:rbac.db");
         dataSource.setEnforceForeignKeys(true);
         dataSource.setIncrementalVacuum(10);
         return dataSource;
@@ -42,7 +41,6 @@ public class SpringConfig extends WebMvcConfigurerAdapter {
     @Bean
     public TDB db(@Autowired DataSource dataSource) {
         TDB db = new TDB(dataSource);
-        if(Config.isDebug) db.openPrintSQL();
         Consts.DB = db;
         return db;
     }
@@ -78,8 +76,7 @@ public class SpringConfig extends WebMvcConfigurerAdapter {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/**").addResourceLocations(
-                "classpath:web/",
-                new File(Consts.ResFolder, "web").toURI().toString());
+                Consts.WebFolder.toURI().toString());
     }
     
 }

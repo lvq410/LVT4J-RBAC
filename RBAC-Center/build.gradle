@@ -1,25 +1,22 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.4.2.RELEASE")
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
 apply plugin: 'org.springframework.boot'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
-compileJava {
-    options.bootClasspath = "$System.env.JAVA_HOME/jre/lib/rt.jar"
-    options.bootClasspath += "$File.pathSeparator$System.env.JAVA_HOME/jre/lib/jce.jar"
-}
-
-File appFolder = project.projectDir
-
-jar {
-    baseName 'rbac-center'
-    archiveName 'rbac-center.jar'
-    version version
-    manifest {
-        attributes 'Implementation-Title': 'RBAC-CENTER',
-                   'Implementation-Version': version
-    }
-    from sourceSets.main.allSource
+tasks.withType(JavaCompile) {    
+    options.encoding = 'UTF-8'  
 }
 
 sourceSets {
@@ -27,22 +24,26 @@ sourceSets {
         java {
             srcDir 'src/main/java'
         }
-        resources {
-            srcDir 'res'
-        }
     }
-    eclipse {
+    test {
         java {
-            srcDir 'src/main/java'
             srcDir 'src/test/java'
         }
     }
 }
 
-eclipse {
-    classpath {
-        sourceSets = [sourceSets.eclipse] 
+jar {
+    baseName 'rbac-center'
+    archiveName 'rbac-center.jar'
+    version ''
+    manifest {
+        attributes 'Implementation-Title': 'RBAC-CENTER'
     }
+}
+
+repositories {
+    jcenter()
+    mavenCentral()
 }
 
 dependencies {
@@ -68,17 +69,8 @@ dependencies {
     compile group: 'org.xerial', name: 'sqlite-jdbc', version: '3.16.1'
 }
 
-task configDev(type: Copy) {
-    from "config/dev/application.properties"
-    into "config"
-}
-task configRelease(type: Copy) {
-    copy{
-        from "config/release/application.properties"
-        into "config"
-    }
-    copy{
-        from 'config/release/application.properties'
-        into 'res/config/release'
-    }
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+compileJava {
+    options.bootClasspath = "$System.env.JAVA_HOME/jre/lib/rt.jar"
+    options.bootClasspath += "$File.pathSeparator$System.env.JAVA_HOME/jre/lib/jce.jar"
 }

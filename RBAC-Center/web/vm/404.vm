@@ -1,0 +1,10 @@
+#set($navs=['首页'])
+#set($pageDesc='404')
+#parse('/header.vm')
+<div class="row">
+    <div class="col-xs-12">
+        <span class="blue bigger-300">404</span>
+        <h3>请求的地址<strong>$rc.getRequestUri()</strong>无效</h3>
+    </div>
+</div>
+#parse('/footer.vm')
