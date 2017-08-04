@@ -1,5 +1,7 @@
 #概述
+
 LVT4J-RBAC是以RBAC(role-based access control,基于角色的权限控制)为核心思想制作的权限管理系统。
+
 #特点
 LVT4J-RBAC的使用方式不是高度集成到需要权限控制的项目中，而是建立一个权限控制的中心服务，其他项目通过引入一个客户端或者调用中心服务的RESTfull接口来查询和控制用户的权限。
 #名词约定
@@ -61,6 +63,8 @@ Spring配置
 &lt;property name="rbacCenterSyncTimeout" value="200"/&gt;
 </pre>
 
+
+
 ####或者使用Javax.servlet的`Filter`
 RBAC-Client可使用`javax.servlet.Filter`的方式来拦截用户访问和注入用户权限信息。要使用RBAC-Client，需要继承`com.lvt4j.rbac.RbacFilter`类，并实现其方法`getUserId`。
 <pre>
@@ -118,7 +122,7 @@ web.xml配置
 &lt;/init-param&gt;
 </pre>
 ####用户权限POJO
-使用以上两种方式后，若用户通过验证，会向`request`的`attribute`里写入`key`为`rbac`的用户权限POJO，该POJO提供以下属性及方法
+使用以上两种方式后，若用户通过验证，会向`request`的`attribute`里写入`key`为`UserAuth.ReqAttr(rbac)`的用户权限POJO，该POJO提供以下属性及方法
 <pre>
 /** 用户ID */
 public String userId;
@@ -138,6 +142,8 @@ public boolean allowAccess(String uri) {}
 /** 用户是否有指定授权项的权限 */
 public boolean permit(String permissionId) {}
 </pre>
+#####获取方法
+
 ####更多控制
 以上两种方式默认游客可以访问产品，以及在用户无权访问某URI时会返回比较简单的提示信息。若要改变该规则，参考如下。
 #####未登录
@@ -161,10 +167,11 @@ protected boolean onNotAllowAccess(HttpServletRequest request,
  }
 </pre>
 #####授权项
-对当前请求用户的授权项控制需要在各业务代码里来实现，通过调用RBAC-Client写入在`request`的`attribute`里的参数`rbac`
+对当前请求用户的授权项控制需要在各业务代码里来实现，通过调用RBAC-Client写入在`request`的`attribute`里的参数`UserAuth.ReqAttr`
 <pre>
 //如判断用户是否有转账权限
-if(request.getAttribute("rbac").permit("transfer_accounts")){
+UserAuth
+if(request.getAttribute(UserAuth.ReqAttr).permit("transfer_accounts")){
 	//有权限的处理
 }
 </pre>
