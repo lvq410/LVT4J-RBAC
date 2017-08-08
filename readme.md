@@ -1,5 +1,5 @@
 # 概述
-LVT4J-RBAC是以RBAC(role-based access control,基于角色的权限控制)为核心思想制作的权限管理系统。
+LVT4J-RBAC是以RBAC(role-based access control,基于角色的权限控制)为核心思想制作的权限管理系统。适用于在一个封闭的企业环境内有多个项目产品需要进行人员权限管理时的情况。
 # 特点
 LVT4J-RBAC的使用方式不是高度集成到需要权限控制的项目中，而是建立一个权限控制的中心服务，其他项目通过引入一个客户端或者调用中心服务的RESTfull接口来查询和控制用户的权限。
 # 名词约定
@@ -20,10 +20,11 @@ LVT4J-RBAC的使用方式不是高度集成到需要权限控制的项目中，�
 
 # 使用方法
 ## 启动授权中心
+依赖:JAVA1.8+、gradle
 ```shell
 git clone git@github.com:lvq410/LVT4J-RBAC.git 'rbac'
 cd ./rbac/RBAC-Center
-#如果要修改端口号
+#如果要修改端口号及管理员账号密码
 #vim ./config/application.properties
 sh ./run/start.sh
 ```
@@ -33,7 +34,7 @@ sh ./run/start.sh
 #### 加入client的jar依赖
 **TODO**
 #### 使用Spring的`HandlerInterceptor`
-RBAC-Client可使用`org.springframework.web.servlet.HandlerInterceptor`的方式来拦截用户访问和注入用户权限信息。要使用RBAC-Client，需要继承`com.lvt4j.rbac.RbacInterceptor`类，并实现其方法`getUserId`，同时配置文件中声明其产品ID。
+RBAC-Client可使用`org.springframework.web.servlet.HandlerInterceptor`的方式来拦截用户访问和注入用户权限信息。要使用该方法，需要继承`com.lvt4j.rbac.RbacInterceptor`类，并实现其方法`getUserId`，同时配置文件中声明其产品ID。
 ```java
 public class ExampleInterceptor extends RbacInterceptor {
     @Override
@@ -67,18 +68,18 @@ Spring配置
 </mvc:interceptor>
 ```
 ##### Spring Interceptor的特殊控制
-基于于Spring-MVC框架丰富的特性，提供了一些特殊的权限控制方式
+基于Spring-MVC框架丰富的特性，提供了一些特殊的权限控制方式
 ###### 注解 `@RbacIgnore`
 对于系统内某些资源，有时候不想让其纳入权限控制中，一个办法是将该资源在访问项中配置，并分配给游客。但如果这种资源很多，一个一个加会很麻烦。`@RbacIgnore`注解的作用是当该注解配置在controller(或者controller的handlemethod上)时，该controller下的所有handlemethod(或指定的handlemethod)控制的资源都不会被权限控制所限制，任何人都可以访问。
 ###### 注解 `@RegisteredIgnore`
 对于系统内某些资源，有时只想让已在权限中心注册的用户可访问。一个办法是将该资源在访问项中配置，并挨个分配给用户。但，一个个分配会比较麻烦。`@RegisteredIgnore`注解的作用是当该注解配置在controller(或者controller的handlemethod上)时，该controller下的所有handlemethod(或指定的handlemethod)控制的资源在对于已在权限中心注册的用户都可访问，无需进行访问项，授权项等的验证操作。
 ###### 注解 `@PermissionNeed`
-有时对于某些资源的访问想要采用不仅仅是访问项的控制方式，而是增加授权项的控制时，可以使用注解 `@PermissionNeed`。作用是配置在controller(或者controller的handlemethod上)，该controller下的所有handlemethod(或指定的handlemethod)控制的资源需要指定的授权项才能访问,若有多个授权项,满足其中一个即可。
+有时对于某些资源的访问想要采用不仅仅是访问项的控制方式，而是同时也要增加授权项的控制时，可以使用注解 `@PermissionNeed`。作用是配置在controller(或者controller的handlemethod上)，该controller下的所有handlemethod(或指定的handlemethod)控制的资源需要指定的授权项才能访问,若有多个授权项,满足其中一个即可。
 ##### 使用Spring Interceptor的权限控制流程图
 ![Spring Interceptor的权限控制流程图](https://raw.githubusercontent.com/lvq410/LVT4J-RBAC/master/readme/RbacInterceptor-flowchart.png)
 
 #### 或者使用Javax.servlet的`Filter`
-RBAC-Client可使用`javax.servlet.Filter`的方式来拦截用户访问和注入用户权限信息。要使用RBAC-Client，需要继承`com.lvt4j.rbac.RbacFilter`类，并实现其方法`getUserId`。
+RBAC-Client可使用`javax.servlet.Filter`的方式来拦截用户访问和注入用户权限信息。要使用该方法，需要继承`com.lvt4j.rbac.RbacFilter`类，并实现其方法`getUserId`。
 ```java
 public class ExampleFilter extends RbacFilter {
     @Override
@@ -164,7 +165,7 @@ protected boolean onNotAllowAccess(HttpServletRequest request,
 //如判断用户是否有转账权限
 UserAuth userAuth = request.getAttribute(UserAuth.ReqAttr);
 if(userAuth.permit("transfer_accounts")){
-	//有权限的处理
+    //有权限的处理
 }
 ```
 ##### 其它
@@ -175,8 +176,12 @@ Spring Intercepter提供了其他一些处理，参见Spring Intercepter的流�
 ```java
 //创建client端
 ProductAuth4Client productAuth = new ProductAuth4Client("examplePro", "127.0.0.1:80");
-//获取用户权限pojo
-UserAuth userAuth = productAuth.getUserAuth("userId")
+//判断用户是否有权限访问指定uri
+productAuth.allowAccess("userId","uri");
+//判断用户是否有指定授权项的权限
+productAuth.permit("userId","permissionId");
+//或者获取用户权限pojo
+UserAuth userAuth = productAuth.getUserAuth("userId");
 //不用时销毁
 productAuth.destory();
 ```
