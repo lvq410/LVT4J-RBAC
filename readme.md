@@ -75,7 +75,7 @@ Spring配置
 ###### 注解 `@PermissionNeed`
 有时对于某些资源的访问想要采用不仅仅是访问项的控制方式，而是增加授权项的控制时，可以使用注解 `@PermissionNeed`。作用是配置在controller(或者controller的handlemethod上)，该controller下的所有handlemethod(或指定的handlemethod)控制的资源需要指定的授权项才能访问,若有多个授权项,满足其中一个即可。
 ##### 使用Spring Interceptor的权限控制流程图
-![Spring Interceptor的权限控制流程图](https://raw.githubusercontent.com/lvq410/LVT4J-RBAC/master/readme/RbacFilter-flowchart.svg)
+![Spring Interceptor的权限控制流程图](https://raw.githubusercontent.com/lvq410/LVT4J-RBAC/master/readme/RbacInterceptor-flowchart.png)
 
 #### 或者使用Javax.servlet的`Filter`
 RBAC-Client可使用`javax.servlet.Filter`的方式来拦截用户访问和注入用户权限信息。要使用RBAC-Client，需要继承`com.lvt4j.rbac.RbacFilter`类，并实现其方法`getUserId`。
@@ -134,6 +134,7 @@ web.xml配置
 </filter-mapping>
 ```
 ##### 使用Javax.servlet的`Filter`的权限控制流程图
+![Filter的权限控制流程图](https://raw.githubusercontent.com/lvq410/LVT4J-RBAC/master/readme/RbacFilter-flowchart.png)
 
 #### 更多控制
 以上两种方式默认游客可以访问产品，以及在用户无权访问某URI时会返回比较简单的提示信息。若要改变该规则，参考如下。
