@@ -14,5 +14,6 @@ public class Consts {
     
     /** app根文件夹 */
     public static final File AppFolder = new File(System.getProperty("user.dir"));
-    
+    /** config文件夹 */
+    public static final File ConfFolder = new File(Consts.AppFolder, "config");
 }

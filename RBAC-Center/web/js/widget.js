@@ -79,7 +79,7 @@ function widget_select2_init() {
                         keyword : params.term,
                         pager : JSON.stringify({pageNo : params.page})
                     };
-                    if(curPro) data.proId = curPro.id;
+                    if(curPro) data.proAutoId = curPro.autoId;
                     return data;
                 },
                 processResults: function (rst, params) {

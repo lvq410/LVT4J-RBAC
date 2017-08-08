@@ -21,6 +21,10 @@ public class UserAuth implements Serializable{
     
     /** 用户ID */
     public String userId;
+    /** 用户名称 */
+    public String userName;
+    /** 用户描述 */
+    public String userDes;
     /** 用户在授权中心是否存在 */
     public boolean exist;
     /** 用户的所有配置项 */
@@ -65,9 +69,25 @@ public class UserAuth implements Serializable{
     }
     
     public String getUserId(){return userId;}
+    public String getUserName(){return userName;}
+    public String getUserDes(){return userDes;}
     public boolean isExist(){return exist;}
     public Map<String, String> getParams(){return params;}
     public Set<String> getRoles(){return roles;}
     public Set<String> getAccesses(){return accesses;}
     public Set<String> getPermissions(){return permissions;}
+    
+    @Override
+    public String toString(){
+        StringBuilder str = new StringBuilder();
+        str.append("userId:").append(userId).append('\n')
+            .append("userName:").append(userName).append('\n')
+            .append("userDes:").append(userDes).append('\n')
+            .append("exist:").append(exist).append('\n')
+            .append("params:").append(params).append('\n')
+            .append("roles:").append(roles).append('\n')
+            .append("accesses:").append(accesses).append('\n')
+            .append("permissions:").append(permissions);
+        return str.toString();
+    }
 }

@@ -12,7 +12,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.zip.GZIPInputStream;
 
-class ProductAuth4Client extends AbstractProductAuth{
+public class ProductAuth4Client extends AbstractProductAuth{
 
     /** 产品同步的接口路径 */
     private static final String Path_ProLastModify = "/inner/proLastModify";
@@ -59,6 +59,11 @@ class ProductAuth4Client extends AbstractProductAuth{
         rbacCenterSyncTimer = new Timer();
         rbacCenterSyncTimer.schedule(rbacCenterSync, 0, rbacCenterSyncInterval*60*1000);
         RbacCenterSyncTimeout = rbacCenterSyncTimeout;
+    }
+    public ProductAuth4Client(String proId, String rbacCenterAddr){
+        this(proId, RbacBaseFilter.CacheCapacityDef,
+                RbacBaseFilter.RbacCenterProtocolDef, rbacCenterAddr,
+                RbacBaseFilter.RbacCenterSyncIntervalDef, RbacBaseFilter.RbacCenterSyncTimeoutDef);
     }
 
     @Override

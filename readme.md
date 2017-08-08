@@ -20,10 +20,16 @@ LVT4J-RBAC的使用方式不是高度集成到需要权限控制的项目中，�
 
 # 使用方法
 ## 启动授权中心
-**TODO**
+```shell
+git clone git@github.com:lvq410/LVT4J-RBAC.git 'rbac'
+cd ./rbac/RBAC-Center
+#如果要修改端口号
+#vim ./config/application.properties
+sh ./run/start.sh
+```
 ## 接入授权中心
-注意LVT4J-RBAC并不负责处理计算用户ID，因此查询用户权限需要各项目自己提供用户的ID
-### 引入RBAC-Client的jar包
+注意LVT4J-RBAC并不负责处理计算用户ID，因此查询用户权限需各项目自己提供用户的ID
+### 使用RBAC-Client的jar包方式
 #### 加入client的jar依赖
 **TODO**
 #### 使用Spring的`HandlerInterceptor`
@@ -37,45 +43,42 @@ public class ExampleInterceptor extends RbacInterceptor {
     }
 }
 ```
-
-<pre>
-public class ExampleInterceptor extends RbacInterceptor {
-    @Override
-    protected String getUserId(HttpServletRequest request,
-            HttpServletResponse response) {
-        return null;//返回用户的ID，若用户未登录，返回null即可
-    }
-}
-</pre>
 Spring配置
-<pre>
-&lt;mvc:interceptor&gt;
-    &lt;mvc:mapping path="/**"/&gt;
-    &lt;bean class="ExampleInterceptor"&gt;
-        &lt;!-- 在授权中心注册的产品ID,会使用该产品下信息进行验权 --&gt;
-        &lt;property name="proId" value="exampleProId"/&gt;
-    &lt;/bean&gt;
-&lt;/mvc:interceptor&gt;
+```xml
+<mvc:interceptor>
+    <mvc:mapping path="/**"/>
+    <bean class="ExampleInterceptor">
+        <!-- 在授权中心注册的产品ID,会使用该产品下信息进行验权 -->
+        <property name="proId" value="exampleProId"/>
 
-&lt;!-- 除了proId必填外，还提供了以下可选配置 --&gt;
-
-&lt;!-- 最大为多少用户缓存权限,默认1000个 --&gt;
-&lt;property name="cacheCapacity" value="1000"/&gt;
-&lt;!-- 与授权中心同步使用的协议,默认http --&gt;
-&lt;property name="rbacCenterProtocol" value="http"/&gt;
-&lt;!-- 授权中心服务地址,[host](:[port])形式,默认127.0.0.1:80 --&gt;
-&lt;property name="rbacCenterAddr" value="127.0.0.1:80"/&gt;
-&lt;!-- 与授权中心服务同步时间间隔,单位分钟,默认5分钟 --&gt;
-&lt;property name="rbacCenterSyncInterval" value="5"/&gt;
-&lt;!-- 与授权中心同步超时时间,单位毫秒,默认200ms --&gt;
-&lt;property name="rbacCenterSyncTimeout" value="200"/&gt;
-</pre>
-
-
+        <!-- 除了proId必填外，还提供了以下可选配置 -->
+        
+        <!-- 最大为多少用户缓存权限,默认1000个 -->
+        <property name="cacheCapacity" value="1000"/>
+        <!-- 与授权中心同步使用的协议,默认http -->
+        <property name="rbacCenterProtocol" value="http"/>
+        <!-- 授权中心服务地址,[host](:[port])形式,默认127.0.0.1:80 -->
+        <property name="rbacCenterAddr" value="127.0.0.1:80"/>
+        <!-- 与授权中心服务同步时间间隔,单位分钟,默认5分钟 -->
+        <property name="rbacCenterSyncInterval" value="5"/>
+        <!-- 与授权中心同步超时时间,单位毫秒,默认200ms -->
+        <property name="rbacCenterSyncTimeout" value="200"/>
+    </bean>
+</mvc:interceptor>
+```
+##### Spring Interceptor的特殊控制
+基于于Spring-MVC框架丰富的特性，提供了一些特殊的权限控制方式
+###### 注解 `@RbacIgnore`
+对于系统内某些资源，有时候不想让其纳入权限控制中，一个办法是将该资源在访问项中配置，并分配给游客。但如果这种资源很多，一个一个加会很麻烦。`@RbacIgnore`注解的作用是当该注解配置在controller(或者controller的handlemethod上)时，该controller下的所有handlemethod(或指定的handlemethod)控制的资源都不会被权限控制所限制，任何人都可以访问。
+###### 注解 `@RegisteredIgnore`
+对于系统内某些资源，有时只想让已在权限中心注册的用户可访问。一个办法是将该资源在访问项中配置，并挨个分配给用户。但，一个个分配会比较麻烦。`@RegisteredIgnore`注解的作用是当该注解配置在controller(或者controller的handlemethod上)时，该controller下的所有handlemethod(或指定的handlemethod)控制的资源在对于已在权限中心注册的用户都可访问，无需进行访问项，授权项等的验证操作。
+###### 注解 `@PermissionNeed`
+有时对于某些资源的访问想要采用不仅仅是访问项的控制方式，而是增加授权项的控制时，可以使用注解 `@PermissionNeed`。作用是配置在controller(或者controller的handlemethod上)，该controller下的所有handlemethod(或指定的handlemethod)控制的资源需要指定的授权项才能访问,若有多个授权项,满足其中一个即可。
+##### 使用Spring Interceptor的权限控制流程图
 
 #### 或者使用Javax.servlet的`Filter`
 RBAC-Client可使用`javax.servlet.Filter`的方式来拦截用户访问和注入用户权限信息。要使用RBAC-Client，需要继承`com.lvt4j.rbac.RbacFilter`类，并实现其方法`getUserId`。
-<pre>
+```java
 public class ExampleFilter extends RbacFilter {
     @Override
     protected String getUserId(HttpServletRequest request,
@@ -83,80 +86,59 @@ public class ExampleFilter extends RbacFilter {
         return null;//返回用户的ID，若用户未登录，返回null即可
     }
 }
-</pre>
+```
 web.xml配置
-<pre>
-&lt;filter&gt;
-    &lt;filter-name&gt;rbacfilter&lt;/filter-name&gt;
-    &lt;display-name&gt;rbacfilter&lt;/display-name&gt;
-    &lt;filter-class&gt;ExampleFilter&lt;/filter-class&gt;
-    &lt;!-- 在授权中心注册的产品ID,会使用该产品下信息进行验权 --&gt;
-    &lt;init-param&gt;
-        &lt;param-name&gt;proId&lt;/param-name&gt;
-        &lt;param-value&gt;exampleProId&lt;/param-value&gt;
-    &lt;/init-param&gt;
-&lt;/filter&gt;
-&lt;filter-mapping&gt;
-    &lt;filter-name&gt;rbacfilter&lt;/filter-name&gt;
-    &lt;url-pattern&gt;/*&lt;/url-pattern&gt;
-&lt;/filter-mapping&gt;
+```xml
+<filter>
+    <filter-name>rbacfilter</filter-name>
+    <display-name>rbacfilter</display-name>
+    <filter-class>ExampleFilter</filter-class>
+    <!-- 在授权中心注册的产品ID,会使用该产品下信息进行验权 -->
+    <init-param>
+        <param-name>proId</param-name>
+        <param-value>exampleProId</param-value>
+    </init-param>
 
-&lt;!-- 与Spring配置类似，除了proId必填外，还提供了以下可选配置 --&gt;
+    <!-- 与Spring配置类似，除了proId必填外，还提供了以下可选配置 -->
 
-&lt;!-- 最大为多少用户缓存权限,默认1000个 --&gt;
-&lt;init-param&gt;
-    &lt;param-name&gt;cacheCapacity&lt;/param-name&gt;
-    &lt;param-value&gt;1000&lt;/param-value&gt;
-&lt;/init-param&gt;
-&lt;!-- 与授权中心同步使用的协议,默认http --&gt;
-&lt;init-param&gt;
-    &lt;param-name&gt;rbacCenterProtocol&lt;/param-name&gt;
-    &lt;param-value&gt;http&lt;/param-value&gt;
-&lt;/init-param&gt;
-&lt;!-- 授权中心服务地址,[host](:[port])形式,默认127.0.0.1:80 --&gt;
-&lt;init-param&gt;
-    &lt;param-name&gt;rbacCenterAddr&lt;/param-name&gt;
-    &lt;param-value&gt;127.0.0.1:80&lt;/param-value&gt;
-&lt;/init-param&gt;
-&lt;!-- 与授权中心服务同步时间间隔,单位分钟,默认5分钟 --&gt;
-&lt;init-param&gt;
-    &lt;param-name&gt;rbacCenterSyncInterval&lt;/param-name&gt;
-    &lt;param-value&gt;5&lt;/param-value&gt;
-&lt;/init-param&gt;
-&lt;!-- 与授权中心同步超时时间,单位毫秒,默认200ms --&gt;
-&lt;init-param&gt;
-    &lt;param-name&gt;rbacCenterSyncTimeout&lt;/param-name&gt;
-    &lt;param-value&gt;200&lt;/param-value&gt;
-&lt;/init-param&gt;
-</pre>
-#### 用户权限POJO
-使用以上两种方式后，若用户通过验证，会向`request`的`attribute`里写入`key`为`UserAuth.ReqAttr(rbac)`的用户权限POJO，该POJO提供以下属性及方法
-<pre>
-/** 用户ID */
-public String userId;
-/** 用户在授权中心是否存在 */
-public boolean exist;
-/** 用户的所有配置项 */
-public Map&lt;String, String&gt; params;
-/** 用户的所有角色 */
-public Set&lt;String&gt; roles;
-/** 用户的所有访问项 */
-public Set&lt;String&gt; accesses;
-/** 用户的所有授权项 */
-public Set&lt;String&gt; permissions;
-
-/** 用户是否有权限访问指定uri */
-public boolean allowAccess(String uri) {}
-/** 用户是否有指定授权项的权限 */
-public boolean permit(String permissionId) {}
-</pre>
-##### 获取方法
+    <!-- 最大为多少用户缓存权限,默认1000个 -->
+    <init-param>
+        <param-name>cacheCapacity</param-name>
+        <param-value>1000</param-value>
+    </init-param>
+    <!-- 与授权中心同步使用的协议,默认http -->
+    <init-param>
+        <param-name>rbacCenterProtocol</param-name>
+        <param-value>http</param-value>
+    </init-param>
+    <!-- 授权中心服务地址,[host](:[port])形式,默认127.0.0.1:80 -->
+    <init-param>
+        <param-name>rbacCenterAddr</param-name>
+        <param-value>127.0.0.1:80</param-value>
+    </init-param>
+    <!-- 与授权中心服务同步时间间隔,单位分钟,默认5分钟 -->
+    <init-param>
+        <param-name>rbacCenterSyncInterval</param-name>
+        <param-value>5</param-value>
+    </init-param>
+    <!-- 与授权中心同步超时时间,单位毫秒,默认200ms -->
+    <init-param>
+        <param-name>rbacCenterSyncTimeout</param-name>
+        <param-value>200</param-value>
+    </init-param>
+</filter>
+<filter-mapping>
+    <filter-name>rbacfilter</filter-name>
+    <url-pattern>/*</url-pattern>
+</filter-mapping>
+```
+##### 使用Javax.servlet的`Filter`的权限控制流程图
 
 #### 更多控制
 以上两种方式默认游客可以访问产品，以及在用户无权访问某URI时会返回比较简单的提示信息。若要改变该规则，参考如下。
 ##### 未登录
 要改变游客默认可访问产品的规则及自定义不能访问时的提示信息时，重写`com.lvt4j.rbac.RbacInterceptor`或`com.lvt4j.rbac.RbacFilter`的`onNotLogin()`方法
-<pre>
+```java
 //游客可继续访问返回true,拦截返回false
 protected boolean onNotLogin(HttpServletRequest request,
         HttpServletResponse response) throws IOException {
@@ -164,30 +146,74 @@ protected boolean onNotLogin(HttpServletRequest request,
     //则返回false并向response中写入提示信息
     return true;
 }
-</pre>
-#####无权访问
+```
+##### 无权访问
 要自定义用户无权访问时的提示信息时，重写`com.lvt4j.rbac.RbacInterceptor`或`com.lvt4j.rbac.RbacFilter`的`onNotAllowAccess()`方法
-<pre>
+```java
 protected boolean onNotAllowAccess(HttpServletRequest request,
         HttpServletResponse response) throws IOException {
     //向response中写入自定义提示信息
     return false;
  }
-</pre>
-#####授权项
+```
+##### 授权项
 对当前请求用户的授权项控制需要在各业务代码里来实现，通过调用RBAC-Client写入在`request`的`attribute`里的参数`UserAuth.ReqAttr`
-<pre>
+```java
 //如判断用户是否有转账权限
-UserAuth
-if(request.getAttribute(UserAuth.ReqAttr).permit("transfer_accounts")){
+UserAuth userAuth = request.getAttribute(UserAuth.ReqAttr);
+if(userAuth.permit("transfer_accounts")){
 	//有权限的处理
 }
-</pre>
-###使用RESTful-API
+```
+##### 其它
+Spring Intercepter提供了其他一些处理，参见Spring Intercepter的流程图。
+
+#### 直接使用权限client端
+如果在一个非web项目中或在一个项目中需要获取多个不同项目的权限，可以直接使用权限client端
+```java
+//创建client端
+ProductAuth4Client productAuth = new ProductAuth4Client("examplePro", "127.0.0.1:80");
+//获取用户权限pojo
+UserAuth userAuth = productAuth.getUserAuth("userId")
+//不用时销毁
+productAuth.destory();
+```
+
+#### 用户权限POJO
+若用户通过验证，会向`request`的`attribute`里写入`key`为`UserAuth.ReqAttr //即'rbac'`的用户权限POJO，该POJO提供以下属性及方法
+```java
+/** 用户ID */
+public String userId;
+/** 用户名称 */
+public String userName;
+/** 用户描述 */
+public String userDes;
+/** 用户在授权中心是否存在 */
+public boolean exist;
+/** 用户的所有配置项 */
+public Map<String, String> params;
+/** 用户的所有角色 */
+public Set<String> roles;
+/** 用户的所有访问项 */
+public Set<String> accesses;
+/** 用户的所有授权项 */
+public Set<String> permissions;
+
+/** 用户是否有权限访问指定uri */
+public boolean allowAccess(String uri) {}
+/** 用户是否有指定授权项的权限 */
+public boolean permit(String permissionId) {}
+```
+获取方法
+```java
+UserAuth userAuth = request.getAttribute(UserAuth.ReqAttr);
+```
+
+### 使用RESTful-API方式
 授权中心提供了一些接口来查询和验证用户权限
-####获取用户权限
+#### 获取用户权限
 [RBAC-Center-Host]/api/user/auth?proId=&userId=
-####验证用户是否可访问
+#### 验证用户是否可访问
 [RBAC-Center-Host]/api/user/allowAccess?proId=&userId=&uri=
-####验证用户是否有某访问项
+#### 验证用户是否有某访问项
 [RBAC-Center-Host]/api/user/permit?proId=&userId=&permissionId=

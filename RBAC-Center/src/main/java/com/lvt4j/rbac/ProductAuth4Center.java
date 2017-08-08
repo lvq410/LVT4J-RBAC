@@ -50,6 +50,8 @@ public class ProductAuth4Center extends AbstractProductAuth{
                 userAuth.permissions = loadVisitorAuth().permissions;
                 return userAuth;
             }
+            userAuth.userName = user.name;
+            userAuth.userDes = user.des;
             
             Map<String, String> param = new HashMap<String, String>();
             List<Param> rawParams = dao.params("user", product.autoId, user.autoId);

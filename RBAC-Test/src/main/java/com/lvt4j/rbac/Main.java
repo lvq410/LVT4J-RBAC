@@ -13,7 +13,6 @@ public class Main{
 
     public static void main(String[] args) {
         System.out.println("App路径:"+Consts.AppFolder.getAbsolutePath());
-        
         SpringApplication.run(Main.class, args);
     }
     

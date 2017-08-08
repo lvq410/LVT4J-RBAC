@@ -49,7 +49,15 @@ abstract class RbacBaseFilter {
             HttpServletResponse response) throws IOException {
         return true;
     }
-    
+    /**
+     * 用户已登录但未在授权中心注册处理,默认该类用户可以继续访问<br>
+     * 重写此方法以进行用户已登录但未在授权中心注册时处理以及向response返回自定义信息
+     * @return 可继续访问返回true,拦截返回false
+     */
+    protected boolean onNotRegister(HttpServletRequest request,
+            HttpServletResponse response) throws IOException {
+        return true;
+    }
     /**
      * 重写此方法以进行用户无权访问处理<br>
      * 默认拦截并向response写入提示信息<br>
@@ -61,12 +69,11 @@ abstract class RbacBaseFilter {
         StringBuilder content = new StringBuilder();
         content.append(strIsEmpty(userId)?"<strong>游客</strong>":("用户<strong>"+userId+"</strong>"));
         content.append("无权访问<strong>").append(uri).append("</strong>");
-        responeWriteFobiddenContent(response, content.toString());
+        responeWriteForbiddenContent(response, content.toString());
         return false;
      }
-    
     /** response内写入禁止访问的提示信息 */
-    protected void responeWriteFobiddenContent(HttpServletResponse response,
+    protected void responeWriteForbiddenContent(HttpServletResponse response,
             String content) throws IOException {
         response.setStatus(HttpStatus_Forbidden);
         response.setContentType(ContentType_Html);
