@@ -22,7 +22,7 @@ LVT4J-RBAC的使用方式不是高度集成到需要权限控制的项目中，�
 ## 启动授权中心
 依赖:JAVA1.8+、gradle
 ```shell
-git clone git@github.com:lvq410/LVT4J-RBAC.git 'rbac'
+git clone https://github.com/lvq410/LVT4J-RBAC.git rbac
 cd ./rbac/RBAC-Center
 #如果要修改端口号及管理员账号密码
 #vim ./config/application.properties
