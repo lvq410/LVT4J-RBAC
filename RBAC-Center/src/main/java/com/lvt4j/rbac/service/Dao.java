@@ -64,7 +64,7 @@ public class Dao{
         StringBuilder sql = new StringBuilder("select * from ")
             .append(modelName).append(" where seq>=0 ");
         List<Object> args = new LinkedList<Object>();
-        if(proAutoId!=null && (User.class!=modelCls || Product.class!=modelCls)){
+        if(proAutoId!=null && User.class!=modelCls && Product.class!=modelCls){
             sql.append("and proAutoId=? ");
             args.add(proAutoId);
         }
