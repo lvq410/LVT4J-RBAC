@@ -17,3 +17,8 @@ gradlew
 gradlew.bat
 /.gradle/
 /build/
+
+#app
+applicationPid
+rbac.db
+/config/

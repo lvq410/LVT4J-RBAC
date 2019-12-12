@@ -1,6 +1,5 @@
 subprojects {
     apply plugin: 'java'
-    apply plugin: 'java-library'
     apply plugin: 'eclipse'
     apply plugin: 'idea'
     
@@ -15,13 +14,4 @@ subprojects {
         options.encoding = "UTF-8"
     }
     
-    task sourcesJar(type: Jar) {
-        archiveClassifier = 'sources'
-        from sourceSets.main.allJava
-    }
-    
-    task javadocJar(type: Jar) {
-        archiveClassifier = 'javadoc'
-        from javadoc.destinationDir
-    }
 }

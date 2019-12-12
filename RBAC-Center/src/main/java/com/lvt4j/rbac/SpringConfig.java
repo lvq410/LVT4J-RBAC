@@ -1,10 +1,14 @@
 package com.lvt4j.rbac;
 
+import java.io.File;
+import java.io.InputStream;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.sql.DataSource;
 
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -29,14 +33,23 @@ import com.lvt4j.spring.ControllerConfig;
 @EnableWebMvc
 public class SpringConfig extends WebMvcConfigurerAdapter {
 
+    @Value("${db-file}")
+    private String dbFile;
+    
     @Bean
     public SQLiteDataSource dataSource() throws Throwable {
+        File db = new File(dbFile);
+        if(!db.exists()) initDbFile(db);
         SQLiteDataSource dataSource = new SQLiteDataSource();
-        dataSource.setUrl("jdbc:sqlite:rbac.db");
+        dataSource.setUrl("jdbc:sqlite:"+dbFile);
         dataSource.setEnforceForeignKeys(true);
         dataSource.setIncrementalVacuum(1000);
         dataSource.setCacheSize(-200000);
         return dataSource;
+    }
+    private void initDbFile(File db) throws Exception {
+        InputStream is = ClassLoader.getSystemResourceAsStream("rbac.db");
+        FileUtils.copyInputStreamToFile(is, db);
     }
     
     @Bean

@@ -15,7 +15,6 @@ public class Main{
 
     public static void main(String[] args) throws Exception {
         System.setProperty("file.encoding", "UTF-8");
-        System.out.println("App路径:"+Consts.AppFolder.getAbsolutePath());
         
         SpringApplication app = new SpringApplication(Main.class);
         File applicationPidFile = new File(Consts.AppFolder, "applicationPid");
