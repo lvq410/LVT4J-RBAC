@@ -48,7 +48,7 @@ public class SpringConfig extends WebMvcConfigurerAdapter {
         return dataSource;
     }
     private void initDbFile(File db) throws Exception {
-        InputStream is = ClassLoader.getSystemResourceAsStream("rbac.db");
+        InputStream is = SpringConfig.class.getResourceAsStream("rbac.db");
         FileUtils.copyInputStreamToFile(is, db);
     }
     

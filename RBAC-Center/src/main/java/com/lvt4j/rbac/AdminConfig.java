@@ -37,7 +37,7 @@ public class AdminConfig {
         
     }
     private void initAdminFile(File propFile) throws Exception {
-        InputStream is = ClassLoader.getSystemResourceAsStream("admin.properties");
+        InputStream is = AdminConfig.class.getResourceAsStream("admin.properties");
         FileUtils.copyInputStreamToFile(is, propFile);
     }
     

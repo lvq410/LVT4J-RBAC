@@ -26,6 +26,10 @@ public class Consts {
     public static final File VMFolder = new File(WebFolder, "vm");
     
     
+    static{
+        ConfFolder.mkdirs();
+    }
+    
     public static Dao Dao;
     
     public static final Class<?>[] SupportHandlerMethodTypes = new Class<?>[]{
