@@ -14,6 +14,17 @@ import java.util.zip.GZIPInputStream;
 
 public class ProductAuth4Client extends AbstractProductAuth{
 
+    /** 默认产品用户权限缓存容量:1000个用户的权限 */
+    public static final int CacheCapacityDef = 1000;
+    /** 默认与授权中心同步的协议:http */
+    public static final String RbacCenterProtocolDef = "http";
+    /** 默认授权中心地址:127.0.0.1:80 */
+    public static final String RbacCenterAddrDef = "127.0.0.1:80";
+    /** 默认与授权中心同步时间间隔:5分钟 */
+    public static final int RbacCenterSyncIntervalDef = 5;
+    /** 默认与授权中心同步超时时间:200ms */
+    public static final int RbacCenterSyncTimeoutDef = 200;
+    
     /** 产品同步的接口路径 */
     private static final String Path_ProLastModify = "/inner/proLastModify";
     /** 加载用户权限的接口路径 */
@@ -61,16 +72,21 @@ public class ProductAuth4Client extends AbstractProductAuth{
         RbacCenterSyncTimeout = rbacCenterSyncTimeout;
     }
     public ProductAuth4Client(String proId, String rbacCenterAddr){
-        this(proId, RbacBaseFilter.CacheCapacityDef,
-                RbacBaseFilter.RbacCenterProtocolDef, rbacCenterAddr,
-                RbacBaseFilter.RbacCenterSyncIntervalDef, RbacBaseFilter.RbacCenterSyncTimeoutDef);
+        this(proId, CacheCapacityDef,
+                RbacCenterProtocolDef, rbacCenterAddr,
+                RbacCenterSyncIntervalDef, RbacCenterSyncTimeoutDef);
+    }
+    public ProductAuth4Client(String proId, String rbacCenterAddr, int rbacCenterSyncInterval, int rbacCenterSyncTimeout){
+        this(proId, CacheCapacityDef,
+                RbacCenterProtocolDef, rbacCenterAddr,
+                rbacCenterSyncInterval, rbacCenterSyncTimeout);
     }
 
     @Override
     protected UserAuth loadUserAuth(String userId) {
         try {
-            String userAuthUrl = Url_UserAuth+"?proId="+URLEncoder.encode(proId, RbacBaseFilter.Encoding);
-            if(userId!=null && !userId.isEmpty()) userAuthUrl+="&userId="+URLEncoder.encode(userId, RbacBaseFilter.Encoding);
+            String userAuthUrl = Url_UserAuth+"?proId="+URLEncoder.encode(proId, "utf8");
+            if(userId!=null && !userId.isEmpty()) userAuthUrl+="&userId="+URLEncoder.encode(userId, "utf8");
             Map<String, Object> rst = loadInner(userAuthUrl);
             Long lastModify = (Long) rst.get("lastModify");
             if(lastModify==null) throw new IllegalArgumentException("加载结果中产品最近同步时间不能为null!");

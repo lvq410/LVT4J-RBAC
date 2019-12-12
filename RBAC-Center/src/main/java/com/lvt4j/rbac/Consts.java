@@ -2,11 +2,10 @@ package com.lvt4j.rbac;
 
 import java.io.File;
 
-import net.sf.json.JSONObject;
-
-import com.lvt4j.basic.TDB;
 import com.lvt4j.basic.TPager;
 import com.lvt4j.rbac.service.Dao;
+
+import net.sf.json.JSONObject;
 
 /**
  * 各种全局常量
@@ -27,7 +26,6 @@ public class Consts {
     public static final File VMFolder = new File(WebFolder, "vm");
     
     
-    public static TDB DB;
     public static Dao Dao;
     
     public static final Class<?>[] SupportHandlerMethodTypes = new Class<?>[]{

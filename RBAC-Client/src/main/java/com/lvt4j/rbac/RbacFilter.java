@@ -1,5 +1,11 @@
 package com.lvt4j.rbac;
 
+import static com.lvt4j.rbac.ProductAuth4Client.CacheCapacityDef;
+import static com.lvt4j.rbac.ProductAuth4Client.RbacCenterAddrDef;
+import static com.lvt4j.rbac.ProductAuth4Client.RbacCenterProtocolDef;
+import static com.lvt4j.rbac.ProductAuth4Client.RbacCenterSyncIntervalDef;
+import static com.lvt4j.rbac.ProductAuth4Client.RbacCenterSyncTimeoutDef;
+
 import java.io.IOException;
 
 import javax.servlet.Filter;

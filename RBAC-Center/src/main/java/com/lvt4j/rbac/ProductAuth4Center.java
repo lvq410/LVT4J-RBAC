@@ -5,11 +5,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import lombok.extern.slf4j.Slf4j;
-
 import org.apache.commons.lang3.StringUtils;
 
-import com.lvt4j.basic.TDB;
 import com.lvt4j.basic.TVerify;
 import com.lvt4j.rbac.data.model.Access;
 import com.lvt4j.rbac.data.model.Param;
@@ -20,11 +17,11 @@ import com.lvt4j.rbac.data.model.User;
 import com.lvt4j.rbac.service.Dao;
 import com.lvt4j.rbac.service.Dao.AuthCalRst;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 public class ProductAuth4Center extends AbstractProductAuth{
 
-    TDB db = Consts.DB;
-    
     Dao dao = Consts.Dao;
 
     public Product product;

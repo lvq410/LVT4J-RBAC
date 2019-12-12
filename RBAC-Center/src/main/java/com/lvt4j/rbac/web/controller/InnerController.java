@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.lvt4j.rbac.ProductAuth4Center;
 import com.lvt4j.rbac.UserAuth;
 import com.lvt4j.rbac.service.ProductAuthCache;
+import com.lvt4j.rbac.web.Read;
 
 @RestController
 @RequestMapping("/inner")
@@ -24,6 +25,7 @@ public class InnerController{
     @Autowired
     ProductAuthCache productAuthCache;
     
+    @Read
     @RequestMapping("/proLastModify")
     public void proLastModify(
             HttpServletResponse response,
@@ -35,6 +37,7 @@ public class InnerController{
         mapCompress2Stream(rst, response.getOutputStream());
     }
     
+    @Read
     @RequestMapping("/userAuth")
     public void userAuth(
             HttpServletResponse response,

@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.lvt4j.rbac.Consts.ErrCode;
 import com.lvt4j.rbac.ProductAuth4Center;
 import com.lvt4j.rbac.service.ProductAuthCache;
+import com.lvt4j.rbac.web.Read;
 import com.lvt4j.spring.JsonResult;
 
 @RestController
@@ -17,6 +18,7 @@ public class ApiController{
     @Autowired
     ProductAuthCache productAuthCache;
     
+    @Read
     @RequestMapping("/user/auth")
     public JsonResult userAuth(
             @RequestParam String proId,
@@ -26,6 +28,7 @@ public class ApiController{
         return JsonResult.success(productAuth.getUserAuth(userId));
     }
     
+    @Read
     @RequestMapping("/user/allowAccess")
     public JsonResult userAllowAccess(
             @RequestParam String proId,
@@ -36,6 +39,7 @@ public class ApiController{
         return JsonResult.success(productAuth.allowAccess(userId, uri));
     }
     
+    @Read
     @RequestMapping("/user/permit")
     public JsonResult userPermit(
             @RequestParam String proId,

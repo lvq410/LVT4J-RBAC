@@ -8,16 +8,7 @@ buildscript {
     }
 }
 
-apply plugin: 'java'
-apply plugin: 'eclipse'
 apply plugin: 'org.springframework.boot'
-
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-tasks.withType(JavaCompile) {    
-    options.encoding = 'UTF-8'  
-}
 
 sourceSets {
     main {
@@ -41,11 +32,6 @@ jar {
     }
 }
 
-repositories {
-    jcenter()
-    mavenCentral()
-}
-
 dependencies {
     compile project(':RBAC-Client')
     compile files('lib/lvt4j.jar')
@@ -67,10 +53,4 @@ dependencies {
     compile group: 'org.springframework.boot', name: 'spring-boot-devtools', version: '1.4.2.RELEASE'
     compile group: 'org.apache.velocity', name: 'velocity', version: '1.7'
     compile group: 'org.xerial', name: 'sqlite-jdbc', version: '3.16.1'
-}
-
-[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
-compileJava {
-    options.bootClasspath = "$System.env.JAVA_HOME/jre/lib/rt.jar"
-    options.bootClasspath += "$File.pathSeparator$System.env.JAVA_HOME/jre/lib/jce.jar"
 }

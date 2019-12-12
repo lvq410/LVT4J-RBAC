@@ -10,17 +10,6 @@ abstract class RbacBaseFilter {
 
     static final String Encoding = System.getProperty("file.encoding", "UTF-8");
     
-    /** 默认产品用户权限缓存容量:1000个用户的权限 */
-    protected static final int CacheCapacityDef = 1000;
-    /** 默认与授权中心同步的协议:http */
-    protected static final String RbacCenterProtocolDef = "http";
-    /** 默认授权中心地址:127.0.0.1:80 */
-    protected static final String RbacCenterAddrDef = "127.0.0.1:80";
-    /** 默认与授权中心同步时间间隔:5分钟 */
-    protected static final int RbacCenterSyncIntervalDef = 5;
-    /** 默认与授权中心同步超时时间:200ms */
-    protected static final int RbacCenterSyncTimeoutDef = 200;
-    
     protected static final int HttpStatus_OK = 200;
     protected static final int HttpStatus_Forbidden = 403;
     protected static final String ContentType_Html = "text/html;charset="+Encoding;

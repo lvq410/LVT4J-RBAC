@@ -46,7 +46,7 @@ import com.lvt4j.spring.Err;
 public class Dao{
 
     @Autowired
-    TDB db;
+    private TDB db;
     
     @Autowired
     @Lazy

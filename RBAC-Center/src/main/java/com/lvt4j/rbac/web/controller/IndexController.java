@@ -7,15 +7,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import com.lvt4j.basic.TDB;
 import com.lvt4j.rbac.data.model.Product;
+import com.lvt4j.rbac.service.Dao;
+import com.lvt4j.rbac.web.Read;
 
 @Controller
 public class IndexController{
 
     @Autowired
-    TDB db;
+    Dao dao;
     
+    @Read
     @RequestMapping("/")
     public String index(
             HttpSession session){
@@ -23,6 +25,7 @@ public class IndexController{
         return "index";
     }
     
+    @Read
     @RequestMapping("/view/**")
     public String view(
             HttpServletRequest request,
@@ -33,7 +36,7 @@ public class IndexController{
     
     private void refreshCurPro(HttpSession session){
         Product curPro = (Product)session.getAttribute("curPro");
-        if(curPro!=null) session.setAttribute("curPro", db.get(curPro).execute());
+        if(curPro!=null) session.setAttribute("curPro", dao.get(Product.class, curPro.autoId));
     }
     
 }

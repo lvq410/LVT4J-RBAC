@@ -68,6 +68,7 @@ public class UserAuth implements Serializable{
                 && permissions==null;
     }
     
+    public UserAuth() {}
     public String getUserId(){return userId;}
     public String getUserName(){return userName;}
     public String getUserDes(){return userDes;}

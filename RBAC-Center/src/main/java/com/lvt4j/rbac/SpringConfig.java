@@ -34,15 +34,14 @@ public class SpringConfig extends WebMvcConfigurerAdapter {
         SQLiteDataSource dataSource = new SQLiteDataSource();
         dataSource.setUrl("jdbc:sqlite:rbac.db");
         dataSource.setEnforceForeignKeys(true);
-        dataSource.setIncrementalVacuum(10);
+        dataSource.setIncrementalVacuum(1000);
+        dataSource.setCacheSize(-200000);
         return dataSource;
     }
     
     @Bean
     public TDB db(@Autowired DataSource dataSource) {
-        TDB db = new TDB(dataSource);
-        Consts.DB = db;
-        return db;
+        return new TDB(dataSource);
     }
     
     @Bean
@@ -60,7 +59,7 @@ public class SpringConfig extends WebMvcConfigurerAdapter {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(authInterceptor()).addPathPatterns("", "/", "/edit/**", "/view/**");
-        registry.addInterceptor(dbInterceptor()).addPathPatterns("/edit/**");
+        registry.addInterceptor(dbInterceptor()).addPathPatterns("/**");
     }
     
     @Bean

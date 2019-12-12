@@ -25,6 +25,8 @@ import com.lvt4j.rbac.data.model.Role;
 import com.lvt4j.rbac.data.model.User;
 import com.lvt4j.rbac.service.Dao;
 import com.lvt4j.rbac.service.Dao.AuthCalRst;
+import com.lvt4j.rbac.web.Read;
+import com.lvt4j.rbac.web.Write;
 import com.lvt4j.rbac.service.ProductAuthCache;
 import com.lvt4j.spring.ControllerConfig;
 import com.lvt4j.spring.JsonResult;
@@ -50,6 +52,7 @@ public class EditController {
     @Autowired
     Dao dao;
     
+    @Write
     @RequestMapping("/curProSet")
     public JsonResult curProSet(
             HttpSession session,
@@ -58,6 +61,7 @@ public class EditController {
         return JsonResult.success();
     }
     
+    @Read
     @SuppressWarnings("unchecked")
     @RequestMapping("/{modelName}/list")
     public JsonResult baseList(
@@ -89,8 +93,9 @@ public class EditController {
         }
         return JsonResult.success(list);
     }
-    @RequestMapping("/{modelName}/set")
+    @Write
     @Transaction
+    @RequestMapping("/{modelName}/set")
     public JsonResult baseSet(
             @PathVariable String modelName,
             @RequestParam(required=false) Integer proAutoId,
@@ -108,8 +113,9 @@ public class EditController {
         }
         return JsonResult.success();
     }
-    @RequestMapping("/{modelName}/del")
+    @Write
     @Transaction
+    @RequestMapping("/{modelName}/del")
     public JsonResult baseDel(
             @PathVariable String modelName,
             @RequestParam int autoId)throws Exception{
@@ -117,8 +123,9 @@ public class EditController {
         dao.del(modelCls, autoId);
         return JsonResult.success();
     }
-    @RequestMapping("/{modelName}/sort")
+    @Write
     @Transaction
+    @RequestMapping("/{modelName}/sort")
     public JsonResult baseSort(
             @PathVariable String modelName,
             @RequestParam("autoIds") int[] autoIds)throws Exception{
@@ -133,6 +140,7 @@ public class EditController {
         return JsonResult.success(uri.matches(pattern));
     }
     
+    @Read
     @RequestMapping("/auth/visitor/get")
     public JsonResult authVisitorGet(
             @RequestParam int proAutoId){
@@ -143,8 +151,9 @@ public class EditController {
                 .dataPut("accesses", dao.auths(modelName, Access.class, proAutoId, null))
                 .dataPut("permissions", dao.auths(modelName, Permission.class, proAutoId, null));
     }
-    @RequestMapping("/auth/visitor/set")
+    @Write
     @Transaction
+    @RequestMapping("/auth/visitor/set")
     public JsonResult authVisitorSet(
             @RequestParam int proAutoId,
             @RequestParam(value="params",required=false) JSONObject params,
@@ -159,6 +168,7 @@ public class EditController {
         dao.productNotify(proAutoId);
         return JsonResult.success();
     }
+    @Read
     @RequestMapping("/auth/visitor/cal")
     public JsonResult authVisitorCal(
             @RequestParam(required=false) int[] roleAutoIds,
@@ -170,8 +180,9 @@ public class EditController {
                 .dataPut("allPermissions", authCalRst.getAuthDescs(Permission.class));
     }
     
-    @RequestMapping("/auth/user/set")
+    @Write
     @Transaction
+    @RequestMapping("/auth/user/set")
     public JsonResult authUserSet(
             @RequestParam int proAutoId,
             @RequestParam int userAutoId,
@@ -187,6 +198,7 @@ public class EditController {
         dao.productNotify(proAutoId);
         return JsonResult.success();
     }
+    @Read
     @RequestMapping("/auth/user/cal")
     public JsonResult authUserCal(
             @RequestParam int proAutoId,
