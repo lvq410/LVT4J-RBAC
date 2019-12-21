@@ -43,7 +43,7 @@ class AdminInterceptor extends WebMvcConfigurerAdapter implements HandlerInterce
     
     @PostConstruct
     private void init() throws Exception {
-        File propFile = new File(Consts.ConfFolder, "application.properties");
+        File propFile = new File(Consts.ConfFolder, "admin.properties");
         if(!propFile.exists()) initAdminFile(propFile);
         props = new PropertiesConfiguration();
         props.setEncoding("utf-8");
