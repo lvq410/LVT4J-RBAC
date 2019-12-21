@@ -76,7 +76,13 @@ class DataSourceConfig {
         File db = new File(dbFolder, "rbac.mv.db");
         if(!db.exists()) initDbFile("h2.mv.db", db);
         log.info("数据库H2-master:{}",db.getPath());
-        return h2DataSource("jdbc:h2:"+dbFolder+"rbac");
+        BasicDataSource dataSource = h2DataSource("jdbc:h2:"+dbFolder+"rbac");
+        try{
+            dataSource.getConnection().close();
+        }catch(Exception e){
+            throw new IllegalStateException("无法建立数据库连接，可能原因：H2 master 节点只能部署一个", e);
+        }
+        return dataSource;
     }
     private BasicDataSource h2SlaveDataSource() {
         log.info("数据库H2-slave:{}",h2MasterHost+":"+h2TcpPort+"/"+dbFolder+"rbac");
