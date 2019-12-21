@@ -1,4 +1,4 @@
-package com.lvt4j.rbac.data;
+package com.lvt4j.rbac.db;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,4 +7,4 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Transaction{}
+public @interface Write {}

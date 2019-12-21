@@ -1,4 +1,4 @@
-package com.lvt4j.rbac.web;
+package com.lvt4j.rbac.db;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

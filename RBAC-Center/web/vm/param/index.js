@@ -83,8 +83,8 @@ function tpl_params(params) {
         var param = params[i];
         /*<tr data="{Tigh(param)}" title="{Tigh(param.des)}">
             <td class="sortabler-handler"><i class="ace-icon fa fa-arrows-v"></i></td>
-            <td><div class="list-ele">{Tigh(param.key)}</div></td>
-            <td><div class="list-ele">{Tigh(param.name)}</div></td>
+            <td style="padding:0"><div class="list-ele">{Tigh(param.key)}</div></td>
+            <td style="padding:0"><div class="list-ele">{Tigh(param.name)}</div></td>
             <td>
                 <button onclick="editParam(this)" type="button" class="btn btn-info btn-minier">编辑</button>
                 <button onclick="delParam(this)" type="button" class="btn btn-danger btn-minier">删除</button>

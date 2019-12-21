@@ -1,171 +1,179 @@
 package com.lvt4j.rbac;
 
+import static java.util.Arrays.asList;
+
+import java.io.File;
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
-import net.sf.json.JSONObject;
+import javax.annotation.PostConstruct;
 
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.fluent.Form;
+import org.apache.http.client.fluent.Request;
+import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.stereotype.Service;
 
-import com.lvt4j.basic.TDB;
-import com.lvt4j.basic.TDB.Table;
-import com.lvt4j.basic.TScan;
-import com.lvt4j.rbac.data.model.Access;
-import com.lvt4j.rbac.data.model.Param;
-import com.lvt4j.rbac.data.model.Permission;
-import com.lvt4j.rbac.data.model.Product;
-import com.lvt4j.rbac.data.model.Role;
-import com.lvt4j.rbac.data.model.User;
-import com.lvt4j.rbac.web.controller.EditController;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 
 /**
  * 压力测试
  * @author LV
  */
-@RunWith(SpringJUnit4ClassRunner.class)
-@SpringBootTest(classes={Main.class})
-@WebAppConfiguration
-@FixMethodOrder
-public class StressTest {
+@SpringBootApplication
+public class StressTest extends RbacCenter implements UncaughtExceptionHandler {
     
-//    @Autowired
-//    TDB db;
-//    
-//    @Autowired
-//    EditController editController;
-//    
-//    List<Integer> proList;
-//    List<Integer> userList;
-//    
-//    @Before
-//    public void clean() throws Exception {
-//        for (Class<?> cls : TScan.scanClass("com.lvt4j.rbac.data.bean")) {
-//            Table tbl = cls.getAnnotation(Table.class);
-//            if(tbl==null) continue;
-//            db.executeSQL("delete from "+tbl.value()).execute();
-//        }
-//        proList = new LinkedList<Integer>();
-//        for (int i = 0; i < 1000; i++) proList.add(i);
-//        userList = new LinkedList<Integer>();
-//        for (int i = 0; i < 10000; i++) userList.add(i);
-//    }
-//    
-//    //创建1000个产品
-//    @Test
-//    public void cPros() {
-//        System.out.println("cPros");
-//        for(Integer i : proList) {
-//            Product pro = new Product();
-//            pro.id = "pro"+i;
-//            pro.name = pro.id;
-//            pro.des = pro.id;
-////            editController.productSet(null, pro);
-//        }
-//        db.endTransaction();
-//    }
-//    
-//    //创建1W个用户
-//    @Test
-//    public void cUsers() {
-//        System.out.println("cUsers");
-//        for(Integer i : userList) {
-//            User user = new User();
-//            user.id = "user"+i;
-//            user.name = user.id;
-//            user.des = user.id;
-////            editController.userSet(null, user);
-//        }
-//        db.endTransaction();
-//    }
-//    
-//    //每个产品创建50个配置项,500个访问项,500个授权,50个角色(角色拥有前100个访问项和授权项)
-//    @Test
-//    public void cParams() {
-//        System.out.println("cParams...");
-//        for(Integer i : proList) {
-//            Param param = new Param();
-//            param.proId = "pro"+i;
-//            for (int j = 0; j < 50; j++) {
-//                param.key = "param"+j;
-//                param.name = param.key;
-//                param.des = param.key;
-//                editController.paramSet(null, param);
-//            }
-//            Access access = new Access();
-//            access.proId = "pro"+i;
-//            Permission permission = new Permission();
-//            permission.proId = "pro"+i;
-//            for (int j = 0; j < 500; j++) {
-//                access.pattern = "^/"+j+"$";
-//                access.name = access.pattern;
-//                access.des = access.pattern;
-//                editController.accessSet(null, access);
-//                permission.id = "permission"+j;
-//                permission.name = permission.id;
-//                permission.des = permission.id;
-//                editController.permissionSet(null, permission);
-//            }
-//            Role role = new Role();
-//            role.proId = "pro"+i;
-//            String[] accessPatterns = new String[100];
-//            String[] permissionIds = new String[100];
-//            for (int k = 0; k < 100; k++) {
-//                accessPatterns[k] = "^/"+k+"$";
-//                permissionIds[k] = "permission"+k;
-//            }
-//            for (int j = 0; j < 50; j++) {
-//                role.id = "role"+j;
-//                role.name = role.id;
-//                role.des = role.id;
-//                editController.roleSet(null, role, accessPatterns, permissionIds);
-//            }
-//        }
-//        db.endTransaction();
-//    }
-//    
-//    //为每个游客设置配置项、分配第0个角色、第200个访问项、第200个授权项
-//    @Test
-//    public void cVisitors() {
-//        System.out.println("cVisitors...");
-//        JSONObject params = new JSONObject();
-//        for (int j = 0; j < 50; j++) params.put("param"+j, "param_visitor"+j);
-//        for(Integer i : proList) {
-//            String[] roleIds = {"role0"};
-//            String[] accessPatterns = {"^/200$"};
-//            String[] permissionIds = {"permission200"};
-//            editController.authVisitorSet("pro"+i, params, roleIds, accessPatterns, permissionIds);
-//        }
-//        db.endTransaction();
-//    }
-//    
-//    //为前100个产品前100个用户设置配置项、分配第10~20个角色、第300~400个访问项、第300~400个授权项
-//    @Test
-//    public void cUserAuths() throws Exception {
-//        System.out.println("cUsers...");
-//        JSONObject params = new JSONObject();
-//        for (int j = 0; j < 50; j++) params.put("param"+j, "param_user"+j);
-//        String[] roleIds = new String[10];
-//        for (int j = 10; j < 20; j++) roleIds[j-10] = "role"+j;
-//        String[] accessPatterns = new String[100];
-//        for (int j = 300; j < 400; j++) accessPatterns[j-300] = "^/"+j+"$";
-//        String[] permissionIds = new String[100];
-//        for (int j = 300; j < 400; j++) permissionIds[j-300] = "permission"+j;
-//        for (int i = 0; i < 100; i++) {
-//            String userId = "user"+i;
-//            for (int proI = 0; proI < 100; proI++) {
-//                String proId = "pro"+proI;
-//                editController.authUserSet(proId, userId, params, roleIds, accessPatterns, permissionIds);
-//            }
-//        }
-//        db.endTransaction();
-//    }
+    public static void main(String[] args) throws Exception {
+        new File("rbac.db").delete();
+        RbacCenter.main(args);
+        Tester.start();
+        Tester.join();
+        System.exit(Ex==null?0:-1);
+    }
     
+    private static Throwable Ex;
+    
+    private static Tester Tester;
+    
+    @Autowired
+    Tester tester;
+    
+    @PostConstruct
+    private void init() {
+        Tester = tester;
+    }
+
+    @Override
+    public void uncaughtException(Thread t, Throwable e) {
+        Ex = e;
+        e.printStackTrace();
+    }
+    
+}
+@Slf4j
+@Service
+class Tester extends Thread {
+    
+    @Autowired
+    TestDataIniter testDatar;
+    
+    @Value("${server.port}")
+    private int port;
+    
+    ExecutorService pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    
+    @Override
+    @SneakyThrows
+    public void run() {
+        testDatar.init();
+        log.info("并发数:{}", Runtime.getRuntime().availableProcessors());
+        log.info("无写入纯查询压测...");
+        queryTest(10000);
+        log.info("边更新项目边查询压测...");
+        scheduleChangePro0(10000, 1000);
+        queryTest(10000);
+    }
+    @SneakyThrows
+    private void queryTest(int n) {
+        CountDownLatch latch = new CountDownLatch(n);
+        Statis suc = new Statis();
+        Statis fail = new Statis();
+        for(int i=0; i<n; i++){
+            int no = i;
+            pool.execute(()->{
+                long begin = System.currentTimeMillis();
+                Pair<Integer, String> post = post("/api/user/auth", "proId","pro0","userId","user"+no);
+                long end = System.currentTimeMillis();
+                long consume = end-begin;
+                if(post.getLeft()==200){
+                    suc.append(consume);
+                }else {
+                    fail.append(consume);
+                }
+                latch.countDown();
+            });
+        }
+        latch.await();
+        List<List<Object>> table = new LinkedList<>();
+        table.add(asList("结果","总数","总耗时","平均耗时",".99耗时","max","min"));
+        table.add(suc.row("成功"));
+        table.add(fail.row("失败"));
+        Statis total = new Statis();
+        total.add(suc);
+        total.add(fail);
+        table.add(total.row("总计"));
+        log.info("结果\n"+table.stream().map(r->StringUtils.join(r,"\t")).collect(Collectors.joining("\n")));
+    }
+    private void scheduleChangePro0(long max, long delta) {
+        new Thread(()->{
+            long n = 0;
+            while(n<max){
+                log.info("更新项目0:{}", post("/proNotify", "proAutoId",TestDataIniter.Pro0AutoId));
+                n+=delta;
+                try {
+                    Thread.sleep(delta);
+                } catch (Exception e) {}
+            }
+        }).start();
+    }
+    
+    
+    private Pair<Integer, String> post(String uri, Object... params) {
+        Request req = Request.Post("http://localhost:"+port+uri);
+        if(ArrayUtils.isNotEmpty(params)){
+            Form form = Form.form();
+            for(int i=0; i<params.length; i++){
+                String key = String.valueOf(params[i++]);
+                String val = params[i]==null?"":String.valueOf(params[i]);
+                form.add(key, val);
+            }
+            req.bodyForm(form.build(), Charset.defaultCharset());
+        }
+        try{
+            HttpResponse res = req.execute().returnResponse();
+            int status = res.getStatusLine().getStatusCode();
+            String rst = EntityUtils.toString(res.getEntity());
+            return Pair.of(status, rst);
+        }catch(Exception e){
+            return Pair.of(500, "IOException");
+        }
+    }
+    
+}
+class Statis {
+    List<Long> consumes = Collections.synchronizedList(new LinkedList<>());
+    AtomicLong consumeSum = new AtomicLong();
+    public void append(long consume) {
+        consumes.add(consume);
+        consumeSum.addAndGet(consume);
+    }
+    public void add(Statis other) {
+        consumes.addAll(other.consumes);
+        consumeSum.addAndGet(other.consumeSum.get());
+    }
+    public List<Object> row(String type) {
+        int count = consumes.size();
+        long avg = consumes.isEmpty()?0:(consumeSum.get()/consumes.size());
+        Collections.sort(consumes);
+        long c99 = consumes.isEmpty()?0:consumes.get(consumes.size()-(consumes.size()/100));
+        Long max = consumes.stream().max(Long::compareTo).orElse(null);
+        Long min = consumes.stream().min(Long::compareTo).orElse(null);
+        return asList(type, count, consumeSum.get(), avg, c99, max, min);
+    }
 }

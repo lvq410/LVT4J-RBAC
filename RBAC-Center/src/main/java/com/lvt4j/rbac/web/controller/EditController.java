@@ -1,12 +1,13 @@
 package com.lvt4j.rbac.web.controller;
 
+import static com.lvt4j.rbac.Consts.CookieName_CurProAutoId;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.Lock;
 
-import javax.servlet.http.HttpSession;
-
-import net.sf.json.JSONObject;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,22 +15,23 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lvt4j.basic.TPager;
 import com.lvt4j.rbac.Consts.ErrCode;
 import com.lvt4j.rbac.data.Model;
-import com.lvt4j.rbac.data.Transaction;
 import com.lvt4j.rbac.data.model.Access;
 import com.lvt4j.rbac.data.model.Permission;
 import com.lvt4j.rbac.data.model.Product;
 import com.lvt4j.rbac.data.model.Role;
 import com.lvt4j.rbac.data.model.User;
+import com.lvt4j.rbac.db.Read;
+import com.lvt4j.rbac.db.Transaction;
+import com.lvt4j.rbac.db.Write;
 import com.lvt4j.rbac.service.Dao;
 import com.lvt4j.rbac.service.Dao.AuthCalRst;
-import com.lvt4j.rbac.web.Read;
-import com.lvt4j.rbac.web.Write;
-import com.lvt4j.rbac.service.ProductAuthCache;
-import com.lvt4j.spring.ControllerConfig;
 import com.lvt4j.spring.JsonResult;
+
+import net.sf.json.JSONObject;
 
 
 /**
@@ -38,26 +40,25 @@ import com.lvt4j.spring.JsonResult;
  */
 @RestController
 @RequestMapping("/edit")
-public class EditController {
+class EditController {
 
     @Autowired
-    Lock editLock;
+    private Dao dao;
     
     @Autowired
-    ControllerConfig controllerConfig;
-    
-    @Autowired
-    ProductAuthCache productAuthCache;
-    
-    @Autowired
-    Dao dao;
+    ObjectMapper objectMapper;
     
     @Write
     @RequestMapping("/curProSet")
     public JsonResult curProSet(
-            HttpSession session,
-            @RequestParam int proAutoId){
-        session.setAttribute("curPro", dao.get(Product.class, proAutoId));
+            HttpServletResponse res,
+            @RequestParam int proAutoId) throws Exception {
+        Product pro = dao.get(Product.class, proAutoId);
+        String proAutoIdStr = pro==null?EMPTY:String.valueOf(pro.autoId);
+        Cookie cookie = new Cookie(CookieName_CurProAutoId, proAutoIdStr);
+        cookie.setMaxAge(Integer.MAX_VALUE);
+        cookie.setPath("/");
+        res.addCookie(cookie);
         return JsonResult.success();
     }
     

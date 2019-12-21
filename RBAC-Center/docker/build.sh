@@ -23,4 +23,4 @@ cd ./build/docker
 #打镜像
 docker build -t lvq410/rbac:latest . 
 #推镜像
-#docker push lvq410/rbac:latest
+docker push lvq410/rbac:latest

@@ -77,12 +77,13 @@ function tpl_users(users) {
     for (var i = 0; i < users.length; i++) {
         var user = users[i];
         /*<tr data="{Tigh(user)}" title="{Tigh(user.des)}">
-            <td><div class="list-ele">{Tigh(user.id)}</div></td>
-            <td><div class="list-ele">{Tigh(user.name)}</div></td>*/
-            /*<td colspan="2">
+            <td style="padding:0"><div class="list-ele">{Tigh(user.id)}</div></td>
+            <td style="padding:0"><div class="list-ele">{Tigh(user.name)}</div></td>*/
+            /*<td colspan="2" style="padding:0">
                 <div class="list-ele"><table class="table table-striped table-bordered table-hover table-condensed" style="margin:0;"><tbody>*/
                     for (var j = 0; j < user.params.length; j++) {
                         var param = user.params[j];
+                        if(!param.val) continue;
                         /*<tr>
                             <td class="msg-tooltiper" style="width:94px;">
                                 {Tigh(param.name)}
@@ -102,9 +103,9 @@ function tpl_users(users) {
                     }
             /*</tbody></table></div>
             </td>*/
-            /*<td><div class="list-ele">{$tpl(tpl_auths)(user.roles, 0)}</div></td>
-            <td><div class="list-ele">{$tpl(tpl_auths)(user.accesses, 0)}</div></td>
-            <td><div class="list-ele">{$tpl(tpl_auths)(user.permissions, 0)}</div></td>
+            /*<td style="padding:0"><div class="list-ele">{$tpl(tpl_auths)(user.roles, 0)}</div></td>
+            <td style="padding:0"><div class="list-ele">{$tpl(tpl_auths)(user.accesses, 0)}</div></td>
+            <td style="padding:0"><div class="list-ele">{$tpl(tpl_auths)(user.permissions, 0)}</div></td>
             <td><button onclick="editUserAuth(this)" type="button" class="btn btn-info btn-minier">更改</button></td>
         </tr>*/
     }

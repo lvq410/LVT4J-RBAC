@@ -25,6 +25,8 @@ public class Consts {
     /** vm文件夹 */
     public static final File VMFolder = new File(WebFolder, "vm");
     
+    public static final String CookieName_CurProAutoId= "RbacCurProAutoId";
+    public static final String CookieName_Auth= "RbacAuth";
     
     static{
         ConfFolder.mkdirs();

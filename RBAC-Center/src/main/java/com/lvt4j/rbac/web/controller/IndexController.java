@@ -8,14 +8,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.lvt4j.rbac.data.model.Product;
+import com.lvt4j.rbac.db.Read;
 import com.lvt4j.rbac.service.Dao;
-import com.lvt4j.rbac.web.Read;
 
 @Controller
 public class IndexController{
 
     @Autowired
-    Dao dao;
+    private Dao dao;
     
     @Read
     @RequestMapping("/")

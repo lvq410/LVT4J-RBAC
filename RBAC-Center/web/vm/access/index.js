@@ -113,8 +113,8 @@ function tpl_accesses(accesses) {
         var access = accesses[i];
         /*<tr data="{Tigh(access)}" title="{Tigh(access.des)}">
             <td class="sortabler-handler"><i class="ace-icon fa fa-arrows-v"></i></td>
-            <td><div class="list-ele">{Tigh(access.pattern)}</div></td>
-            <td><div class="list-ele">{Tigh(access.name)}</div></td>
+            <td style="padding:0"><div class="list-ele">{Tigh(access.pattern)}</div></td>
+            <td style="padding:0"><div class="list-ele">{Tigh(access.name)}</div></td>
             <td>
                 <button onclick="editAccess(this)" type="button" class="btn btn-info btn-minier">编辑</button>
                 <button onclick="delAccess(this)" type="button" class="btn btn-danger btn-minier">删除</button>

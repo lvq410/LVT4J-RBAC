@@ -1,3 +1,5 @@
+[TOC]
+
 # 概述
 LVT4J-RBAC是以RBAC(role-based access control,基于角色的权限控制)为核心思想制作的权限管理系统。适用于在一个封闭的企业环境内有多个项目产品需要进行人员权限管理时的情况。
 # 特点
@@ -20,14 +22,64 @@ LVT4J-RBAC的使用方式不是高度集成到需要权限控制的项目中，�
 
 # 使用方法
 ## 启动授权中心
+### 容器方式启动
+```
+docker run -p 80:80 lvq410/rbac:latest
+```
+### 源代码启动
 依赖:JAVA1.8+、gradle
 ```shell
 git clone https://github.com/lvq410/LVT4J-RBAC.git rbac
 cd ./rbac/RBAC-Center
-#如果要修改端口号及管理员账号密码
-#vim ./config/application.properties
 sh ./run/start.sh
 ```
+### 数据库模式
+内置两种数据库模式：SQLite（默认）和H2
+
+SQLite模式只能单例部署，若要达成HA，需要使用H2模式
+
+#### H2模式的集群部署
+H2数据库模式提供一个master-slave模式的集群部署方式。
+
+其中master节点包含数据库，只能部署一个。slave节点可以部署多个，连接并使用master节点的数据库。
+
+master节点部署配置
+```
+db.type=h2 #数据库类型
+db.folder=./ #数据库文件位置
+db.h2.master=true #是master
+```
+salve节点部署配置
+```
+db.type=h2 #数据库类型
+db.folder=./ #master节点的数据库文件位置
+db.h2.master=false #是slave
+db.h2.master.host=master-host #master节点地址
+```
+#### 备份
+默认启动备份，相关配置参考`配置说明`
+
+### 配置说明
+采用Spring配置方式，可以用环境变量方式（如db_type=h2）修改
+```
+db.type=sqlite/h2 #数据库类型
+db.folder=./ #数据库文件夹
+
+db.backup.folder=./backup #数据库备份文件夹
+db.backup.cron=0 0 0 * * * #数据库定时备份cron
+db.backup.max=10 #备份文件最多保留数量
+
+db.h2.master=true #是否h2 master节点
+db.h2.web.port=8082 #master节点时的数据库web管理端口
+db.h2.tcp.port=9123 #master节点时的数据库tcp端口
+db.h2.master.host=localhost #slave节点时要连接的master节点的地址
+
+admin.userId=pwd #管理员账户密码
+```
+
+### 管理员账户密码管理
+Http Basic Auth验权模式。可以配置在Spring配置里，也可以配置在./config/admin.properties里。admin.properties支持实时修改生效。有相同账号时，以Spring配置的为准。支持配置多个管理员账号。H2集群模式时，要注意各个节点的配置尽量一致，否则做同一域名的反向代理时会有问题。
+
 ## 接入授权中心
 注意LVT4J-RBAC并不负责处理计算用户ID，因此查询用户权限需各项目自己提供用户的ID
 ### 使用RBAC-Client的jar包方式

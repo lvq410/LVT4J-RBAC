@@ -85,8 +85,8 @@ function tpl_permissions(permissions) {
         var permission = permissions[i];
         /*<tr data="{Tigh(permission)}" title="{Tigh(permission.des)}">
             <td class="sortabler-handler"><i class="ace-icon fa fa-arrows-v"></i></td>
-            <td><div class="list-ele">{Tigh(permission.id)}</div></td>
-            <td><div class="list-ele">{Tigh(permission.name)}</div></td>
+            <td style="padding:0"><div class="list-ele">{Tigh(permission.id)}</div></td>
+            <td style="padding:0"><div class="list-ele">{Tigh(permission.name)}</div></td>
             <td>
                 <button onclick="editPermission(this)" type="button" class="btn btn-info btn-minier">编辑</button>
                 <button onclick="delPermission(this)" type="button" class="btn btn-danger btn-minier">删除</button>

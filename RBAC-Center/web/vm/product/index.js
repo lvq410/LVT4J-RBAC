@@ -83,9 +83,9 @@ function tpl_products(products) {
         var product = products[i];
         /*<tr data="{Tigh(product)}" title="{Tigh(product.des)}">
             <td class="sortabler-handler"><i class="ace-icon fa fa-arrows-v"></i></td>
-            <td><div class="list-ele">{Tigh(product.id)}</div></td>
-            <td><div class="list-ele">{Tigh(product.name)}</div></td>
-            <td><div class="list-ele">{Tigh(TtimestampFormat(product.lastModify))}</div></td>
+            <td style="padding:0"><div class="list-ele">{Tigh(product.id)}</div></td>
+            <td style="padding:0"><div class="list-ele">{Tigh(product.name)}</div></td>
+            <td style="padding:0"><div class="list-ele">{Tigh(TtimestampFormat(product.lastModify))}</div></td>
             <td>
                 <button onclick="editProduct(this)" type="button" class="btn btn-info btn-minier">编辑</button>
                 <button onclick="delProduct(this)" type="button" class="btn btn-danger btn-minier">删除</button>

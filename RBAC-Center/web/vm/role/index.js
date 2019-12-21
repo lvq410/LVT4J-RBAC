@@ -98,10 +98,10 @@ function tpl_roles(roles) {
         var role = roles[i];
         /*<tr data="{Tigh(role)}" title="{Tigh(role.des)}">
             <td class="sortabler-handler"><i class="ace-icon fa fa-arrows-v"></i></td>
-            <td><div class="list-ele">{Tigh(role.id)}</td>
-            <td><div class="list-ele">{Tigh(role.name)}</td>
-            <td><div class="list-ele">{$tpl(tpl_auths)(role.accesses, 0)}</td>
-            <td><div class="list-ele">{$tpl(tpl_auths)(role.permissions, 0)}</td>
+            <td style="padding:0"><div class="list-ele">{Tigh(role.id)}</td>
+            <td style="padding:0"><div class="list-ele">{Tigh(role.name)}</td>
+            <td style="padding:0"><div class="list-ele">{$tpl(tpl_auths)(role.accesses, 0)}</td>
+            <td style="padding:0"><div class="list-ele">{$tpl(tpl_auths)(role.permissions, 0)}</td>
             <td>
                 <button onclick="editRole(this)" type="button" class="btn btn-info btn-minier">编辑</button>
                 <button onclick="delRole(this)" type="button" class="btn btn-danger btn-minier">删除</button>
