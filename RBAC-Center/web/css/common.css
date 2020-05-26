@@ -89,6 +89,10 @@ input[type=checkbox].ace.ace-switch.ace-switch-5+.lbl::before {
     content: "\662F\a0\a0\a0\a0\a0\a0\a0\a0\a0\a0\a0\5426";
 }
 
+.ui-widget button.btn-minier{
+  font-size: 12px;
+}
+
 .auth-name{
     max-width: 250px;
     overflow: hidden;

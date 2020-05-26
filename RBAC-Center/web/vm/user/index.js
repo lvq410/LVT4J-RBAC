@@ -1,12 +1,20 @@
+$(loadUsers);
+
+function queryUsers(){
+    $('#usersPager').pagerPageNo(1);
+    loadUsers();
+}
+
 function loadUsers() {
     q('/edit/user/list.json',
         {
             keyword: $('#keyword').val(),
             pager: $('#usersPager').pagerSerialize()
         },
-        function(users){
-            $('#users').html($tpl(tpl_users)(users));
-            $('#editUserDiv').slideUp();
+        function(data){
+            $('#usersPager').pagerCount(data.count);
+            $('#users').html($tpl(tpl_users)(data.models));
+            if($('#editUserDiv').dialog('instance')) $('#editUserDiv').dialog('close');
         },
         '加载用户中'
     );
@@ -14,7 +22,11 @@ function loadUsers() {
 
 function addUser() {
     $('#editUserDiv').formData({});
-    $('#editUserDiv').slideDown().scrollToMe();
+    $('#editUserDiv').dialog({
+        title:'新增用户',
+        minWidth:1000,
+        buttons:{'保存':editUserSave}
+    })
 }
 
 function sortUser() {
@@ -29,15 +41,18 @@ function sortUser() {
         },
         function(){
             alert('保存排序成功!');
-        },
-        '保存排序中'
+        }, '保存排序中'
     );
 }
 
 function editUser(btn) {
     var user = $(btn).closest('tr').attrData();
     $('#editUserDiv').formData(user);
-    $('#editUserDiv').slideDown().scrollToMe();
+    $('#editUserDiv').dialog({
+        title:'修改用户',
+        minWidth:1000,
+        buttons:{'保存':editUserSave}
+    })
 }
 
 function editUserSave() {
@@ -48,8 +63,7 @@ function editUserSave() {
         function(){
             alert('保存成功!');
             loadUsers();
-        },
-        '保存用户中'
+        }, '保存用户中'
     );
 }
 
@@ -63,16 +77,10 @@ function delUser(btn) {
         function(){
             alert('删除成功!');
             loadUsers();
-        },
-        '删除用户中'
+        }, '删除用户中'
     );
 }
 
-$(document).ready(ready);
-
-function ready(){
-    loadUsers();
-}
 
 function tpl_users(users) {
     if(!users) return;

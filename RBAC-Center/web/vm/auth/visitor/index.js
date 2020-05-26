@@ -9,11 +9,8 @@ function loadVisitorAuth() {
             $('#roles').html($tpl(tpl_auths)(visitorAuth.roles, 1));
             $('#accesses').html($tpl(tpl_auths)(visitorAuth.accesses, 1));
             $('#permissions').html($tpl(tpl_auths)(visitorAuth.permissions, 1));
-            
-            $('#editVisitorAuthDiv').slideDown();
             onAuthChange();
-        },
-        '加载游客权限中'
+        }, '加载游客权限中'
     );
 }
 

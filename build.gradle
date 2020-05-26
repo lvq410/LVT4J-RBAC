@@ -6,6 +6,7 @@ subprojects {
     group = 'com.lvt4j.rbac'
     
     repositories {
+        maven { url "http://maven.aliyun.com/nexus/content/groups/public/" }
         jcenter()
         mavenCentral()
     }

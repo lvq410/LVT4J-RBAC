@@ -2,20 +2,49 @@
 #set($pageDesc='所有使用授权中心的用户在当前产品下权限的配置')
 #parse('/header.vm')
 
-<script src="/vm/auth/user/index.js"></script>
+<script src="/vm/auth/user/index.js?${ResVer}"></script>
 
-##用户授权配置
-<div id="editUserAuthDiv" class="col-xs-12" style="display:none;"><div class="widget-box">
-<div class="widget-header">
-    <h4 class="widget-title" style="word-break:break-all;">为用户授权</h4>
-    <div class="widget-toolbar">
-        <a href="javascript:;" onclick="$(this).closest('.col-xs-12').slideUp()">
-            <i class="ace-icon fa fa-close bigger-130"></i>
-        </a>
+##用户列表
+<div class="col-xs-3" style="padding-left:0">
+    <select id="qRole" onchange="queryUsers()" widget="select2" model="role" allow-clear="true" placeholder="请选择角色" style="width:100%"></select>
+</div>
+<div class="col-xs-3">
+    <select id="qAccess" onchange="queryUsers()" widget="select2" model="access" allow-clear="true" placeholder="请选择访问项" style="width:100%"></select>
+</div>
+<div class="col-xs-3">
+    <select id="qPermission" onchange="queryUsers()" widget="select2" model="permission" allow-clear="true" placeholder="请选择授权项" style="width:100%"></select>
+</div>
+<div class="col-xs-3" style="padding-right:0">
+    <div class="input-group">
+        <input id="keyword" onenter="queryUsers()" onkeyup="queryUsers()" type="text" class="form-control" style="height:28px;" placeholder="请输入关键词">
+        <span class="input-group-btn">
+            <button type="button" class="btn btn-purple btn-minier" onclick="queryUsers()" style="height:28px;">搜索<i class="ace-icon fa fa-search"></i></button>
+        </span>
     </div>
 </div>
-<div class="widget-body"><div class="widget-main">
-<form class="form-horizontal">
+<div id="usersPager" widget="pager" show-count="true" show-page-count="true" show-page-size="true" show-go="true" class="pull-right" onpage="loadUsers()"></div>
+<table class="table table-striped table-bordered table-hover table-condensed" style="margin-bottom:0;">
+    <thead>
+        <tr>
+            <th title="用户的ID" rowspan="2" style="min-width:100px;">ID</th>
+            <th title="用户的名称" rowspan="2" style="min-width:100px;">名称</th>
+            <th title="用户的配置项" colspan="2" style="min-width:300px;">配置项</th>
+            <th rowspan="2" style="width:150px;" title="单独分配给用户的角色">角色</th>
+            <th rowspan="2" style="width:200px;" title="单独分配给用户的访问项">访问项</th>
+            <th rowspan="2" style="width:250px;" title="单独分配给用户的授权项">授权项</th>
+            <th style="width:45px;" rowspan="2">操作</th>
+        </tr>
+        <tr>
+            <th style="width:100px;">配置</th>
+            <th style="width:200px;">值</th>
+        </tr>
+    </thead>
+    <tbody id="users"></tbody>
+</table>
+
+
+##用户授权配置
+<div id="editUserAuthDiv" class="form-horizontal" style="display:none;">
     <p class="valid-err text-danger col-xs-9 col-xs-offset-3"></p>
     <div class="form-group">
         <label class="col-xs-3 control-label">用户ID：</label>
@@ -153,58 +182,6 @@
             </table>
         </div>
     </div>
-    <button type="button" class="btn btn-purple btn-block" onclick="editUserAuthSave()">保存</button>
-</form>
-</div></div>##widget-body
-</div></div>##widget-box
-
-##用户列表
-<div class="col-xs-12"><div class="widget-box">
-<div class="widget-header">
-    <h4 class="widget-title">用户列表</h4>
-    <div class="widget-toolbar" style="line-height:28px;">
-        <div class="display:inline-block" style="width:150px;display:inline-block;padding-top:3px;vertical-align:top;">
-            <select id="qRole" onchange="loadUsers()" widget="select2" url="/edit/role/list.json?ignoreAuth=true" allow-clear="true" placeholder="请选择角色" style="width:100%"></select>
-        </div>
-        <div class="display:inline-block" style="width:150px;display:inline-block;padding-top:3px;vertical-align:top;">
-            <select id="qAccess" onchange="loadUsers()" widget="select2" url="/edit/access/list.json" allow-clear="true" placeholder="请选择访问项" style="width:100%"></select>
-        </div>
-        <div class="display:inline-block" style="width:150px;display:inline-block;padding-top:3px;vertical-align:top;">
-            <select id="qPermission" onchange="loadUsers()" widget="select2" url="/edit/permission/list.json" allow-clear="true" placeholder="请选择授权项" style="width:100%"></select>
-        </div>
-        <div style="width:200px;display:inline-block;">
-            <div class="input-group" style="width:200px;">
-                <input id="keyword" type="text" class="form-control" style="height:22px;margin-top:8px;" placeholder="请输入关键词">
-                <span class="input-group-btn">
-                    <button type="button" class="btn btn-purple btn-minier" onclick="loadUsers()" style="margin-top:8px;">
-                        搜索<i class="ace-icon fa fa-search"></i>
-                    </button>
-                </span>
-            </div>
-        </div>
-    </div>
 </div>
-<div class="widget-body"><div class="widget-main" style="padding-bottom:52px;">
-<p class="text-info">只列出直接分配给用户的角色、访问项和授权项</p>
-<table class="table table-striped table-bordered table-hover table-condensed" style="margin-bottom:0;">
-    <thead>
-        <tr>
-            <td title="用户的ID" rowspan="2" style="min-width:100px;">ID</td>
-            <td title="用户的名称" rowspan="2" style="min-width:100px;">名称</td>
-            <td title="用户的配置项" colspan="2" style="min-width:300px;">配置项</td>
-            <td rowspan="2" style="width:150px;" title="单独分配给用户的角色">角色</td>
-            <td rowspan="2" style="width:200px;" title="单独分配给用户的访问项">访问项</td>
-            <td rowspan="2" style="width:250px;" title="单独分配给用户的授权项">授权项</td>
-            <td style="width:45px;" rowspan="2">操作</td>
-        </tr>
-        <tr>
-            <td style="width:100px;">配置</td>
-            <td style="width:200px;">值</td>
-        </tr>
-    </thead>
-    <tbody id="users"></tbody>
-</table>
-<div id="usersPager" widget="pager" show-page-size="true" show-go="true" class="pull-right" onpage="loadUsers()"></div>
-</div></div>##widget-body
-</div></div>##widget-box
+
 #parse('/footer.vm')

@@ -1,0 +1,60 @@
+#set($navs=['批量授权'])
+#set($pageDesc='')
+#parse('/header.vm')
+
+<script src="/vm/auth/batch/index.js?${ResVer}"></script>
+
+
+<div id="batchBox" data-type="arr" class="accordion-style1 panel-group">
+
+<div name data-type="obj" class="panel panel-default">
+    <div class="panel-heading">
+        <h4 class="panel-title">
+            <a class="accordion-toggle" data-toggle="collapse" data-parent="#batchBox" href="#usersPanel">
+                <i class="ace-icon fa fa-angle-down bigger-110" data-icon-hide="ace-icon fa fa-angle-down" data-icon-show="ace-icon fa fa-angle-right"></i>
+                &nbsp;填写待授权用户信息
+                <span class="valid-err text-danger pull-right"></span>
+            </a>
+        </h4>
+    </div>
+
+    <div id="usersPanel" class="panel-collapse collapse in">
+        <textarea name="users" data-required data-err="待授权用户信息必填" class="panel-body" placeholder="一行一个用户信息，每行的格式为 &quot;用户ID 姓名 描述&quot;。可以省略姓名与描述。如：
+zhangsan 张三 人事
+lisi 李四 行政
+wangmazi
+laowang
+
+如果用户ID不存在时需要创建用户，则姓名与描述不可省略
+" style="width:100%;resize:vertical;padding:5px;min-height:160px;margin-bottom:-5px;"></textarea>
+    </div>
+</div>
+
+</div>
+
+<div class="col-xs-4" style="padding-left:0">
+    <div class="input-group">
+        <select id="proSelect" widget="select2" model="product" allow-clear="true" placeholder="请选择要增加的授权产品" style="width:100%"></select>
+        <span class="input-group-btn">
+            <button onclick="addProduct()" type="button" class="btn btn-info btn-minier" style="height:28px">添加</button>
+        </span>
+    </div>
+</div>
+
+<div class="col-xs-12"></div>
+
+<div class="col-xs-3 pull-right">
+     <div class="input-group">
+        <select id="batchAction" class="form-control">
+            <option>添加权限</option>
+            <option>移除权限</option>
+        </select>
+        <span class="input-group-btn">
+            <button id="batchBtn" onclick="batchBegin()" type="button" class="btn btn-danger btn-sm">执行</button>
+        </span>
+    </div>
+</div>
+
+<pre id="batchMsg" class="col-xs-12" style="margin-top:10px;display:none"></pre>
+
+#parse('/footer.vm')

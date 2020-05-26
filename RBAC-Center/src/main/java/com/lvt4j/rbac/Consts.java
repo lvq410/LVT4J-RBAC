@@ -3,7 +3,6 @@ package com.lvt4j.rbac;
 import java.io.File;
 
 import com.lvt4j.basic.TPager;
-import com.lvt4j.rbac.service.Dao;
 
 import net.sf.json.JSONObject;
 
@@ -31,8 +30,6 @@ public class Consts {
     static{
         ConfFolder.mkdirs();
     }
-    
-    public static Dao Dao;
     
     public static final Class<?>[] SupportHandlerMethodTypes = new Class<?>[]{
         JSONObject.class, TPager.class, String[].class, int[].class};

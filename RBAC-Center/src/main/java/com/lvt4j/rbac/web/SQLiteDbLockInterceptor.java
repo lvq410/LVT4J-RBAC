@@ -1,10 +1,9 @@
 package com.lvt4j.rbac.web;
 
-import java.util.concurrent.locks.ReentrantLock;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -14,22 +13,21 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
+import com.lvt4j.rbac.db.DbLock;
 import com.lvt4j.rbac.db.Read;
 import com.lvt4j.rbac.db.Write;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * SQLite数据库只能单线程处理，上个锁
  * @author LV
  */
-@Slf4j
-@Order(InterceptorOrder.SQLite)
-@Configuration("SQLiteInterceptor")
+@Order(InterceptorOrder.SQLiteDbLock)
+@Configuration("SQLiteDbLockInterceptor")
 @ConditionalOnProperty(name="db.type",havingValue="sqlite")
-class SQLiteInterceptor extends WebMvcConfigurerAdapter implements HandlerInterceptor {
+class SQLiteDbLockInterceptor extends WebMvcConfigurerAdapter implements HandlerInterceptor {
 
-    private ReentrantLock lock = new ReentrantLock();
+    @Autowired
+    private DbLock lock;
     
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
@@ -42,7 +40,11 @@ class SQLiteInterceptor extends WebMvcConfigurerAdapter implements HandlerInterc
         if(!(rawHandler instanceof HandlerMethod)) return true;
         HandlerMethod handler = (HandlerMethod)rawHandler;
         if(!handler.hasMethodAnnotation(Read.class) && !handler.hasMethodAnnotation(Write.class)) return true;
-        lock.lock();
+        if(handler.hasMethodAnnotation(Read.class)){
+            lock.readLock();
+        }else if(handler.hasMethodAnnotation(Write.class)) {
+            lock.writeLock();
+        }
         return true;
     }
 
@@ -59,10 +61,10 @@ class SQLiteInterceptor extends WebMvcConfigurerAdapter implements HandlerInterc
         if(!(rawHandler instanceof HandlerMethod)) return;
         HandlerMethod handler = (HandlerMethod)rawHandler;
         if(!handler.hasMethodAnnotation(Read.class) && !handler.hasMethodAnnotation(Write.class)) return;
-        try{
-            lock.unlock();
-        }catch(Exception e){
-            log.error("SQLite锁释放失败!", e);
+        if(handler.hasMethodAnnotation(Read.class)){
+            lock.readUnLock();
+        }else if(handler.hasMethodAnnotation(Write.class)) {
+            lock.writeUnLock();
         }
     }
     

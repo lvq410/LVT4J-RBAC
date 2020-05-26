@@ -1,21 +1,32 @@
+$(loadProducts);
+
+function queryProducts(){
+    $('#productsPager').pagerPageNo(1);
+    loadProducts()
+}
+
 function loadProducts() {
     q('/edit/product/list.json',
         {
             keyword: $('#keyword').val(),
             pager: $('#productsPager').pagerSerialize()
         },
-        function(products){
-            $('#products').html($tpl(tpl_products)(products));
-            $('#editProductDiv').slideUp();
-        },
-        '加载产品中'
+        function(data){
+            $('#productsPager').pagerCount(data.count);
+            $('#products').html($tpl(tpl_products)(data.models));
+            if($('#editProductDiv').dialog('instance')) $('#editProductDiv').dialog('close');
+        }, '加载产品中'
     );
 }
 
 function addProduct() {
     $('#editProductDiv').formData({});
     $('#adminUserId').select2Clear();
-    $('#editProductDiv').slideDown().scrollToMe();
+    $('#editProductDiv').dialog({
+        title:'新建产品',
+        minWidth:1000,
+        buttons:{'保存':editProductSave}
+    });
 }
 
 function sortProduct() {
@@ -38,7 +49,11 @@ function sortProduct() {
 function editProduct(btn) {
     var product = $(btn).closest('tr').attrData();
     $('#editProductDiv').formData(product);
-    $('#editProductDiv').slideDown().scrollToMe();
+    $('#editProductDiv').dialog({
+        title:'修改产品',
+        minWidth:1000,
+        buttons:{'保存':editProductSave}
+    });
 }
 
 function editProductSave() {
@@ -70,12 +85,6 @@ function delProduct(btn) {
 }
 
 
-
-$(document).ready(ready);
-
-function ready(){
-    loadProducts();
-}
 
 function tpl_products(products) {
     if(!products) return;

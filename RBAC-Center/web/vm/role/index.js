@@ -1,3 +1,10 @@
+$(loadRoles);
+
+function queryRoles(){
+    $('#rolesPager').pagerPageNo(1);
+    loadRoles();
+}
+
 function loadRoles(){
     if(!curPro) return alert('请先选择当前产品!');
     q('/edit/role/list.json',
@@ -9,12 +16,11 @@ function loadRoles(){
             needAuth:true,
             pager: $('#rolesPager').pagerSerialize()
         },
-        function(roles){
-            $('#roles').html($tpl(tpl_roles)(roles));
-            $('#editRoleDiv').slideUp();
-            $('#rolesDiv').slideDown();
-        },
-        '加载角色中'
+        function(data){
+            $('#rolesPager').pagerCount(data.count);
+            $('#roles').html($tpl(tpl_roles)(data.models));
+            if($('#editRoleDiv').dialog('instance')) $('#editRoleDiv').dialog('close');
+        }, '加载角色中'
     );
 }
 
@@ -23,8 +29,10 @@ function addRole() {
     $('#accesses').empty();
     $('#permissions').empty();
     $('.q-auth-search').val('');
-    $('#editRoleDiv').slideDown(function () {
-        $('#editRoleDiv').scrollToMe();
+    $('#editRoleDiv').dialog({
+        title:'新增角色',
+        minWidth:1200,
+        buttons:{'保存':editRoleSave}
     });
 }
 
@@ -40,8 +48,7 @@ function sortRole() {
         },
         function(){
             alert('保存排序成功!');
-        },
-        '保存排序中'
+        }, '保存排序中'
     );
 }
 
@@ -51,8 +58,10 @@ function editRole(btn) {
     $('#accesses').html($tpl(tpl_auths)(role.accesses, 1));
     $('#permissions').html($tpl(tpl_auths)(role.permissions, 1));
     $('.q-auth-search').val('');
-    $('#editRoleDiv').slideDown(function () {
-        $('#editRoleDiv').scrollToMe();
+    $('#editRoleDiv').dialog({
+        title:'修改角色',
+        minWidth:1200,
+        buttons:{'保存':editRoleSave}
     });
 }
 
@@ -65,8 +74,7 @@ function editRoleSave() {
         function(){
             alert('保存成功!');
             loadRoles();
-        },
-        '保存角色中'
+        }, '保存角色中'
     );
 }
 
@@ -81,16 +89,10 @@ function delRole(btn) {
         function() {
             alert('删除成功!');
             loadRoles();
-        },
-        '删除角色中'
+        }, '删除角色中'
     );
 }
 
-$(document).ready(ready);
-
-function ready(){
-    loadRoles();
-}
 
 function tpl_roles(roles) {
     if(!roles) return;

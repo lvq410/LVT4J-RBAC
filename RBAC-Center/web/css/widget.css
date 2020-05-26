@@ -4,6 +4,10 @@
     cursor: move !important;
 }
 
+.select2-search:after{
+    display:none;
+}
+
 .pager{
     color: #2283c5;
     margin: 10px 0;

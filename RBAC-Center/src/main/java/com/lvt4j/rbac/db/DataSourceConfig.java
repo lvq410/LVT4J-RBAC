@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Configuration("DataSourceConfig")
-class DataSourceConfig {
+public class DataSourceConfig {
 
     @Value("${db.type}")
     private String dbType;
@@ -41,6 +41,8 @@ class DataSourceConfig {
     private String h2TcpPort;
     @Value("${db.h2.master.host}")
     private String h2MasterHost;
+    @Value("${db.h2.master.tcp.port}")
+    private int h2MasterTcpPort;
     
     @PostConstruct
     private void init() {
@@ -56,7 +58,11 @@ class DataSourceConfig {
         }
     }
     
-    //====================================================================SQLite
+    public boolean isDistributedDatabase() {
+        return "h2".equals(dbType);
+    }
+    
+    //====================================================================SQLiteDbLock
     private SQLiteDataSource sqliteDataSource() throws Exception {
         File db = new File(dbFolder, "rbac.db");
         if(!db.exists()) initDbFile("sqlite.db", db);
@@ -85,8 +91,8 @@ class DataSourceConfig {
         return dataSource;
     }
     private BasicDataSource h2SlaveDataSource() {
-        log.info("数据库H2-slave:{}",h2MasterHost+":"+h2TcpPort+"/"+dbFolder+"rbac");
-        String url = "jdbc:h2:tcp://"+h2MasterHost+":"+h2TcpPort+"/"+dbFolder+"rbac";
+        log.info("数据库H2-slave:{}",h2MasterHost+":"+h2MasterTcpPort+"/"+dbFolder+"rbac");
+        String url = "jdbc:h2:tcp://"+h2MasterHost+":"+h2MasterTcpPort+"/"+dbFolder+"rbac";
         return h2DataSource(url);
     }
     private BasicDataSource h2DataSource(String url) {

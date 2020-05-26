@@ -1,3 +1,10 @@
+$(loadAccesses);
+
+function queryAccesses(){
+    $('#accessesPager').pagerPageNo(1);
+    loadAccesses();
+}
+
 function loadAccesses(){
     if(!curPro) return alert('请先选择当前产品!');
     q('/edit/access/list.json',
@@ -6,12 +13,11 @@ function loadAccesses(){
             keyword: $('#keyword').val(),
             pager: $('#accessesPager').pagerSerialize()
         },
-        function(accesses){
-            $('#accesses').html($tpl(tpl_accesses)(accesses));
-            $('#editAccessDiv').slideUp();
-            $('#accessesDiv').slideDown();
-        },
-        '加载访问项中'
+        function(data){
+            $('#accessesPager').pagerCount(data.count);
+            $('#accesses').html($tpl(tpl_accesses)(data.models));
+            if($('#editAccessDiv').dialog('instance')) $('#editAccessDiv').dialog('close');
+        }, '加载访问项中'
     );
 }
 
@@ -19,7 +25,11 @@ function addAccess() {
     $('#editAccessDiv').formData({});
     $('#testPatternUri').val('');
     $('#testPatternRst').text('');
-    $('#editAccessDiv').slideDown().scrollToMe();
+    $('#editAccessDiv').dialog({
+        title:'新建访问项',
+        minWidth:1000,
+        buttons:{'保存':editAccessSave}
+    });
 }
 
 function sortAccess() {
@@ -34,8 +44,7 @@ function sortAccess() {
         },
         function(){
             alert('保存排序成功!');
-        },
-        '保存排序中'
+        }, '保存排序中'
     );
 }
 
@@ -44,10 +53,16 @@ function editAccess(btn) {
     $('#editAccessDiv').formData(access);
     $('#testPatternUri').val('');
     $('#testPatternRst').text('');
-    $('#editAccessDiv').slideDown().scrollToMe();
+    $('#editAccessDiv').dialog({
+        title:'修改访问项',
+        minWidth:1000,
+        buttons:{'保存':editAccessSave}
+    });
 }
 
 function testPattern() {
+    var uri = $('#testPatternUri').val();
+    if(!uri) return $('#testPatternRst').removeClass('text-danger').addClass('text-info').text('');
     q('/edit/access/patternMatch.json',
         {
             pattern: $('#pattern').val(),
@@ -59,8 +74,7 @@ function testPattern() {
             } else {
                 $('#testPatternRst').removeClass('text-info').addClass('text-danger').text('不匹配');
             }
-        },
-        '验证uri匹配pattern中'
+        }, '验证uri匹配pattern中'
     );
 }
 
@@ -80,8 +94,7 @@ function editAccessSave() {
         function() {
             alert('保存成功!');
             loadAccesses();
-        },
-        '保存访问项中'
+        }, '保存访问项中'
     );
 }
 
@@ -101,11 +114,6 @@ function delAccess(btn) {
     );
 }
 
-$(document).ready(ready);
-
-function ready(){
-    loadAccesses();
-}
 
 function tpl_accesses(accesses) {
     if(!accesses) return;

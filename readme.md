@@ -73,6 +73,7 @@ db.h2.master=true #是否h2 master节点
 db.h2.web.port=8082 #master节点时的数据库web管理端口
 db.h2.tcp.port=9123 #master节点时的数据库tcp端口
 db.h2.master.host=localhost #slave节点时要连接的master节点的地址
+db.h2.master.tcp.port=${db.h2.tcp.port} #slave节点时要连接的master节点的tcp端口
 
 admin.userId=pwd #管理员账户密码
 ```

@@ -1,3 +1,10 @@
+$(loadPermissions);
+
+function queryPermissions(){
+    $('#permissionsPager').pagerPageNo(1);
+    loadPermissions();
+}
+
 function loadPermissions(){
     if(!curPro) return alert('请先选择当前产品!');
     q('/edit/permission/list.json',
@@ -6,18 +13,21 @@ function loadPermissions(){
             keyword: $('#keyword').val(),
             pager: $('#permissionsPager').pagerSerialize()
         },
-        function(permissions){
-            $('#permissions').html($tpl(tpl_permissions)(permissions));
-            $('#editPermissionDiv').slideUp();
-            $('#permissionsDiv').slideDown();
-        },
-        '加载授权项中'
+        function(data){
+            $('#permissionsPager').pagerCount(data.count);
+            $('#permissions').html($tpl(tpl_permissions)(data.models));
+            if($('#editPermissionDiv').dialog('instance')) $('#editPermissionDiv').dialog('close');
+        }, '加载授权项中'
     );
 }
 
 function addPermission() {
     $('#editPermissionDiv').formData({});
-    $('#editPermissionDiv').slideDown().scrollToMe();
+    $('#editPermissionDiv').dialog({
+        title:'新建授权项',
+        minWidth:1000,
+        buttons:{'保存':editPermissionSave}
+    });
 }
 
 function sortPermission() {
@@ -32,15 +42,18 @@ function sortPermission() {
         },
         function(){
             alert('保存排序成功!');
-        },
-        '保存排序中'
+        }, '保存排序中'
     );
 }
 
 function editPermission(btn) {
     var permission = $(btn).closest('tr').attrData();
     $('#editPermissionDiv').formData(permission);
-    $('#editPermissionDiv').slideDown().scrollToMe();
+    $('#editPermissionDiv').dialog({
+        title:'修改授权项',
+        minWidth:1000,
+        buttons:{'保存':editPermissionSave}
+    });
 }
 
 function editPermissionSave() {
@@ -52,8 +65,7 @@ function editPermissionSave() {
         function() {
             alert('保存成功!');
             loadPermissions();
-        },
-        '保存授权项中'
+        }, '保存授权项中'
     );
 }
 
@@ -68,16 +80,10 @@ function delPermission(btn) {
         function() {
             alert('删除成功!');
             loadPermissions();
-        },
-        '删除授权项中'
+        }, '删除授权项中'
     );
 }
 
-$(document).ready(ready);
-
-function ready(){
-    loadPermissions();
-}
 
 function tpl_permissions(permissions) {
     if(!permissions) return;

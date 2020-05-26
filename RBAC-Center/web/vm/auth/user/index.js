@@ -1,3 +1,10 @@
+$(loadUsers);
+
+function queryUsers(){
+    $('#usersPager').pagerPageNo(1);
+    loadUsers();
+}
+
 function loadUsers() {
     if(!curPro) return alert('请先选择当前产品!');
     q('/edit/user/list.json',
@@ -10,11 +17,11 @@ function loadUsers() {
             keyword: $('#keyword').val(),
             pager: $('#usersPager').pagerSerialize()
         },
-        function(users){
-            $('#users').html($tpl(tpl_users)(users));
-            $('#editUserAuthDiv').slideUp();
-        },
-        '加载用户中'
+        function(data){
+            $('#usersPager').pagerCount(data.count);
+            $('#users').html($tpl(tpl_users)(data.models));
+            if($('#editUserAuthDiv').dialog('instance')) $('#editUserAuthDiv').dialog('close');
+        }, '加载用户中'
     );
 }
 
@@ -30,10 +37,12 @@ function editUserAuth(btn) {
     $('#permissions').html($tpl(tpl_auths)(user.permissions, 1));
     $('.q-auth-search').val('');
     $('.a-auth-search').val('');
-    $('#editUserAuthDiv').slideDown(function () {
-        $('#editUserAuthDiv').scrollToMe();
-    });
     onAuthChange();
+    $('#editUserAuthDiv').dialog({
+        title:'更改用户权限',
+        minWidth:1200,
+        buttons:{'保存':editUserAuthSave}
+    });
 }
 
 function onAuthChange() {
@@ -47,30 +56,23 @@ function onAuthChange() {
             $('#allAccesses').html($tpl(tpl_allAuths)(userAuth.allAccesses));
             $('#allPermissions').html($tpl(tpl_allAuths)(userAuth.allPermissions));
             $('.a-auth-search').change();
-        },
-        '计算用户所有权限中'
+        }, '计算用户所有权限中'
     );
 }
 
 function editUserAuthSave() {
     var userAuth = $('#editUserAuthDiv').formData();
-    if(!userAuth) userAuth = {};
+    if(!userAuth) return;
     userAuth.proAutoId = curPro.autoId;
     q('/edit/auth/user/set.json',
         userAuth,
         function() {
             alert('保存成功!');
             loadUsers();
-        },
-        '保存用户权限中'
+        }, '保存用户权限中'
     );
 }
 
-$(document).ready(ready);
-
-function ready(){
-    loadUsers();
-}
 
 function tpl_users(users) {
     if(!users) return;

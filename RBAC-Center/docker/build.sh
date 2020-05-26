@@ -1,7 +1,7 @@
 #!/bin/sh
 #############################
 #docker镜像构建脚本
-#本地构建要求有docker环境，默认jdk18，默认gradle5.0+
+#本地构建要求有docker环境，默认jdk18，默认gradle 2.12+
 #############################
 set -e
 #切换至工作目录
@@ -15,12 +15,11 @@ gradle bootRepackage
 #整理打镜像用文件
 mkdir ./build/docker
 mv ./build/libs/*.jar ./build/docker/app.jar
-cp ./docker/Dockerfile ./build/docker/
-cp ./docker/start.sh ./build/docker/start.sh
-sed -i 's/^M//g' ./build/docker/start.sh
+sed 's/^M//g' ./docker/Dockerfile > ./build/docker/Dockerfile
+sed 's/^M//g' ./docker/start.sh > ./build/docker/start.sh
 cp -r ./web ./build/docker/
 cd ./build/docker
 #打镜像
-docker build -t lvq410/rbac:latest . 
+#docker build -t lvq410/rbac:latest . 
 #推镜像
-docker push lvq410/rbac:latest
+#docker push lvq410/rbac:latest

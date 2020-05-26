@@ -49,9 +49,11 @@ function widget_sortabler_init() {
  * 选择器初始化<br>
  * 必须是select元素,以属性widget="select2"标识<br>
  * 必须的html属性:<br>
- * ⊙url:请求数据地址<br>
+ * ⊙model:请求数据对象类型<br>
  * 可配置的html属性:<br>
  * ⊙placeholder:默认'请选择...'<br>
+ * ⊙select2multiple(多选属性):默认false<br>
+ * ⊙proAutoId:搜索时附加的proAutoId参数，默认''，没有则用curPro<br>
  */
 function widget_select2_init() {
     $('[widget=select2]').each(function(){
@@ -70,8 +72,9 @@ function widget_select2_init() {
                 var obj = rst.data;
                 return $($tpl(widget_tpl_select)(obj));
             },
+            multiple:widget.attr('select2multiple') == 'true',
             ajax : {
-                url : url,
+                url : '/edit/'+widget.attr('model')+'/list.json',
                 dataType : 'json',
                 delay: 500,
                 data: function (params) {
@@ -79,7 +82,8 @@ function widget_select2_init() {
                         keyword : params.term,
                         pager : JSON.stringify({pageNo : params.page})
                     };
-                    if(curPro) data.proAutoId = curPro.autoId;
+                    if(widget.attr('proAutoId')) data.proAutoId = widget.attr('proAutoId');
+                    else if(curPro) data.proAutoId = curPro.autoId;
                     return data;
                 },
                 processResults: function (rst, params) {
@@ -92,7 +96,7 @@ function widget_select2_init() {
                             pagination: {more: false}
                         }
                     }
-                    var objs = rst.data;
+                    var objs = rst.data.models;
                     var results = [];
                     for (var i = 0; i < objs.length; i++) {
                         var obj = objs[i];
@@ -160,33 +164,64 @@ jQuery.fn.select2Set = function(data){
 };
 
 /**
+ * 回车输入事件<br>
+ * 以属性onenter={callback}标识<br>
+ * 可配置的html属性:<br>
+ * onenter:回车按键后调用的执行代码
+ */
+function widget_onEnter_init(){
+    $('[onenter]').each(function(){
+        var widget = $(this);
+        if(widget.data('widget-onenter-init')) return;
+        widget.data('widget-onenter-init', true);
+        widget.bind("keyup", function(event) {
+            if("Enter"!=event.key) return;
+            var callback = widget.attr('onenter');
+            if(!callback) return;
+            eval(callback);
+        });
+    });
+}
+
+/**
  * 翻页器初始化<br>
- * 以属性widget="pager"标识<br>
+ * 必须是div元素,以属性widget="pager"标识<br>
  * 必须的html属性:<br>
  * ⊙onpage:翻页后的回调脚本<br>
  * 可配置的html属性:<br>
+ * ⊙show-page-count:是否显示总页数,默认false<br>
+ * ⊙show-count:是否显示总条数,默认false<br>
  * ⊙show-go:是否显示跳转按钮,默认false<br>
  * ⊙show-page-size:是否显示每页个数,默认false<br>
  * ⊙page-size:每页个数,默认10<br>
  */
 function widget_pager_init() {
-    $('[widget=pager]').each(function(){
+    $('div[widget=pager]').each(function(){
         var widget = $(this);
         if(widget.data('widget-init')) return;
+        var showPageCount = widget.attr('show-page-count')=='true';
+        var showCount = widget.attr('show-count')=='true';
         var showGo = widget.attr('show-go')=='true';
         var showPageSize = widget.attr('show-page-size')=='true';
         var pageSize = LVT.int(widget.attr('page-size'), 10);
         var pagerDiv = $('<div widget="pager">'+
                 '<div class="pager-ele pager-btn pager-prev">←</div>'+
-                '<div class="pager-ele">第<input class="pager-page-no" type="text" value="1">页</div>'+
+                '<div class="pager-ele">第<span class="pager-page-no input" contenteditable="true">1</span>'
+                    +'<span'+(showPageCount?'':' style="display:none;"')+' class="pager-page-count-box">'
+                        +'/<span class="pager-page-count">1</span></span>'
+                    +'页'
+                    +'<span'+(showCount?'':' style="display:none;"')+' class="pager-count-box">'
+                        +'，共<span class="pager-count">0</span>条</span>'
+                    +'</div>'+
                 '<div'+(showGo?'':' style="display:none;"')+' class="pager-ele pager-btn pager-go">go</div>'+
                 '<div'+(showPageSize?'':' style="display:none;"')+' class="pager-ele">'
-                    +'每页<input class="pager-page-size" type="text" value="'+pageSize+'">个</div>'+
+                    +'每页<span class="pager-page-size input" contenteditable="true">'+pageSize+'</span>个</div>'+
                 '<div class="pager-ele pager-btn pager-next">→</div>'+
             '</div>');
         pagerDiv.attr('id', widget.attr('id'));
         pagerDiv.attr('onpage', widget.attr('onpage'));
-        pagerDiv.attr('class', widget.attr('class')+' pager');
+        pagerDiv.attr('class', (widget.attr('class')||'')+' pager');
+        pagerDiv.attr('style', widget.attr('style'));
         pagerDiv.find('.pager-prev').click(function(){
             var pagerDiv = $(this).closest('[widget=pager]');
             pagerDiv.pagerPageNo(pagerDiv.pagerPageNo()-1);
@@ -213,10 +248,10 @@ jQuery.fn.pagerPageNo = function(pageNo){
     var pagerDiv = this.closest('[widget=pager]');
     var pageNoEle = pagerDiv.find('.pager-page-no');
     pageNo = pageNo==null?
-            LVT.int(pageNoEle.val(), 1)
+            LVT.int(pageNoEle.text(), 1)
             :LVT.int(pageNo, 1);
     if(pageNo<1) pageNo=1;
-    pageNoEle.val(pageNo);
+    pageNoEle.text(pageNo);
     return pageNo;
 };
 /** 翻页器扩展：设置或获取每页大小 */
@@ -225,10 +260,10 @@ jQuery.fn.pagerPageSize = function(pageSize){
     var pageSizeEle = pagerDiv.find('.pager-page-size');
     var defPageSize = LVT.int(pagerDiv.attr('page-size'), 10);
     pageSize = pageSize==null?
-            LVT.int(pageSizeEle.val(), defPageSize)
+            LVT.int(pageSizeEle.text(), defPageSize)
             :LVT.int(pageSize, defPageSize);
     if(pageSize<1) pageSize = 10;
-    pageSizeEle.val(pageSize);
+    pageSizeEle.text(pageSize);
     return pageSize;
 };
 /** 翻页器扩展：页数及每页大小序列化为json对象 */
@@ -237,6 +272,23 @@ jQuery.fn.pagerSerialize = function(){
         pageNo   : this.pagerPageNo(),
         pageSize : this.pagerPageSize()
     }
+}
+/** 翻页器扩展：获取总页数 */
+jQuery.fn.pagerPageCount = function(){
+    var pagerDiv = this.closest('[widget=pager]');
+    pageCountEle = pagerDiv.find('.pager-page-count');
+    return LVT.int(pageCountEle.text());
+}
+/** 翻页器扩展：设置与获取总条数 */
+jQuery.fn.pagerCount = function(count){
+    var pagerDiv = this.closest('[widget=pager]');
+    countEle = pagerDiv.find('.pager-count');
+    if(count==null) return LVT.int(countEle.text());
+    count = LVT.int(count);
+    countEle.text(count);
+    var pagerPageCount = Math.max(1, Math.ceil(count/this.pagerPageSize()));
+    pageCountEle = pagerDiv.find('.pager-page-count');
+    pageCountEle.text(pagerPageCount);
 }
 
 /**
@@ -257,14 +309,14 @@ function widget_auth_chooser_init() {
             +'</div>'
             +'<div class="col-xs-4" style="border-left:1px solid #d5d5d5;min-height:80px;margin-left:-1px;">'
                 +'<div class="input-group" style="width:100%;">'
-                    +'<input type="text" class="form-control q-auth-keyword" style="height:22px;margin-top:8px;" placeholder="请输入关键词"/>'
+                    +'<input type="text" onenter="widget_auth_load(this, &quot;'+authModel+'&quot;)" class="form-control q-auth-keyword" style="height:22px;margin-top:8px;" placeholder="请输入关键词"/>'
                     +'<span class="input-group-btn">'
                         +'<button type="button" class="btn btn-purple btn-minier" onclick="widget_auth_load(this, &quot;'+authModel+'&quot;)" style="margin-top:8px;">'
                             +'搜索<i class="ace-icon fa fa-search"></i>'
                         +'</button>'
                     +'</span>'
                 +'</div>'
-                +'<div class="pull-right q-auths-pager" widget="pager" show-go="true" onpage="widget_auth_load(this, &quot;'+authModel+'&quot;)"></div>'
+                +'<div class="pull-right q-auths-pager" widget="pager" show-go="true" show-page-count="true" show-count="true" onpage="widget_auth_load(this, &quot;'+authModel+'&quot;)"></div>'
                 +'<div class="q-auths" style="border-top:1px solid #d5d5d5;margin-top:50px;padding-top:10px;margin-bottom:10px;"></div>'
             +'</div>'
         +'</div>');
@@ -277,6 +329,7 @@ function widget_auth_chooser_init() {
         widget_pager_init();
         chooserDiv.data('widget-init', true);
     });
+    widget_onEnter_init();
 }
 function widget_auth_load(btn, authModelName) {
     if(!curPro) return;
@@ -287,8 +340,9 @@ function widget_auth_load(btn, authModelName) {
             keyword: box.find('.q-auth-keyword').val(),
             pager: box.find('.q-auths-pager').pagerSerialize()
         },
-        function(auths){
-            box.find('.q-auths').html($tpl(tpl_auths)(auths, 2));
+        function(data){
+            box.find('.q-auths-pager').pagerCount(data.count);
+            box.find('.q-auths').html($tpl(tpl_auths)(data.models, 2));
         },
         '加载权限中'
     );
@@ -321,6 +375,7 @@ function widget_init() {
     widget_tooltiper_init();
     widget_sortabler_init();
     widget_select2_init();
+    widget_onEnter_init();
     widget_pager_init();
     widget_auth_chooser_init();
 }

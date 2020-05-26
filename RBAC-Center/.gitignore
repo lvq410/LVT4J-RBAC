@@ -22,6 +22,6 @@ gradlew.bat
 applicationPid
 rbac.db
 rbac.db-journal
-/backup/
-/config/
 rbac.mv.db
+/backup/
+/test/

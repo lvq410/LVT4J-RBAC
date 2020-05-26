@@ -9,13 +9,14 @@ import java.util.Map;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.Validate;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lvt4j.basic.TPager;
 import com.lvt4j.rbac.Consts.ErrCode;
 import com.lvt4j.rbac.data.Model;
@@ -45,9 +46,6 @@ class EditController {
     @Autowired
     private Dao dao;
     
-    @Autowired
-    ObjectMapper objectMapper;
-    
     @Write
     @RequestMapping("/curProSet")
     public JsonResult curProSet(
@@ -75,24 +73,55 @@ class EditController {
             @RequestParam(required=false) String keyword,
             @RequestParam(required=false) TPager pager){
         Class<?> modelCls = Model.getModelCls(modelName);
-        List<?> list = dao.list(modelName, proAutoId, roleAutoId, accessAutoId, permissionAutoId, keyword, pager);
-        if(!needAuth || list.isEmpty()) return JsonResult.success(list);
+        Pair<Long, List<? extends Model>> pair = dao.list(modelName, proAutoId, roleAutoId, accessAutoId, permissionAutoId, keyword, pager);
+        JsonResult rst = JsonResult.success().dataPut("count", pair.getLeft()).dataPut("models", pair.getRight());
+        if(!needAuth || pair.getRight().isEmpty()) return rst;
         if(Role.class!=modelCls
-                && User.class!=modelCls) return JsonResult.success(list);
+                && User.class!=modelCls) return rst;
         if(User.class==modelCls){
-            for(User user : (List<User>)list){
+            for(User user : (List<User>)pair.getRight()){
                 user.params = dao.params(modelName, proAutoId, user.autoId);
                 user.roles = dao.auths(modelName, Role.class, proAutoId, user.autoId);
                 user.accesses = dao.auths(modelName, Access.class, proAutoId, user.autoId);
                 user.permissions = dao.auths(modelName, Permission.class, proAutoId, user.autoId);
             }
         }else if(Role.class==modelCls){
-            for(Role role : (List<Role>)list){
+            for(Role role : (List<Role>)pair.getRight()){
                 role.accesses = dao.auths(modelName, Access.class, proAutoId, role.autoId);
                 role.permissions = dao.auths(modelName, Permission.class, proAutoId, role.autoId);
             }
         }
-        return JsonResult.success(list);
+        return rst;
+    }
+    @Read
+    @RequestMapping("/{modelName}/get")
+    public JsonResult baseGet(
+            @PathVariable String modelName,
+            @RequestParam(required=false) Integer autoId,
+            @RequestParam(required=false) String id,
+            @RequestParam(required=false) boolean needAuth,
+            @RequestParam(required=false) Integer proAutoId) {
+        Class<? extends Model> modelCls = Model.getModelCls(modelName);
+        Object model = null;
+        if(autoId!=null) model = dao.get(modelCls, autoId);
+        else if(id!=null) model = dao.uniqueGet(modelCls, id);
+        else throw new IllegalArgumentException("autoId 或 id 参数必填一项");
+        if(!needAuth) return JsonResult.success(model);
+        if(Role.class!=modelCls
+                && User.class!=modelCls) return JsonResult.success(model);
+        Validate.notNull(proAutoId, "needAuth为true时proAutoId参数必须");
+        if(User.class==modelCls){
+            User user = (User) model;
+            user.params = dao.params(modelName, proAutoId, user.autoId);
+            user.roles = dao.auths(modelName, Role.class, proAutoId, user.autoId);
+            user.accesses = dao.auths(modelName, Access.class, proAutoId, user.autoId);
+            user.permissions = dao.auths(modelName, Permission.class, proAutoId, user.autoId);
+        }else if(Role.class==modelCls){
+            Role role = (Role) model;
+            role.accesses = dao.auths(modelName, Access.class, proAutoId, role.autoId);
+            role.permissions = dao.auths(modelName, Permission.class, proAutoId, role.autoId);
+        }
+        return JsonResult.success(model);
     }
     @Write
     @Transaction
@@ -112,7 +141,7 @@ class EditController {
             dao.authsSet(modelName, Access.class, proAutoId, (int)model.get("autoId"), accessAutoIds);
             dao.authsSet(modelName, Permission.class, proAutoId, (int)model.get("autoId"), permissionAutoIds);
         }
-        return JsonResult.success();
+        return JsonResult.success(model);
     }
     @Write
     @Transaction

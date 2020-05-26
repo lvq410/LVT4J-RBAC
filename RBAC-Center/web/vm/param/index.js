@@ -1,21 +1,25 @@
+$(loadParams);
+
 function loadParams(){
     if(!curPro) return alert('请先选择当前产品!');
     q('/edit/param/list.json',
         {
             proAutoId: curPro.autoId
         },
-        function(params){
-            $('#params').html($tpl(tpl_params)(params));
-            $('#editParamDiv').slideUp();
-            $('#paramsDiv').slideDown();
-        },
-        '加载配置项中'
+        function(data){
+            $('#params').html($tpl(tpl_params)(data.models));
+            if($('#editParamDiv').dialog('instance')) $('#editParamDiv').dialog('close');
+        }, '加载配置项中'
     );
 }
 
 function addParam() {
     $('#editParamDiv').formData({});
-    $('#editParamDiv').slideDown().scrollToMe();
+    $('#editParamDiv').dialog({
+        title:'新增配置项',
+        minWidth:1000,
+        buttons:{'保存':editParamSave}
+    });
 }
 
 function sortParam() {
@@ -30,8 +34,7 @@ function sortParam() {
         },
         function(){
             alert('保存排序成功!');
-        },
-        '保存排序中'
+        }, '保存排序中'
     );
 }
 
@@ -39,7 +42,11 @@ function editParam(btn) {
     var param = $(btn).closest('tr').attrData();
     param.oldKey = param.key;
     $('#editParamDiv').formData(param);
-    $('#editParamDiv').slideDown().scrollToMe();
+    $('#editParamDiv').dialog({
+        title:'修改配置项',
+        minWidth:1000,
+        buttons:{'保存':editParamSave}
+    });
 }
 
 function editParamSave() {
@@ -51,8 +58,7 @@ function editParamSave() {
         function() {
             alert('保存成功!');
             loadParams();
-        },
-        '保存配置项中'
+        }, '保存配置项中'
     );
 }
 
@@ -66,16 +72,10 @@ function delParam(btn) {
         function(){
             alert('删除成功!');
             loadParams();
-        },
-        '删除配置项中'
+        }, '删除配置项中'
     );
 }
 
-$(document).ready(ready);
-
-function ready(){
-    loadParams();
-}
 
 function tpl_params(params) {
     if(!params) return;

@@ -5,7 +5,7 @@
 <div class="footer">
     <div class="footer-inner">
         <div class="footer-content">
-            Copyright © <span><script>document.write(new Date().getFullYear())</script></span>, LVT4J, Inc. All Rights Reserved.
+            Copyright © <span id="copyrightYear"></span><script>$('#copyrightYear').text(new Date().getFullYear())</script>, LVT4J, Inc. All Rights Reserved.
         </div>
     </div>
 </div>

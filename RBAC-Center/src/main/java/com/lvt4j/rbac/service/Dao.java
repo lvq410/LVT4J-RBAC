@@ -4,30 +4,26 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.PostConstruct;
-
-import lombok.Data;
-import net.sf.json.JSONObject;
-
+import org.apache.commons.collections4.map.LazyMap;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.lvt4j.basic.TCollection.TAutoMap;
-import com.lvt4j.basic.TCollection.TAutoMap.ValueBuilder;
 import com.lvt4j.basic.TDB;
 import com.lvt4j.basic.TDB.Table;
 import com.lvt4j.basic.TPager;
-import com.lvt4j.rbac.Consts;
 import com.lvt4j.rbac.Consts.ErrCode;
 import com.lvt4j.rbac.data.Model;
 import com.lvt4j.rbac.data.model.Access;
@@ -38,6 +34,9 @@ import com.lvt4j.rbac.data.model.Role;
 import com.lvt4j.rbac.data.model.User;
 import com.lvt4j.rbac.data.model.UserParam;
 import com.lvt4j.spring.Err;
+
+import lombok.Data;
+import net.sf.json.JSONObject;
 
 /**
  * @author LV
@@ -50,55 +49,57 @@ public class Dao{
     
     @Autowired
     @Lazy
-    ProductAuthCache productAuthCache;
+    private ProductAuthCache productAuthCache;
     
-    @PostConstruct
-    public void init(){
-        Consts.Dao = this;
-    }
-    
-    public List<? extends Model> list(String modelName, Integer proAutoId,
+    public Pair<Long, List<? extends Model>> list(String modelName, Integer proAutoId,
             Integer roleAutoId, Integer accessAutoId, Integer permissionAutoId,
             String keyword, TPager pager){
         Class<? extends Model> modelCls = Model.getModelCls(modelName);
-        StringBuilder sql = new StringBuilder("select * from ")
-            .append(modelName).append(" where seq>=0 ");
+        StringBuilder sql = new StringBuilder("select * from ").append(modelName);
+        StringBuilder whereClause = new StringBuilder(" where seq>=0 ");
+        
         List<Object> args = new LinkedList<Object>();
         if(proAutoId!=null && User.class!=modelCls && Product.class!=modelCls){
-            sql.append("and proAutoId=? ");
+            whereClause.append("and proAutoId=? ");
             args.add(proAutoId);
         }
         if(roleAutoId!=null){
-            sql.append("and autoId in (select "+modelName+"AutoId from "+modelName+"_role where roleAutoId=?)");
+            whereClause.append("and autoId in (select "+modelName+"AutoId from "+modelName+"_role where roleAutoId=?)");
             args.add(roleAutoId);
         }
         if(accessAutoId!=null){
-            sql.append("and autoId in (select "+modelName+"AutoId from "+modelName+"_access where accessAutoId=?)");
+            whereClause.append("and autoId in (select "+modelName+"AutoId from "+modelName+"_access where accessAutoId=?)");
             args.add(accessAutoId);
         }
         if(permissionAutoId!=null){
-            sql.append("and autoId in (select "+modelName+"AutoId from "+modelName+"_permission where permissionAutoId=?)");
+            whereClause.append("and autoId in (select "+modelName+"AutoId from "+modelName+"_permission where permissionAutoId=?)");
             args.add(permissionAutoId);
         }
         if(StringUtils.isNotEmpty(keyword)){
             keyword = '%'+keyword+'%';
-            sql.append("and (");
+            whereClause.append("and (");
             boolean first = true;
             for(Field field : Model.getLikeFields(modelCls)){
-                if(!first) sql.append("or ");
-                sql.append(field.getName()).append(" like ? ");
+                if(!first) whereClause.append("or ");
+                whereClause.append(field.getName()).append(" like ? ");
                 args.add(keyword);
                 first = false;
             }
-            sql.append(")");
+            whereClause.append(")");
         }
+        sql.append(whereClause);
+        
+        StringBuilder countSql = new StringBuilder("select count(autoId) from ").append(modelName).append(whereClause);
+        long count = db.select(countSql.toString(), args.toArray()).execute2BasicOne(long.class);
+        
         sql.append("order by seq ");
         if(pager!=null){
             sql.append("limit ?,?");
             args.add(pager.getStart());
             args.add(pager.getSize());
         }
-        return db.select(sql.toString(), args.toArray()).execute2Model(modelCls);
+        List<? extends Model> models = db.select(sql.toString(), args.toArray()).execute2Model(modelCls);
+        return Pair.of(count, models);
     }
     public <E> E get(Class<E> modelCls, Integer autoId){
         if(autoId==null) return null;
@@ -160,7 +161,8 @@ public class Dao{
             return;
         }
         Integer proAutoId = (Integer)model.get("proAutoId");
-        if(proAutoId!=null) productNotify(proAutoId);;
+        if(proAutoId!=null) productNotify(proAutoId);
+        else productNotify();
     }
     public void sort(String modelName, int[] autoIds)throws Exception{
         if(ArrayUtils.isEmpty(autoIds)) return;
@@ -319,7 +321,7 @@ public class Dao{
     }
     
     public void productNotify(Integer... proAutoIds){
-        if(proAutoIds==null){
+        if(ArrayUtils.isEmpty(proAutoIds)){
             db.executeSQL("update product set lastModify=?",
                     System.currentTimeMillis()).execute();
             productAuthCache.clear();
@@ -340,26 +342,8 @@ public class Dao{
         = Arrays.asList(Access.class, Permission.class);
     
     public static class AuthCalRst{
-        TAutoMap<Class<? extends Model>, Set<Integer>> allAuthModelAutoIds =
-                new TAutoMap<Class<? extends Model>, Set<Integer>>(
-            new ValueBuilder<Class<? extends Model>, Set<Integer>>(){
-                private static final long serialVersionUID = 1L;
-                @Override
-                public Set<Integer> build(Class<? extends Model> authModelCls){
-                    return new HashSet<Integer>();
-                }
-            }
-        );
-        TAutoMap<Class<? extends Model>, List<AuthDesc<? extends Model>>> allAuths =
-                new TAutoMap<Class<? extends Model>, List<AuthDesc<? extends Model>>>(
-            new ValueBuilder<Class<? extends Model>, List<AuthDesc<? extends Model>>>(){
-                private static final long serialVersionUID = 1L;
-                @Override
-                public List<AuthDesc<? extends Model>> build(Class<? extends Model> authModelCls){
-                    return new LinkedList<AuthDesc<? extends Model>>();
-                }
-            }
-        );
+        Map<Class<? extends Model>, Set<Integer>> allAuthModelAutoIds = LazyMap.lazyMap(new HashMap<>(), cls->new HashSet<>());
+        Map<Class<? extends Model>, List<AuthDesc<? extends Model>>> allAuths = LazyMap.lazyMap(new HashMap<>(), cls->new LinkedList<>());
         @SuppressWarnings("unchecked")
         public <E extends Model> List<AuthDesc<E>> getAuthDescs(Class<E> authModelCls){
             Object list = allAuths.get(authModelCls);

@@ -22,13 +22,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProductAuth4Center extends AbstractProductAuth{
 
-    Dao dao = Consts.Dao;
+    private Dao dao;
 
     public Product product;
     
-    public ProductAuth4Center(Product product){
+    public ProductAuth4Center(Product product, Dao dao){
         super(product==null?null:product.id, 5000);
         this.product = product;
+        this.dao = dao;
     }
 
     @Override
@@ -74,8 +75,7 @@ public class ProductAuth4Center extends AbstractProductAuth{
             
             return userAuth;
         }catch(Exception e){
-            log.error("加载用户[{}]于产品[{}]下的权限失败!",
-                    new Object[]{userId, proId, e});
+            log.error("加载用户[{}]于产品[{}]下的权限失败!", userId, proId, e);
             return null;
         }
     }
