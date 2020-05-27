@@ -3,6 +3,8 @@ package com.lvt4j.rbac.data.model;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import org.springframework.context.annotation.Description;
+
 import com.lvt4j.basic.TDB.Col;
 import com.lvt4j.basic.TDB.NotCol;
 import com.lvt4j.basic.TDB.Table;
@@ -17,6 +19,7 @@ import com.lvt4j.rbac.data.Unique;
 @Data
 @EqualsAndHashCode(callSuper=true)
 @Table("param")
+@Description("配置项")
 public class Param extends Model{
     
     @Col(id=true, autoId=true)

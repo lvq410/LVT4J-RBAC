@@ -198,3 +198,14 @@ CONSTRAINT "user_permission_permissionAutoId" FOREIGN KEY ("permissionAutoId") R
 CREATE INDEX "user_permission_proAutoId" ON "user_permission" ("proAutoId" ASC);
 CREATE INDEX "user_permission_permissionAutoId" ON "user_permission" ("permissionAutoId" ASC);
 CREATE INDEX "user_permission_seq" ON "user_permission" ("seq" ASC);
+
+CREATE TABLE "oplog" (
+"operator"  VARCHAR NOT NULL,
+"ip"  VARCHAR,
+"action"  VARCHAR NOT NULL,
+"time"  TIMESTAMP NOT NULL,
+"orig"  TEXT,
+"now"  TEXT
+);
+CREATE INDEX "oplog_operator" ON "oplog" ("operator" ASC);
+CREATE INDEX "oplog_time" ON "oplog" ("time" DESC);

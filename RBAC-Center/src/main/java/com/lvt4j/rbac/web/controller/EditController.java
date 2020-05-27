@@ -3,16 +3,20 @@ package com.lvt4j.rbac.web.controller;
 import static com.lvt4j.rbac.Consts.CookieName_CurProAutoId;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,6 +25,7 @@ import com.lvt4j.basic.TPager;
 import com.lvt4j.rbac.Consts.ErrCode;
 import com.lvt4j.rbac.data.Model;
 import com.lvt4j.rbac.data.model.Access;
+import com.lvt4j.rbac.data.model.OpLog;
 import com.lvt4j.rbac.data.model.Permission;
 import com.lvt4j.rbac.data.model.Product;
 import com.lvt4j.rbac.data.model.Role;
@@ -126,7 +131,8 @@ class EditController {
     @Write
     @Transaction
     @RequestMapping("/{modelName}/set")
-    public JsonResult baseSet(
+    public JsonResult baseSet(HttpServletRequest req,
+            @RequestAttribute("operator") String operator,
             @PathVariable String modelName,
             @RequestParam(required=false) Integer proAutoId,
             @RequestParam Map<String, String> modelData,
@@ -135,12 +141,34 @@ class EditController {
         Class<? extends Model> modelCls = Model.getModelCls(modelName);
         Model model = modelCls.newInstance();
         model.set(modelData);
-        if(dao.isDuplicated(model)) return JsonResult.fail(ErrCode.Duplicate);
+        Pair<Boolean, Model> duplicateRst = dao.isDuplicated(model);
+        if(duplicateRst.getLeft()) return JsonResult.fail(ErrCode.Duplicate);
+        
+        OpLog opLog = new OpLog();
+        opLog.operator = operator;
+        opLog.ip = reqIp(req);
+        opLog.action = (duplicateRst.getRight()==null?"新增":"修改") + Model.getModelDes(modelCls);
+        opLog.time = new Date();
+        opLog.proAutoId = proAutoId;
+        if(Role.class==modelCls){
+            Role role = (Role) model;
+            role.accesses = dao.auths(modelName, Access.class, proAutoId, role.autoId);
+            role.permissions = dao.auths(modelName, Permission.class, proAutoId, role.autoId);
+        }
+        opLog.setOrig(duplicateRst.getRight());
+        
         dao.set(model);
         if(Role.class==modelCls){
+            Role role = (Role) model;
             dao.authsSet(modelName, Access.class, proAutoId, (int)model.get("autoId"), accessAutoIds);
             dao.authsSet(modelName, Permission.class, proAutoId, (int)model.get("autoId"), permissionAutoIds);
+            role.accesses = dao.auths(modelName, Access.class, proAutoId, role.autoId);
+            role.permissions = dao.auths(modelName, Permission.class, proAutoId, role.autoId);
         }
+        
+        if(Product.class==modelCls) opLog.proAutoId = (Integer) model.get("autoId");
+        opLog.setNow(model);
+        
         return JsonResult.success(model);
     }
     @Write
@@ -242,4 +270,28 @@ class EditController {
                 .dataPut("allPermissions", authCalRst.getAuthDescs(Permission.class));
     }
     
+    
+    @Read
+    @RequestMapping("/oplogs")
+    public JsonResult oplogs(
+            OpLog.Query query,
+            @RequestParam boolean ascOrDesc,
+            @RequestParam TPager pager) {
+        Pair<Long, List<OpLog>> pair = dao.oplogs(query, ascOrDesc, pager);
+        return JsonResult.success()
+                .dataPut("count", pair.getLeft())
+                .dataPut("oplogs", pair.getRight());
+    }
+    
+    private String reqIp(HttpServletRequest req) {
+        String ip = req.getHeader("X-Forwarded-For");
+        if(StringUtils.isNotBlank(ip) && !"unknown".equalsIgnoreCase(ip)) return ip.split(",")[0];
+        ip = req.getHeader("Proxy-Client-IP");
+        if(StringUtils.isNotBlank(ip) && !"unknown".equalsIgnoreCase(ip)) return ip;
+        ip = req.getHeader("WL-Proxy-Client-IP");
+        if(StringUtils.isNotBlank(ip) && !"unknown".equalsIgnoreCase(ip)) return ip;
+        ip = req.getHeader("X-Real-IP");
+        if(StringUtils.isNotBlank(ip) && !"unknown".equalsIgnoreCase(ip)) return ip;
+        return req.getRemoteAddr();
+    }
 }

@@ -2,6 +2,8 @@ package com.lvt4j.rbac.data.model;
 
 import java.util.List;
 
+import org.springframework.context.annotation.Description;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -19,6 +21,7 @@ import com.lvt4j.rbac.data.Unique;
 @Data
 @EqualsAndHashCode(callSuper=true)
 @Table("role")
+@Description("角色")
 public class Role extends Model{
 
     @Col(id=true, autoId=true)

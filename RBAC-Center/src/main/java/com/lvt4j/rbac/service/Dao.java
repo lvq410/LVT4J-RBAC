@@ -27,6 +27,7 @@ import com.lvt4j.basic.TPager;
 import com.lvt4j.rbac.Consts.ErrCode;
 import com.lvt4j.rbac.data.Model;
 import com.lvt4j.rbac.data.model.Access;
+import com.lvt4j.rbac.data.model.OpLog;
 import com.lvt4j.rbac.data.model.Param;
 import com.lvt4j.rbac.data.model.Permission;
 import com.lvt4j.rbac.data.model.Product;
@@ -107,21 +108,21 @@ public class Dao{
     }
     /**
      * 用unique索引,判断一个基本Model是否冲突<br>
-     * 若是一个旧model,若与缓存的一致,则不冲突<br>
+     * 若是修改(autoId有值)，且与存储的一致，则不冲突<br>
      * 否则若根据unique索引能找到,则冲突<br>
+     * @return 是否冲突与原Model
      */
-    public boolean isDuplicated(Model model)throws Exception{
+    public Pair<Boolean, Model> isDuplicated(Model model)throws Exception{
         Class<? extends Model> modelCls = model.getClass();
-        Model oldModel = get(modelCls, (Integer)model.get("autoId"));
-        if(oldModel!=null){
+        Model origModel = get(modelCls, (Integer)model.get("autoId"));
+        if(origModel!=null){
             boolean equalOld = true;
             for(Field field : Model.getUniqueFields(modelCls)){
-                if(field.get(oldModel).equals(field.get(model))) continue;
+                if(field.get(origModel).equals(field.get(model))) continue;
                 equalOld = false;
                 break;
             }
-            if(equalOld) return false;
-            if(Product.class==modelCls) productNotify((Integer)oldModel.get("autoId"));
+            if(equalOld) return Pair.of(false, origModel);
         }
         
         StringBuilder sql = new StringBuilder("select count(*)<>0 from ")
@@ -134,7 +135,8 @@ public class Dao{
             args.add(field.get(model));
             first = false;
         }
-        return db.select(sql.toString(), args.toArray()).execute2BasicOne(boolean.class);
+        boolean duplicated = db.select(sql.toString(), args.toArray()).execute2BasicOne(boolean.class);
+        return Pair.of(duplicated, origModel);
     }
     public <E extends Model> E uniqueGet(Class<E> modelCls, Object... uniqueVals){
         StringBuilder sql = new StringBuilder("select * from ")
@@ -318,6 +320,26 @@ public class Dao{
                         from+"角色"+auth.get("name"));
         }
         authCalRst.allAuths.get(authModelCls).add(authDesc);
+    }
+    
+    public Pair<Long, List<OpLog>> oplogs(OpLog.Query query, boolean ascOrDesc, TPager pager) {
+        Pair<String, List<Object>> wherePair = query.buildWhereClause();
+        String oplogTbl = OpLog.class.getAnnotation(Table.class).value();
+        
+        StringBuilder countSql = new StringBuilder("select count(*) from ").append(oplogTbl).append(wherePair.getLeft());
+        long count = db.select(countSql.toString(), wherePair.getRight().toArray()).execute2BasicOne(long.class);
+        
+        StringBuilder sql = new StringBuilder("select * from ").append(oplogTbl).append(wherePair.getLeft());
+        List<Object> args = new LinkedList<>(wherePair.getRight());
+        sql.append(" order by time ").append(ascOrDesc?"asc":"desc");
+        if(pager!=null){
+            sql.append("limit ?,?");
+            args.add(pager.getStart());
+            args.add(pager.getSize());
+        }
+        
+        List<OpLog> oplogs = db.select(sql.toString(), args.toArray()).execute2Model(OpLog.class);
+        return Pair.of(count, oplogs);
     }
     
     public void productNotify(Integer... proAutoIds){

@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
+import org.springframework.context.annotation.Description;
 
 import com.lvt4j.basic.TDB.Table;
 import com.lvt4j.basic.TReflect;
@@ -38,6 +39,8 @@ public abstract class Model{
     private static final Map<String, Class<? extends Model>> AllModelCls = new HashMap<String, Class<? extends Model>>();
     private static final Map<Class<? extends Model>, List<Field>> LikeFields = new HashMap<Class<? extends Model>, List<Field>>();
     private static final Map<Class<? extends Model>, List<Field>> UniqueFields = new HashMap<Class<? extends Model>, List<Field>>();
+    private static final Map<Class<? extends Model>, String> ModelDesc = new HashMap<Class<? extends Model>, String>();
+    
     
     static{
         Class<?>[] allModelCls = new Class<?>[]{Product.class, User.class,
@@ -50,12 +53,14 @@ public abstract class Model{
                 @SuppressWarnings("unchecked")
                 Class<? extends Model> modelCls = (Class<? extends Model>)cls;
                 AllModelCls.put(modelCls.getAnnotation(Table.class).value(), modelCls);
+                
                 List<Field> likeFields = new LinkedList<Field>();
                 for(Field field : TReflect.allField(modelCls)){
                     if(!field.isAnnotationPresent(Like.class)) continue;
                     likeFields.add(field);
                 }
                 LikeFields.put(modelCls, likeFields);
+                
                 List<FieldSorter> fieldSorters = new LinkedList<FieldSorter>();
                 for(Field field : TReflect.allField(modelCls)){
                     Unique unique = field.getAnnotation(Unique.class);
@@ -69,6 +74,11 @@ public abstract class Model{
                 List<Field> uniqueFields = new LinkedList<Field>();
                 for(FieldSorter fieldSorter : fieldSorters) uniqueFields.add(fieldSorter.field);
                 UniqueFields.put(modelCls, uniqueFields);
+                
+                Description desc = modelCls.getAnnotation(Description.class);
+                if(desc!=null){
+                    ModelDesc.put(modelCls, desc.value());
+                }
             }
         }catch(Exception e){
             throw new RuntimeException("初始化扫描数据库model包异常!", e);
@@ -85,6 +95,10 @@ public abstract class Model{
     
     public static List<Field> getUniqueFields(Class<? extends Model> modelCls){
         return UniqueFields.get(modelCls);
+    }
+    
+    public static String getModelDes(Class<? extends Model> modelCls) {
+        return ModelDesc.get(modelCls);
     }
     
     public Object get(String fieldName)throws Exception{
