@@ -24,4 +24,5 @@ rbac.db
 rbac.db-journal
 rbac.mv.db
 /backup/
+/config/
 /test/
