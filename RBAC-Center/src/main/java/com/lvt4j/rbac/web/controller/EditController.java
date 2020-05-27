@@ -11,6 +11,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.tuple.Pair;
@@ -169,25 +170,64 @@ class EditController {
         if(Product.class==modelCls) opLog.proAutoId = (Integer) model.get("autoId");
         opLog.setNow(model);
         
+        oplog(opLog);
         return JsonResult.success(model);
     }
     @Write
     @Transaction
     @RequestMapping("/{modelName}/del")
-    public JsonResult baseDel(
+    public JsonResult baseDel(HttpServletRequest req,
+            @RequestAttribute("operator") String operator,
             @PathVariable String modelName,
             @RequestParam int autoId)throws Exception{
         Class<? extends Model> modelCls = Model.getModelCls(modelName);
+        Model orig = dao.get(modelCls, autoId);
+        if(orig==null) return JsonResult.success();
+        
+        
+        OpLog opLog = new OpLog();
+        opLog.operator = operator;
+        opLog.ip = reqIp(req);
+        opLog.action = "删除" + Model.getModelDes(modelCls);
+        opLog.time = new Date();
+        if(Product.class==modelCls) opLog.proAutoId = (Integer) orig.get("autoId");
+        else if (User.class!=modelCls) opLog.proAutoId = (Integer) orig.get("proAutoId");
+        if(Role.class==modelCls){
+            Role role = (Role) orig;
+            role.accesses = dao.auths(modelName, Access.class, role.proAutoId, role.autoId);
+            role.permissions = dao.auths(modelName, Permission.class, role.proAutoId, role.autoId);
+        }
+        opLog.setOrig(orig);
+        
         dao.del(modelCls, autoId);
+        
+        oplog(opLog);
         return JsonResult.success();
     }
     @Write
     @Transaction
     @RequestMapping("/{modelName}/sort")
-    public JsonResult baseSort(
+    public JsonResult baseSort(HttpServletRequest req,
+            @RequestAttribute("operator") String operator,
             @PathVariable String modelName,
             @RequestParam("autoIds") int[] autoIds)throws Exception{
-        dao.sort(modelName, autoIds);
+        if(ArrayUtils.isEmpty(autoIds)) return JsonResult.success();
+        Class<? extends Model> modelCls = Model.getModelCls(modelName);
+        
+        Pair<List<Model>, List<Integer>> pair = dao.sort(modelName, autoIds);
+        
+        OpLog opLog = new OpLog();
+        opLog.operator = operator;
+        opLog.ip = reqIp(req);
+        opLog.action = "排序" + Model.getModelDes(modelCls);
+        opLog.time = new Date();
+        opLog.setOrig(pair.getLeft());
+        opLog.setNow(pair.getRight());
+        if(Product.class!=modelCls && User.class!=modelCls){
+            opLog.proAutoId = (Integer) pair.getLeft().get(0).get("proAutoId");
+        }
+        
+        oplog(opLog);
         return JsonResult.success();
     }
     
@@ -212,18 +252,32 @@ class EditController {
     @Write
     @Transaction
     @RequestMapping("/auth/visitor/set")
-    public JsonResult authVisitorSet(
+    public JsonResult authVisitorSet(HttpServletRequest req,
+            @RequestAttribute("operator") String operator,
             @RequestParam int proAutoId,
             @RequestParam(value="params",required=false) JSONObject params,
             @RequestParam(required=false) int[] roleAutoIds,
             @RequestParam(required=false) int[] accessAutoIds,
             @RequestParam(required=false) int[] permissionAutoIds)throws Exception{
+        
+        OpLog opLog = new OpLog();
+        opLog.operator = operator;
+        opLog.ip = reqIp(req);
+        opLog.action = "游客授权";
+        opLog.time = new Date();
+        opLog.setOrig(authVisitorGet(proAutoId).data());
+        opLog.proAutoId = proAutoId;
+        
         String modelName = "visitor";
         dao.paramsSet(modelName, proAutoId, null, params);
         dao.authsSet(modelName, Role.class, proAutoId, null, roleAutoIds);
         dao.authsSet(modelName, Access.class, proAutoId, null, accessAutoIds);
         dao.authsSet(modelName, Permission.class, proAutoId, null, permissionAutoIds);
         dao.productNotify(proAutoId);
+        
+        opLog.setOrig(authVisitorGet(proAutoId).data());
+        
+        oplog(opLog);
         return JsonResult.success();
     }
     @Read
@@ -241,7 +295,8 @@ class EditController {
     @Write
     @Transaction
     @RequestMapping("/auth/user/set")
-    public JsonResult authUserSet(
+    public JsonResult authUserSet(HttpServletRequest req,
+            @RequestAttribute("operator") String operator,
             @RequestParam int proAutoId,
             @RequestParam int userAutoId,
             @RequestParam(value="params",required=false) JSONObject params,
@@ -249,11 +304,22 @@ class EditController {
             @RequestParam(required=false) int[] accessAutoIds,
             @RequestParam(required=false) int[] permissionAutoIds)throws Exception{
         String modelName = "user";
+        
+        OpLog opLog = new OpLog();
+        opLog.operator = operator;
+        opLog.ip = reqIp(req);
+        opLog.action = "用户授权";
+        opLog.time = new Date();
+        opLog.setOrig(baseGet(modelName, userAutoId, null, true, proAutoId).data());
+        opLog.proAutoId = proAutoId;
+        
         dao.paramsSet(modelName, proAutoId, userAutoId, params);
         dao.authsSet(modelName, Role.class, proAutoId, userAutoId, roleAutoIds);
         dao.authsSet(modelName, Access.class, proAutoId, userAutoId, accessAutoIds);
         dao.authsSet(modelName, Permission.class, proAutoId, userAutoId, permissionAutoIds);
         dao.productNotify(proAutoId);
+        
+        opLog.setNow(baseGet(modelName, userAutoId, null, true, proAutoId).data());
         return JsonResult.success();
     }
     @Read
@@ -270,6 +336,9 @@ class EditController {
                 .dataPut("allPermissions", authCalRst.getAuthDescs(Permission.class));
     }
     
+    private void oplog(OpLog opLog) {
+        dao.oplog(opLog);
+    }
     
     @Read
     @RequestMapping("/oplogs")

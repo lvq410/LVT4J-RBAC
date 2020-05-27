@@ -1,5 +1,7 @@
 package com.lvt4j.rbac.service;
 
+import static java.util.Collections.emptyList;
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -166,39 +168,30 @@ public class Dao{
         if(proAutoId!=null) productNotify(proAutoId);
         else productNotify();
     }
-    public void sort(String modelName, int[] autoIds)throws Exception{
-        if(ArrayUtils.isEmpty(autoIds)) return;
+    public Pair<List<Model>, List<Integer>> sort(String modelName, int[] autoIds)throws Exception{
+        if(ArrayUtils.isEmpty(autoIds)) return Pair.of(emptyList(), emptyList());
         Class<? extends Model> modelCls = Model.getModelCls(modelName);
         List<Integer> seqs = new ArrayList<Integer>(autoIds.length);
+        List<Model> models = new LinkedList<>();
         for(int autoId : autoIds){
             Model model = get(modelCls, autoId);
             if(model==null) throw new Err(ErrCode.NotFound);
+            models.add(model);
             seqs.add((Integer)model.get("seq"));
         }
         Collections.sort(seqs);
         for(int i=0; i<autoIds.length; i++)
             db.executeSQL("update "+modelName+" set seq=? where autoId=?",
                     seqs.get(i), autoIds[i]).execute();
+        return Pair.of(models, seqs);
     }
     public void del(Class<? extends Model> modelCls, int autoId)throws Exception{
         Model model = get(modelCls, autoId);
         if(model==null) return;
-        if(User.class==modelCls){
-            productNotify(db.select(
-                    "select distinct proAutoId from user_param where userAutoId=? "
-                    +"union select distinct proAutoId from user_role where userAutoId=? "
-                    +"union select distinct proAutoId from user_access where userAutoId=? "
-                    +"union select distinct proAutoId from user_permission where userAutoId=?",
-                    autoId, autoId, autoId, autoId).execute2Basic(Integer.class)
-                    .toArray(new Integer[]{}));
-        }
         db.delete(model).execute();
-        if(model instanceof Product){
-            productNotify(autoId);
-            return;
-        }
         Integer proAutoId = (Integer)model.get("proAutoId");
-        if(proAutoId!=null) productNotify(proAutoId);;
+        if(proAutoId!=null) productNotify(proAutoId);
+        else productNotify();
     }
     public List<Param> params(String modelName, int proAutoId, Integer autoId){
         StringBuilder sql = new StringBuilder("select P.*,MP.val "
@@ -320,6 +313,12 @@ public class Dao{
                         from+"角色"+auth.get("name"));
         }
         authCalRst.allAuths.get(authModelCls).add(authDesc);
+    }
+    
+    public void oplog(OpLog opLog) {
+        try{
+            db.insert(opLog).execute();
+        }catch(Throwable ig){}
     }
     
     public Pair<Long, List<OpLog>> oplogs(OpLog.Query query, boolean ascOrDesc, TPager pager) {
