@@ -203,6 +203,7 @@ CREATE TABLE "oplog" (
 "ip"  VARCHAR,
 "action"  VARCHAR NOT NULL,
 "time"  TIMESTAMP NOT NULL,
+"proAutoId" INTEGER,
 "orig"  TEXT,
 "now"  TEXT
 );

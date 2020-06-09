@@ -15,7 +15,7 @@ function loadAccesses(){
         },
         function(data){
             $('#accessesPager').pagerCount(data.count);
-            $('#accesses').html($tpl(tpl_accesses)(data.models));
+            $('#accesses').html(tpl_accesses(data.models));
             if($('#editAccessDiv').dialog('instance')) $('#editAccessDiv').dialog('close');
         }, '加载访问项中'
     );
@@ -114,8 +114,7 @@ function delAccess(btn) {
     );
 }
 
-
-function tpl_accesses(accesses) {
+var tpl_accesses = $tpl(function(accesses){
     if(!accesses) return;
     for (var i = 0; i < accesses.length; i++) {
         var access = accesses[i];
@@ -129,4 +128,4 @@ function tpl_accesses(accesses) {
             </td>
         </tr>*/
     }
-}
+});

@@ -18,7 +18,7 @@ function loadRoles(){
         },
         function(data){
             $('#rolesPager').pagerCount(data.count);
-            $('#roles').html($tpl(tpl_roles)(data.models));
+            $('#roles').html(tpl_roles(data.models));
             if($('#editRoleDiv').dialog('instance')) $('#editRoleDiv').dialog('close');
         }, '加载角色中'
     );
@@ -55,8 +55,8 @@ function sortRole() {
 function editRole(btn) {
     var role = $(btn).closest('tr').attrData();
     $('#editRoleDiv').formData(role);
-    $('#accesses').html($tpl(tpl_auths)(role.accesses, 1));
-    $('#permissions').html($tpl(tpl_auths)(role.permissions, 1));
+    $('#accesses').html(tpl_auths(role.accesses, 1));
+    $('#permissions').html(tpl_auths(role.permissions, 1));
     $('.q-auth-search').val('');
     $('#editRoleDiv').dialog({
         title:'修改角色',
@@ -94,7 +94,7 @@ function delRole(btn) {
 }
 
 
-function tpl_roles(roles) {
+var tpl_roles = $tpl(function(roles){
     if(!roles) return;
     for (var i = 0; i < roles.length; i++) {
         var role = roles[i];
@@ -102,12 +102,12 @@ function tpl_roles(roles) {
             <td class="sortabler-handler"><i class="ace-icon fa fa-arrows-v"></i></td>
             <td style="padding:0"><div class="list-ele">{Tigh(role.id)}</td>
             <td style="padding:0"><div class="list-ele">{Tigh(role.name)}</td>
-            <td style="padding:0"><div class="list-ele">{$tpl(tpl_auths)(role.accesses, 0)}</td>
-            <td style="padding:0"><div class="list-ele">{$tpl(tpl_auths)(role.permissions, 0)}</td>
+            <td style="padding:0"><div class="list-ele">{tpl_auths(role.accesses, 0)}</td>
+            <td style="padding:0"><div class="list-ele">{tpl_auths(role.permissions, 0)}</td>
             <td>
                 <button onclick="editRole(this)" type="button" class="btn btn-info btn-minier">编辑</button>
                 <button onclick="delRole(this)" type="button" class="btn btn-danger btn-minier">删除</button>
             </td>
         </tr>*/
     }
-}
+});

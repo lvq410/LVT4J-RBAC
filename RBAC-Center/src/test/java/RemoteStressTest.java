@@ -74,7 +74,6 @@ public class RemoteStressTest {
     }
     
     private static Pair<Integer, String> post(String uri, Object... params) {
-//        Request req = Request.Post("http://rbac4test.inner.youdao.com"+uri);
 //        Request req = Request.Post("http://10.108.162.57"+uri);
         Request req = Request.Post("http://10.108.162.137"+uri);
 //        Request req = Request.Post("http://ns019:23532"+uri);

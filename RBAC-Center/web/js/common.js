@@ -70,34 +70,18 @@ function q(url, data, callback, waitingMsg, jsonp) {
     $.ajax(ajax);
 }
 
-/** 只展示一个元素,其他隐藏 */
-var Slider = [];
-function slideOne(allEleIds, showEleId, callback){
-    if(callback) Slider.push({callback:callback});
-    var ele = $('#'+showEleId);
-    if(ele.length>0) Slider.push({ele:ele,isShow:true});
-    allEleIds = Tarr.remove(allEleIds, showEleId);
-    for(var i = 0; i < allEleIds.length; i++){
-        ele = $('#'+allEleIds[i]);
-        if(ele.length==0) continue;
-        Slider.push({ele:ele,isShow:false});
+/** 表单一个key代表/,|，|\r|\n|\t| |　|;|；/分隔的一批id，将其整理成数组形式，移除空字符串id,若为空数组，则会从表单数据中delete该idsKey，返回整理后的数据（可为null） */
+function splitIds(formData, idsKey){
+    var val = formData[idsKey];
+    if(val==null) {
+        delete formData[idsKey];
+        return;
     }
-    innerSlideOne();
+    var ids = Tarr.remove(val.split(/,|，|\r|\n|\t| |　|;|；/), '');
+    if(ids.length) return formData[idsKey] = ids;
+    delete formData[idsKey];
+    return;
 }
-function innerSlideOne(){
-    var slider = Slider.pop();
-    if(!slider) return;
-    if(slider.callback)
-        return slider.callback();
-    if(slider.isShow) {
-        slider.ele.slideDown(function(){
-            $(this).scrollToMe(innerSlideOne);
-        });
-    } else {
-        slider.ele.slideUp(innerSlideOne);
-    }
-}
-
 
 function onCurProIdChange(){
     if(curPro && curPro.autoId==$('#curProId').val()) return;
@@ -124,14 +108,15 @@ function onready(){
     setCurPro();
 }
 
-$(document).ready(onready);
+$(onready);
 
 /** type 0:展示用;1:编辑用;2选择用: */
-function tpl_auths(auths, type) {
+var tpl_auths = $tpl(function(auths, type){
     if(!auths) return '';
     var cursor = {0:'default',1:'move',2:'pointer'}[type];
     for (var i = 0; i < auths.length; i++) {
         var auth = auths[i];
+        if(!auth) continue;
         /*<span data="{Tigh(auth)}" class="badge badge-{getBadge(auth.autoId)} msg-tooltiper" style="cursor:{cursor};"*/
             if(type==2){/* onclick="widget_auth_choose(this)"*/}/*>*/
             /*<span class="auth-name">{Tigh(auth.name)}</span>*/
@@ -147,7 +132,7 @@ function tpl_auths(auths, type) {
             </div>
         </span>*/
     }
-}
+});
 function removeAuth(btn) {
     $(btn).closest('span').remove();
     if(window.onAuthChange) onAuthChange();
@@ -158,7 +143,7 @@ function getBadge(key) {
     return BadgeClses[Math.abs(Tobj.hashCode(key))%BadgeClses.length];
 }
 
-function tpl_params(params){
+var tpl_params = $tpl(function(params){
     if (!params) return;
     for (var i=0; i<params.length; i++) {
         var param = params[i];
@@ -172,9 +157,9 @@ function tpl_params(params){
             </div>
         </div>*/
     }
-}
+});
 
-function tpl_allAuths(authDescs){
+var tpl_allAuths = $tpl(function(authDescs){
     if(!authDescs) return '';
     for(var i=0; i<authDescs.length; i++){
         var authDesc = authDescs[i];
@@ -182,10 +167,10 @@ function tpl_allAuths(authDescs){
         if(authDesc.auths.length==0) continue;
         /*<tr>
             <td>{Tigh(authDesc.des)}</td>
-            <td>{$tpl(tpl_auths)(authDesc.auths, 0)}</td>
+            <td>{tpl_auths(authDesc.auths, 0)}</td>
         </tr>*/
     }
-}
+});
 
 function all_auth_search(input){
     var tbl = $(input).closest('table');

@@ -18,7 +18,7 @@ import com.lvt4j.rbac.data.Unique;
 @Data
 @EqualsAndHashCode(callSuper=true)
 @Table("access")
-@Description("授权项")
+@Description("访问项")
 public class Access extends Model{
     
     @Col(id=true, autoId=true)

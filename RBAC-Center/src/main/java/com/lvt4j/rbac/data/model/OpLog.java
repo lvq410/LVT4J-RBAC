@@ -1,10 +1,6 @@
-/**
- * @(#)OpLog.java, 2020年5月26日. 
- * 
- * Copyright 2020 Yodao, Inc. All rights reserved.
- * YODAO PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
- */
 package com.lvt4j.rbac.data.model;
+
+import static java.util.stream.Collectors.toList;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -20,7 +16,6 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.lvt4j.basic.TDB.Table;
 
 import lombok.Setter;
@@ -28,7 +23,7 @@ import lombok.SneakyThrows;
 
 /**
  * 操作日志
- * @author lichenxi on 2020年5月26日
+ * @author LV on 2020年5月26日
  */
 @Table("oplog")
 public class OpLog {
@@ -37,7 +32,6 @@ public class OpLog {
     
     static{
         ObjectMapper.setSerializationInclusion(Include.NON_NULL);
-        ObjectMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
     }
     
     public String operator;
@@ -102,7 +96,7 @@ public class OpLog {
                 whereClauseBuilder.append(" and proAutoId in ( ")
                     .append(IntStream.of(proAutoIds).mapToObj(o->"?").collect(Collectors.joining(",")))
                     .append(") ");
-                args.addAll(Arrays.asList(proAutoIds));
+                args.addAll(IntStream.of(proAutoIds).boxed().collect(toList()));
             }
             if(StringUtils.isNotBlank(keyword)){
                 whereClauseBuilder.append(" and ( orig like ? or now like ?) ");

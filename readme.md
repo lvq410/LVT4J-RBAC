@@ -75,6 +75,8 @@ db.h2.tcp.port=9123 #master节点时的数据库tcp端口
 db.h2.master.host=localhost #slave节点时要连接的master节点的地址
 db.h2.master.tcp.port=${db.h2.tcp.port} #slave节点时要连接的master节点的tcp端口
 
+oplog.maxdays=30 #操作日志保留天数，h2模式时仅master节点生效
+
 admin.userId=pwd #管理员账户密码
 ```
 

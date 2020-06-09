@@ -7,7 +7,7 @@ function loadParams(){
             proAutoId: curPro.autoId
         },
         function(data){
-            $('#params').html($tpl(tpl_params)(data.models));
+            $('#params').html(tpl_params(data.models));
             if($('#editParamDiv').dialog('instance')) $('#editParamDiv').dialog('close');
         }, '加载配置项中'
     );
@@ -76,8 +76,7 @@ function delParam(btn) {
     );
 }
 
-
-function tpl_params(params) {
+var tpl_params = $tpl(function(params){
     if(!params) return;
     for (var i = 0; i < params.length; i++) {
         var param = params[i];
@@ -91,4 +90,4 @@ function tpl_params(params) {
             </td>
         </tr>*/
     }
-}
+});

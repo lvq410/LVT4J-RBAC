@@ -13,7 +13,7 @@ function loadUsers() {
         },
         function(data){
             $('#usersPager').pagerCount(data.count);
-            $('#users').html($tpl(tpl_users)(data.models));
+            $('#users').html(tpl_users(data.models));
             if($('#editUserDiv').dialog('instance')) $('#editUserDiv').dialog('close');
         },
         '加载用户中'
@@ -81,8 +81,7 @@ function delUser(btn) {
     );
 }
 
-
-function tpl_users(users) {
+var tpl_users = $tpl(function(users){
     if(!users) return;
     for (var i = 0; i < users.length; i++) {
         var user = users[i];
@@ -96,4 +95,4 @@ function tpl_users(users) {
             </td>
         </tr>*/
     }
-}
+});

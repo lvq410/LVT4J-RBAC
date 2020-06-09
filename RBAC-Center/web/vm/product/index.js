@@ -13,7 +13,7 @@ function loadProducts() {
         },
         function(data){
             $('#productsPager').pagerCount(data.count);
-            $('#products').html($tpl(tpl_products)(data.models));
+            $('#products').html(tpl_products(data.models));
             if($('#editProductDiv').dialog('instance')) $('#editProductDiv').dialog('close');
         }, '加载产品中'
     );
@@ -85,8 +85,7 @@ function delProduct(btn) {
 }
 
 
-
-function tpl_products(products) {
+var tpl_products = $tpl(function(products){
     if(!products) return;
     for (var i = 0; i < products.length; i++) {
         var product = products[i];
@@ -101,4 +100,4 @@ function tpl_products(products) {
             </td>
         </tr>*/
     }
-}
+})

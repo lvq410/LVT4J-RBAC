@@ -46,6 +46,98 @@ function widget_sortabler_init() {
 }
 
 /**
+ * 输入框内容自动补全初始化<br>
+ * 以属性widget=autocomplete标识<br>
+ * 必须的html属性:<br>
+ * items:自动补全的选项，可以是jsonarray字符串形式的数据，也可以是js代码但执行的返回结果是jsonarray<br>
+ * multi:是否可多选，默认false
+ */
+function widget_autocomplete_init(){
+    $('[widget=autocomplete]').each(function(){
+        var widget = $(this);
+        if(widget.data('widget-init')) return;
+        widget.data('widget-init', true);
+        var multi = widget.attr('multi')=='true';
+        var config = {
+            source: Tjson(widget.attr('items')),
+            items: 100,
+            minLength: 0,
+            delay: 0
+        };
+        if(multi){
+            config['select'] = function(event, ui){
+                var terms = this.value.split(/,/);
+                terms.pop();
+                if(!terms.includes(ui.item.value)) terms.push(ui.item.value);
+                terms.push('');
+                this.value = terms.join(',');
+                setTimeout(function(){widget.autocomplete('search', '')},100);
+                return false;
+            };
+            widget.on("keydown",function(event){
+                setTimeout(function(){
+                    var vals = widget.val().split(/,/);
+                    var keyword = vals[vals.length-1]||'';
+                    widget.autocomplete('search', keyword);
+                }, 100);
+            });
+        }
+        widget.autocomplete(config);
+        widget.bind('focus', function(){$(this).keydown()})
+    });
+}
+
+/**
+ * 时间日期选择器<br>
+ * 必须是input元素,以属性widget="date-time-picker"标识<br>
+ * 可配置的html属性:<br>
+ * date-format:默认'yy-mm-dd'<br>
+ * time-format:默认'HH:mm:ss'<br>
+ * date-time-separator:默认' '<br>
+ * date-only:默认false<br>
+ * time-only:默认false<br>
+ */
+$.datepicker.setDefaults($.datepicker.regional['cn']);
+function widget_dateTimePicker_init() {
+    $('input[widget=date-time-picker]').each(function(){
+        var widget = $(this);
+        if(widget.data('widget-init')) return;
+        widget.data('widget-init', true);
+        var dateOnly = widget.attr('date-only')=='true';
+        var initFunc = dateOnly?'datepicker':'datetimepicker';
+        var dateFormat = widget.attr('date-format') || 'yy-mm-dd';
+        widget[initFunc]({
+            dateFormat: dateFormat,
+            timeFormat: widget.attr('time-format') || 'HH:mm:ss',
+            dateInput: true,
+            timeInput: true,
+            changeMonth: true,
+            changeYear: true,
+            showOtherMonths: true,
+            selectOtherMonths: true,
+            separator: widget.attr('date-time-separator') || ' ',
+            timeOnly: widget.attr('time-only')=='true',
+            prevText: '上月',
+            monthNamesShort: ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'],
+            nextText: '下月',
+            dayNames: ['周日','周一','周二','周三','周四','周五','周六'],
+            dayNamesMin: ['日','一','二','三','四','五','六'],
+            timeText: '时刻',
+            hourText: '时',
+            minuteText: '分',
+            secondText: '秒',
+            currentText: '现在',
+            closeText: '确定',
+            onChangeMonthYear: function(year, month, picker){
+                if(!dateOnly) return;
+                picker.input.val($.datepicker.formatDate(dateFormat, new Date(year, month-1, 1)));
+                picker.input.change();
+            }
+        });
+    });
+}
+
+/**
  * 选择器初始化<br>
  * 必须是select元素,以属性widget="select2"标识<br>
  * 必须的html属性:<br>
@@ -342,7 +434,7 @@ function widget_auth_load(btn, authModelName) {
         },
         function(data){
             box.find('.q-auths-pager').pagerCount(data.count);
-            box.find('.q-auths').html($tpl(tpl_auths)(data.models, 2));
+            box.find('.q-auths').html(tpl_auths(data.models, 2));
         },
         '加载权限中'
     );
@@ -353,7 +445,7 @@ function widget_auth_choose(authBadge) {
     var choosedAuths = chooserRst.formData();
     var auth = $(authBadge).attrData();
     if(Tarr.contains(choosedAuths, auth.autoId)) return;
-    chooserRst.append($tpl(tpl_auths)([auth], 1));
+    chooserRst.append(tpl_auths([auth], 1));
     if(window.onAuthChange) onAuthChange();
 }
 function widge_auth_search(input) {
@@ -374,6 +466,8 @@ function widge_auth_search(input) {
 function widget_init() {
     widget_tooltiper_init();
     widget_sortabler_init();
+    widget_autocomplete_init();
+    widget_dateTimePicker_init();
     widget_select2_init();
     widget_onEnter_init();
     widget_pager_init();

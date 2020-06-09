@@ -15,6 +15,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestAttribute;
@@ -151,8 +152,8 @@ class EditController {
         opLog.action = (duplicateRst.getRight()==null?"新增":"修改") + Model.getModelDes(modelCls);
         opLog.time = new Date();
         opLog.proAutoId = proAutoId;
-        if(Role.class==modelCls){
-            Role role = (Role) model;
+        if(Role.class==modelCls && duplicateRst.getRight()!=null){
+            Role role = (Role) duplicateRst.getRight();
             role.accesses = dao.auths(modelName, Access.class, proAutoId, role.autoId);
             role.permissions = dao.auths(modelName, Permission.class, proAutoId, role.autoId);
         }
@@ -275,7 +276,7 @@ class EditController {
         dao.authsSet(modelName, Permission.class, proAutoId, null, permissionAutoIds);
         dao.productNotify(proAutoId);
         
-        opLog.setOrig(authVisitorGet(proAutoId).data());
+        opLog.setNow(authVisitorGet(proAutoId).data());
         
         oplog(opLog);
         return JsonResult.success();
@@ -320,6 +321,7 @@ class EditController {
         dao.productNotify(proAutoId);
         
         opLog.setNow(baseGet(modelName, userAutoId, null, true, proAutoId).data());
+        oplog(opLog);
         return JsonResult.success();
     }
     @Read
@@ -346,10 +348,11 @@ class EditController {
             OpLog.Query query,
             @RequestParam boolean ascOrDesc,
             @RequestParam TPager pager) {
-        Pair<Long, List<OpLog>> pair = dao.oplogs(query, ascOrDesc, pager);
+        Triple<Long, List<OpLog>, Map<Integer, Product>> pair = dao.oplogs(query, ascOrDesc, pager);
         return JsonResult.success()
-                .dataPut("count", pair.getLeft())
-                .dataPut("oplogs", pair.getRight());
+            .dataPut("count", pair.getLeft())
+            .dataPut("oplogs", pair.getMiddle())
+            .dataPut("pros", pair.getRight());
     }
     
     private String reqIp(HttpServletRequest req) {

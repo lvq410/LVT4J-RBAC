@@ -11,12 +11,14 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.collections4.map.LazyMap;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -162,6 +164,7 @@ public class Dao{
         db.update(model).execute();
         if(model instanceof Product){
             productNotify(autoId);
+            ((Product) model).lastModify = System.currentTimeMillis();
             return;
         }
         Integer proAutoId = (Integer)model.get("proAutoId");
@@ -321,7 +324,7 @@ public class Dao{
         }catch(Throwable ig){}
     }
     
-    public Pair<Long, List<OpLog>> oplogs(OpLog.Query query, boolean ascOrDesc, TPager pager) {
+    public Triple<Long, List<OpLog>, Map<Integer, Product>> oplogs(OpLog.Query query, boolean ascOrDesc, TPager pager) {
         Pair<String, List<Object>> wherePair = query.buildWhereClause();
         String oplogTbl = OpLog.class.getAnnotation(Table.class).value();
         
@@ -332,13 +335,17 @@ public class Dao{
         List<Object> args = new LinkedList<>(wherePair.getRight());
         sql.append(" order by time ").append(ascOrDesc?"asc":"desc");
         if(pager!=null){
-            sql.append("limit ?,?");
+            sql.append(" limit ?,?");
             args.add(pager.getStart());
             args.add(pager.getSize());
         }
         
         List<OpLog> oplogs = db.select(sql.toString(), args.toArray()).execute2Model(OpLog.class);
-        return Pair.of(count, oplogs);
+        
+        Map<Integer, Product> pros = LazyMap.lazyMap(new HashMap<>(), proAutoId->this.get(Product.class, proAutoId));
+        oplogs.stream().map(l->l.proAutoId).filter(Objects::nonNull).distinct().forEach(pros::get);
+        
+        return Triple.of(count, oplogs, pros);
     }
     
     public void productNotify(Integer... proAutoIds){
