@@ -1,0 +1,66 @@
+#set($navs=['操作日志'])
+#set($pageDesc='对权限有修改的操作的日志')
+#parse('/header.vm')
+
+<style>
+.logdata{
+    overflow-y: auto;
+    padding: 5px;
+    max-height: 100px;
+}
+</style>
+
+<script src="/vm/oplog/index.js?${ResVer}"></script>
+
+<div id="queryDiv">
+    <div class="col-xs-4" style="padding-left:0"><div class="input-group">
+        <span class="input-group-addon">操作时间</span>
+        <input name="timeFloor" onenter="queryOpLogs()" data-type="date" widget="date-time-picker" autocomplete="off" type="text" class="form-control">
+        <span class="input-group-addon"><i class="fa fa-exchange"></i></span>
+        <input name="timeCeiling" onenter="queryOpLogs()" data-type="date" widget="date-time-picker" autocomplete="off" type="text" class="form-control">
+    </div></div>
+    <div class="col-xs-3"><div class="input-group">
+        <span class="input-group-addon">操作内容关键字</span>
+        <input name="keyword" onenter="queryOpLogs()" type="text" class="form-control">
+    </div></div>
+    <div class="col-xs-5" style="padding-right:0"><div class="input-group">
+        <span class="input-group-addon">操作对象所属项目</span>
+        <select name="proAutoIds" onchange="queryOpLogs()" widget="select2" model="product" allow-clear="true" select2multiple="true" placeholder="请选择要增加的授权产品" style="width:100%"></select>
+    </div></div>
+    <div class="col-xs-12" style="min-height:10px"></div>
+    <div class="col-xs-5" style="padding-left:0"><div class="input-group">
+        <span class="input-group-addon">操作</span>
+        <input name="actions" onenter="queryOpLogs()" widget="autocomplete" items="['新增产品']" multi="true" type="text" class="form-control" placeholder="多个','分隔">
+    </div></div>
+    <div class="col-xs-5"><div class="input-group">
+        <span class="input-group-addon">操作人</span>
+        <input name="operators" onenter="queryOpLogs()" type="text" class="form-control" placeholder="多个','分隔">
+    </div></div>
+    <div class="col-xs-2 flex-container" style="padding-right:0">
+        <select id="sort" onchange="queryOpLogs()" class="form-control" style="width:fit-content;margin-right:10px">
+            <option value="false">时间倒序</option>
+            <option value="true">时间正序</option>
+        </select>
+        <button onclick="queryOpLogs()" type="button" class="btn btn-info btn-sm flex-flex1">查询</button>
+    </div>
+</div>
+
+<div class="col-xs-12" style="padding-right:0">
+</div>
+<div class="col-xs-12" style="padding-right:0">
+    <div id="pager" widget="pager" show-count="true" show-page-count="true" show-page-size="true" show-go="true" class="pull-right" onpage="loadOpLogs()"></div>
+</div>
+
+<table class="table table-striped table-bordered table-hover table-condensed" style="margin-bottom:0;">
+    <thead>
+        <tr>
+            <td rowspan="2" style="width:160px;">操作人</td>
+            <td rowspan="2" style="width:140px;">所属项目<br>操作<br>时间</td>
+            <td style="padding-left:0;padding-right:0;">操作前</td>
+            <td style="padding-left:0;padding-right:0;">操作后</td>
+        </tr>
+    </thead>
+    <tbody id="oplogs"></tbody>
+</table>
+
+#parse('/footer.vm')

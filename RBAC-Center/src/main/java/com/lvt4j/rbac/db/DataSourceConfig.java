@@ -62,6 +62,14 @@ public class DataSourceConfig {
         return "h2".equals(dbType);
     }
     
+    public boolean isDatabaseMaster() {
+        switch(dbType){
+        case "sqlite": return true;
+        case "h2": return h2Master;
+        default: throw new IllegalArgumentException("未知的数据库类型:"+dbType);
+        }
+    }
+    
     //====================================================================SQLiteDbLock
     private SQLiteDataSource sqliteDataSource() throws Exception {
         File db = new File(dbFolder, "rbac.db");

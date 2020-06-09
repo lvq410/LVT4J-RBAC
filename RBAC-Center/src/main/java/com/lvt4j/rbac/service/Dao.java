@@ -1,5 +1,7 @@
 package com.lvt4j.rbac.service;
 
+import static java.util.Collections.emptyList;
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,12 +11,14 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.collections4.map.LazyMap;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +31,7 @@ import com.lvt4j.basic.TPager;
 import com.lvt4j.rbac.Consts.ErrCode;
 import com.lvt4j.rbac.data.Model;
 import com.lvt4j.rbac.data.model.Access;
+import com.lvt4j.rbac.data.model.OpLog;
 import com.lvt4j.rbac.data.model.Param;
 import com.lvt4j.rbac.data.model.Permission;
 import com.lvt4j.rbac.data.model.Product;
@@ -107,21 +112,21 @@ public class Dao{
     }
     /**
      * 用unique索引,判断一个基本Model是否冲突<br>
-     * 若是一个旧model,若与缓存的一致,则不冲突<br>
+     * 若是修改(autoId有值)，且与存储的一致，则不冲突<br>
      * 否则若根据unique索引能找到,则冲突<br>
+     * @return 是否冲突与原Model
      */
-    public boolean isDuplicated(Model model)throws Exception{
+    public Pair<Boolean, Model> isDuplicated(Model model)throws Exception{
         Class<? extends Model> modelCls = model.getClass();
-        Model oldModel = get(modelCls, (Integer)model.get("autoId"));
-        if(oldModel!=null){
+        Model origModel = get(modelCls, (Integer)model.get("autoId"));
+        if(origModel!=null){
             boolean equalOld = true;
             for(Field field : Model.getUniqueFields(modelCls)){
-                if(field.get(oldModel).equals(field.get(model))) continue;
+                if(field.get(origModel).equals(field.get(model))) continue;
                 equalOld = false;
                 break;
             }
-            if(equalOld) return false;
-            if(Product.class==modelCls) productNotify((Integer)oldModel.get("autoId"));
+            if(equalOld) return Pair.of(false, origModel);
         }
         
         StringBuilder sql = new StringBuilder("select count(*)<>0 from ")
@@ -134,7 +139,8 @@ public class Dao{
             args.add(field.get(model));
             first = false;
         }
-        return db.select(sql.toString(), args.toArray()).execute2BasicOne(boolean.class);
+        boolean duplicated = db.select(sql.toString(), args.toArray()).execute2BasicOne(boolean.class);
+        return Pair.of(duplicated, origModel);
     }
     public <E extends Model> E uniqueGet(Class<E> modelCls, Object... uniqueVals){
         StringBuilder sql = new StringBuilder("select * from ")
@@ -158,45 +164,37 @@ public class Dao{
         db.update(model).execute();
         if(model instanceof Product){
             productNotify(autoId);
+            ((Product) model).lastModify = System.currentTimeMillis();
             return;
         }
         Integer proAutoId = (Integer)model.get("proAutoId");
         if(proAutoId!=null) productNotify(proAutoId);
         else productNotify();
     }
-    public void sort(String modelName, int[] autoIds)throws Exception{
-        if(ArrayUtils.isEmpty(autoIds)) return;
+    public Pair<List<Model>, List<Integer>> sort(String modelName, int[] autoIds)throws Exception{
+        if(ArrayUtils.isEmpty(autoIds)) return Pair.of(emptyList(), emptyList());
         Class<? extends Model> modelCls = Model.getModelCls(modelName);
         List<Integer> seqs = new ArrayList<Integer>(autoIds.length);
+        List<Model> models = new LinkedList<>();
         for(int autoId : autoIds){
             Model model = get(modelCls, autoId);
             if(model==null) throw new Err(ErrCode.NotFound);
+            models.add(model);
             seqs.add((Integer)model.get("seq"));
         }
         Collections.sort(seqs);
         for(int i=0; i<autoIds.length; i++)
             db.executeSQL("update "+modelName+" set seq=? where autoId=?",
                     seqs.get(i), autoIds[i]).execute();
+        return Pair.of(models, seqs);
     }
     public void del(Class<? extends Model> modelCls, int autoId)throws Exception{
         Model model = get(modelCls, autoId);
         if(model==null) return;
-        if(User.class==modelCls){
-            productNotify(db.select(
-                    "select distinct proAutoId from user_param where userAutoId=? "
-                    +"union select distinct proAutoId from user_role where userAutoId=? "
-                    +"union select distinct proAutoId from user_access where userAutoId=? "
-                    +"union select distinct proAutoId from user_permission where userAutoId=?",
-                    autoId, autoId, autoId, autoId).execute2Basic(Integer.class)
-                    .toArray(new Integer[]{}));
-        }
         db.delete(model).execute();
-        if(model instanceof Product){
-            productNotify(autoId);
-            return;
-        }
         Integer proAutoId = (Integer)model.get("proAutoId");
-        if(proAutoId!=null) productNotify(proAutoId);;
+        if(proAutoId!=null) productNotify(proAutoId);
+        else productNotify();
     }
     public List<Param> params(String modelName, int proAutoId, Integer autoId){
         StringBuilder sql = new StringBuilder("select P.*,MP.val "
@@ -318,6 +316,36 @@ public class Dao{
                         from+"角色"+auth.get("name"));
         }
         authCalRst.allAuths.get(authModelCls).add(authDesc);
+    }
+    
+    public void oplog(OpLog opLog) {
+        try{
+            db.insert(opLog).execute();
+        }catch(Throwable ig){}
+    }
+    
+    public Triple<Long, List<OpLog>, Map<Integer, Product>> oplogs(OpLog.Query query, boolean ascOrDesc, TPager pager) {
+        Pair<String, List<Object>> wherePair = query.buildWhereClause();
+        String oplogTbl = OpLog.class.getAnnotation(Table.class).value();
+        
+        StringBuilder countSql = new StringBuilder("select count(*) from ").append(oplogTbl).append(wherePair.getLeft());
+        long count = db.select(countSql.toString(), wherePair.getRight().toArray()).execute2BasicOne(long.class);
+        
+        StringBuilder sql = new StringBuilder("select * from ").append(oplogTbl).append(wherePair.getLeft());
+        List<Object> args = new LinkedList<>(wherePair.getRight());
+        sql.append(" order by time ").append(ascOrDesc?"asc":"desc");
+        if(pager!=null){
+            sql.append(" limit ?,?");
+            args.add(pager.getStart());
+            args.add(pager.getSize());
+        }
+        
+        List<OpLog> oplogs = db.select(sql.toString(), args.toArray()).execute2Model(OpLog.class);
+        
+        Map<Integer, Product> pros = LazyMap.lazyMap(new HashMap<>(), proAutoId->this.get(Product.class, proAutoId));
+        oplogs.stream().map(l->l.proAutoId).filter(Objects::nonNull).distinct().forEach(pros::get);
+        
+        return Triple.of(count, oplogs, pros);
     }
     
     public void productNotify(Integer... proAutoIds){

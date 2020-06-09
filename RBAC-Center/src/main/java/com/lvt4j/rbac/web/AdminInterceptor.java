@@ -78,6 +78,7 @@ class AdminInterceptor extends WebMvcConfigurerAdapter implements HandlerInterce
         if(userAndPwd==null) return onForbidden(response);
         if(userAndPwd.length!=2) return onForbidden(response);
         if(!isAdmin(userAndPwd[0], userAndPwd[1])) return onForbidden(response);
+        request.setAttribute("operator", userAndPwd[0]);
         return true;
     }
     private boolean onForbidden(HttpServletResponse response) throws Exception {

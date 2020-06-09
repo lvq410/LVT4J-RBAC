@@ -8,6 +8,10 @@
     display:none;
 }
 
+.ui-datepicker{
+    width: auto !important;
+}
+
 .pager{
     color: #2283c5;
     margin: 10px 0;

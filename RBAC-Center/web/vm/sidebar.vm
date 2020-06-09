@@ -10,7 +10,8 @@
     {'n':'角色管理','i':'fa-group','h':'/view/role/index','l':[]},
     {'n':'游客授权','i':'fa-key','h':'/view/auth/visitor/index','l':[]},
     {'n':'用户授权','i':'fa-key','h':'/view/auth/user/index','l':[]},
-    {'n':'批量授权','i':'fa-key','h':'/view/auth/batch/index','l':[]}
+    {'n':'批量授权','i':'fa-key','h':'/view/auth/batch/index','l':[]},
+    {'n':'操作日志','i':'fa-eye','h':'/view/oplog/index','l':[]}
 ])
 <div id="sidebar" class="sidebar responsive" data-sidebar="true" data-sidebar-scroll="true" data-sidebar-hover="true">
     <script type="text/javascript">

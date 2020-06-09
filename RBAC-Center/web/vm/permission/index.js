@@ -15,7 +15,7 @@ function loadPermissions(){
         },
         function(data){
             $('#permissionsPager').pagerCount(data.count);
-            $('#permissions').html($tpl(tpl_permissions)(data.models));
+            $('#permissions').html(tpl_permissions(data.models));
             if($('#editPermissionDiv').dialog('instance')) $('#editPermissionDiv').dialog('close');
         }, '加载授权项中'
     );
@@ -85,7 +85,7 @@ function delPermission(btn) {
 }
 
 
-function tpl_permissions(permissions) {
+var tpl_permissions = $tpl(function(permissions){
     if(!permissions) return;
     for (var i = 0; i < permissions.length; i++) {
         var permission = permissions[i];
@@ -99,4 +99,4 @@ function tpl_permissions(permissions) {
             </td>
         </tr>*/
     }
-}
+});

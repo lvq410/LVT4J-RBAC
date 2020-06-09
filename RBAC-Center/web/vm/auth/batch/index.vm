@@ -1,5 +1,5 @@
 #set($navs=['批量授权'])
-#set($pageDesc='')
+#set($pageDesc='为一批用户（不存在且字段充足时创建）批量增加/删除一批产品的权限')
 #parse('/header.vm')
 
 <script src="/vm/auth/batch/index.js?${ResVer}"></script>

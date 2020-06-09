@@ -3,6 +3,8 @@ package com.lvt4j.rbac.data.model;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import org.springframework.context.annotation.Description;
+
 import com.lvt4j.basic.TDB.Col;
 import com.lvt4j.basic.TDB.Table;
 import com.lvt4j.rbac.data.Like;
@@ -16,6 +18,7 @@ import com.lvt4j.rbac.data.Unique;
 @Data
 @EqualsAndHashCode(callSuper=true)
 @Table("access")
+@Description("访问项")
 public class Access extends Model{
     
     @Col(id=true, autoId=true)

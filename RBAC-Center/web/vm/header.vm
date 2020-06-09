@@ -8,16 +8,20 @@
     <meta charset="utf-8"/>
     <title>授权中心</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta http-equiv="Expires" CONTENT="0"> 
+    <meta http-equiv="Cache-Control" CONTENT="no-cache"> 
+    <meta http-equiv="Pragma" CONTENT="no-cache"> 
     <link href="/img/logo.png" type="image/x-icon" rel="shortcut icon">
     
     <link href="/plugin/ace/assets/css/bootstrap.min.css" rel="stylesheet"/>
     <link href="/plugin/ace/assets/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet"/>
     <link href="/plugin/jquery-ui/jquery-ui.min.css" rel="stylesheet"/>
     <link href="/plugin/ace/assets/fonts/fonts.googleapis.com.css" rel="stylesheet"/>
+    <link href="/plugin/jquery.datetimepicker-1.6.1/jquery-ui-timepicker-addon.css" rel="stylesheet"/>
     <link href="/plugin/select2/css/select2.min.css" rel="stylesheet">
     <link href="/plugin/ace/assets/css/ace.min.css" rel="stylesheet"/>
-    <link href="/css/common.css" rel="stylesheet"/>
-    <link href="/css/widget.css" rel="stylesheet"/>
+    <link href="/css/common.css?${ResVer}" rel="stylesheet"/>
+    <link href="/css/widget.css?${ResVer}" rel="stylesheet"/>
 
     <script src="/plugin/ace/assets/js/jquery.2.1.1.min.js"></script>
     <script src="/plugin/ace/assets/js/bootstrap.min.js"></script>
@@ -25,11 +29,12 @@
     <script src="/plugin/ace/assets/js/ace-elements.min.js"></script>
     <script src="/plugin/ace/assets/js/ace.min.js"></script>
     <script src="/plugin/ace/assets/js/ace-extra.min.js"></script>
-    <script src="/plugin/lvt4js.js"></script>
+    <script src="/plugin/lvt4js/lvt4js.js"></script>
+    <script src="/plugin/jquery.datetimepicker-1.6.1/jquery-ui-timepicker-addon.js"></script>
     <script src="/plugin/select2/js/select2.min.js"></script>
     <script src="/plugin/jstpl-2.0.1.min.js"></script>
-    <script src="/js/common.js"></script>
-    <script src="/js/widget.js"></script>
+    <script src="/js/common.js?${ResVer}"></script>
+    <script src="/js/widget.js?${ResVer}"></script>
     <script>
         var curPro = #if($curPro) {autoId:$curPro.autoId,name:'$curPro.name'} #else null;#end
     </script>
@@ -78,6 +83,7 @@
             <select id="curProId" widget="select2" model="product" onchange="onCurProIdChange()" placeholder="请选择当前产品" style="width:150px;"></select>
         </div>
         <div class="navbar-header pull-right" style="color:white;font-size:20px;line-height:40px;">当前产品：</div>
+        <div class="navbar-header pull-right" style="color:white;font-size:20px;line-height:40px;margin-right:10px;">欢迎：$operator</div>
     </div>
 </div>
 

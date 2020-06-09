@@ -1,9 +1,3 @@
-/**
- * @(#)DbLock.java, 2020年5月25日. 
- * 
- * Copyright 2020 Yodao, Inc. All rights reserved.
- * YODAO PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
- */
 package com.lvt4j.rbac.db;
 
 import java.util.concurrent.locks.ReentrantLock;
@@ -15,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 /**
  *
- * @author lichenxi on 2020年5月25日
+ * @author LV on 2020年5月25日
  */
 @Component
 public class DbLock {

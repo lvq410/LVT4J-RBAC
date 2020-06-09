@@ -1,14 +1,18 @@
 package com.lvt4j.rbac.service;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.lvt4j.basic.TLruCache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.lvt4j.rbac.ProductAuth4Center;
 import com.lvt4j.rbac.data.model.Product;
 import com.lvt4j.rbac.db.DataSourceConfig;
@@ -25,9 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class ProductAuthCache extends Thread {
 
-    /** 放在缓存中,表示不存在的产品 */
-    private static final ProductAuth4Center Absent = new ProductAuth4Center(null, null);
-    
     @Autowired
     private Dao dao;
     
@@ -38,14 +39,23 @@ public class ProductAuthCache extends Thread {
     private DbLock dbLock;
     
     /** 所有产品缓存 */
-    private TLruCache<String, ProductAuth4Center> caches = new TLruCache<String, ProductAuth4Center>(1000);
+    private LoadingCache<String, ProductAuth4Center> caches = CacheBuilder.newBuilder()
+        .build(new CacheLoader<String, ProductAuth4Center>() {
+            @Override
+            public ProductAuth4Center load(String proId) throws Exception {
+                Product product = dao.uniqueGet(Product.class, proId);
+                if(product==null) return null;
+                return new ProductAuth4Center(product, dao);
+            }
+        }
+    );
     
     @PostConstruct
     private void init() {
         if(!dbConfig.isDistributedDatabase()) return;
         //分布式类型的数据库，由于各节点均可以修改产品，因此对于产品下权限的刷新，也需要做到分布式同步，有两个方案
         //一、各节点间维持一个消息通道，有节点修改商品就互相同步
-        //二、定时扫描本节点中产品权限缓存里的更新时间，与从数据库查出来的时间做比对，不等则清楚缓存。目前采用本方案
+        //二、定时扫描本节点中产品权限缓存里的更新时间，与从数据库查出来的时间做比对，不等则清除缓存。目前采用本方案
         setName("ProductAuthCache");
         start();
     }
@@ -57,24 +67,19 @@ public class ProductAuthCache extends Thread {
     
     /** 获取指定产品的权限,若产品不存在,返回null */
     public ProductAuth4Center get(String proId) {
-        ProductAuth4Center productAuth = caches.get(proId);
-        if(productAuth!=null) return Absent==productAuth?null:productAuth;
-        synchronized (caches) {
-            productAuth = caches.get(proId);
-            if(productAuth!=null) return Absent==productAuth?null:productAuth;
-            Product product = dao.uniqueGet(Product.class, proId);
-            productAuth = product==null?Absent:new ProductAuth4Center(product, dao);
-            caches.put(proId, productAuth);
-            return Absent==productAuth?null:productAuth;
+        try{
+            return caches.get(proId);
+        }catch(Exception e){
+            return null;
         }
     }
     
     public void invalidate(String proId) {
-        caches.remove(proId);
+        caches.invalidate(proId);
     }
     
     public void clear() {
-        caches.clear();
+        caches.invalidateAll();
     }
     
     @Override
@@ -86,7 +91,7 @@ public class ProductAuthCache extends Thread {
                 return;
             }
             try{
-                for(String proId : caches.keySet()){
+                for(String proId : new HashSet<>(caches.asMap().keySet())){
                     Product pro;
                     try{
                         dbLock.readLock();
@@ -95,9 +100,9 @@ public class ProductAuthCache extends Thread {
                         dbLock.readUnLock();
                     }
                     Long curLastModify = Optional.ofNullable(pro).map(p->p.lastModify).orElse(null);
-                    Long cachedLastModity = Optional.ofNullable(caches.get(proId)).map(pa->pa.product).map(p->p.lastModify).orElse(null);
+                    Long cachedLastModity = Optional.ofNullable(get(proId)).map(pa->pa.product).map(p->p.lastModify).orElse(null);
                     if(Objects.equals(curLastModify, cachedLastModity)) continue;
-                    caches.remove(proId);
+                    invalidate(proId);
                     if(log.isTraceEnabled()) log.trace("产品[{}]缓存过期", proId);
                 }
             }catch(Throwable e){

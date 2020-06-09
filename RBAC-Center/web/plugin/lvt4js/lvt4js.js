@@ -6,11 +6,16 @@
  */
 var LVT = {};
 if(!T) var T = LVT;
+LVT.mUrl = function(){
+    var js = document.scripts;
+    var url =js[js.length - 1].src;
+    return url.substring(0, url.lastIndexOf('/'));
+}();
 /**
  * checkbox联动效果实现
  * 主checkbox添加forgroup参数 子checkbox添加group参数
  * 需要在页面载入完成后调用LVT.cbxRely.init()
- * 页面动态生成从checkbox后也需要调用LVT.cbxRely.init()
+ * 页面动态生成子checkbox后也需要调用LVT.cbxRely.init()
  */
 LVT.cbxRely = {
     changeSub:function(){
@@ -19,7 +24,7 @@ LVT.cbxRely = {
                 $(":checkbox[group="+groupName+"]").length==$(":checked[group="+groupName+"]").length);
     },
     changeGroup:function(){
-        $(":checkbox[group="+$(this).attr('forgroup')+"]").prop('checked',$(this).prop('checked'));
+        $(":checkbox[group="+$(this).attr('forgroup')+"]").prop('checked',$(this).prop('checked')).change();
     },
     init:function(){
         $(':checkbox[group]').unbind('change',LVT.cbxRely.changeSub).bind('change',LVT.cbxRely.changeSub);
@@ -73,7 +78,7 @@ LVT.arr = {
         return tmpArr;
     },
     /**
-     * 从数组删除一个元素，若已有该元素则忽略
+     * 从数组删除一个元素，若没有该元素则忽略
      * @param arr
      * @param ele
      * @returns 删除元素后的数组
@@ -135,23 +140,6 @@ if(!Tstr) var Tstr=LVT.str;
 if(!$str) var $str=LVT.str;
 
 /**
- * 解析请求中的参数
- */
-LVT.params = function(){
-    var params = {};
-    if(location.search){
-        var search = location.search.substring(1,location.search.length).split("&");
-        for(var i = 0; i < search.length; i++){
-            var eIdx = search[i].indexOf('=');
-            params[search[i].substring(0,eIdx)] =  decodeURI(search[i].substring(eIdx+1,search[i].length));
-        }
-    }
-    return params;
-};
-if(!Tparams) var Tparams=LVT.params;
-if(!jQuery.params) jQuery.params=LVT.params;
-
-/**
  * 弹出一个浮在最上方,遮住全部的loading图案<br>
  * 采用延迟机制，若调用LVT.loader.show()的LVT.loader.threshold(默认300)ms后，没有调用LVT.loader.hide(),才出现
  */
@@ -160,18 +148,19 @@ LVT.loader = {
     msger : null,
     msgs : [],
     threshold : 300,
+    gif : LVT.mUrl+'/img/loader.gif',
     init : function(){
         if(LVT.loader.container) return;
         LVT.loader.container = jQuery('<div style="position:fixed;width:100%;height:100%;background-color:rgba(0,0,0,0.23);z-index:20000;display:none;">'+
-                '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;"><div>'+
-                '<div style="text-align:center;"><img src="https://raw.githubusercontent.com/lvq410/LVT4JS/master/img/loader.gif"></div>'+
-                '<div class="lvt-loader-msger" style="text-align:center;color:white;font-weight:bolder;font-size:xx-large;"></div>'+
-                '</div></div>'+
-        '</div>');
+            '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;"><div>'+
+            '<div style="text-align:center;"><img src="'+LVT.loader.gif+'"></div>'+
+            '<div class="lvt-loader-msger" style="text-align:center;color:white;font-weight:bolder;font-size:xx-large;"></div>'+
+        '</div></div></div>');
         LVT.loader.msger = LVT.loader.container.find('.lvt-loader-msger');
         $('body').prepend(LVT.loader.container);
     },
     show : function(msg){
+        if(msg==null) return;
         LVT.loader.init();
         var loadingMsgObj = LVT.loader.loadingMsgObj(msg);
         LVT.loader.msgs.push(loadingMsgObj);
@@ -179,6 +168,7 @@ LVT.loader = {
         setTimeout('LVT.loader.internalShow()', LVT.loader.threshold);
     },
     immediateShow : function(msg){
+        if(msg==null) return;
         LVT.loader.init();
         var loadingMsgObj = LVT.loader.loadingMsgObj(msg);
         LVT.loader.msgs.push(loadingMsgObj);
@@ -196,6 +186,7 @@ LVT.loader = {
         LVT.loader.container.show();
     },
     hide : function(msg){
+        if(msg==null) return;
         var tmpMsgObj = LVT.loader.loadingMsgObj(msg);
         var loadingMsgObj;
         for(var i=0; i<LVT.loader.msgs.length; i++){
@@ -208,16 +199,79 @@ LVT.loader = {
         loadingMsgObj.ele.remove();
         LVT.loader.msgs = LVT.arr.remove(LVT.loader.msgs, loadingMsgObj);
         if(LVT.loader.msgs.length==0) LVT.loader.container.hide();
+    },
+    change : function(origMsg, msg){
+        if(origMsg==null && msg==null) return;
+        if(origMsg==null) return LVT.loader.immediateShow(msg);
+        if(msg==null) return LVT.loader.hide(origMsg);
+        var tmpMsgObj = LVT.loader.loadingMsgObj(origMsg);
+        var loadingMsgObj;
+        for(var i=0; i<LVT.loader.msgs.length; i++){
+            var msgObj = LVT.loader.msgs[i];
+            if(msgObj.hash!=tmpMsgObj.hash) continue;
+            loadingMsgObj = msgObj;
+            break;
+        }
+        if(loadingMsgObj==null) return LVT.loader.immediateShow(msg);
+        tmpMsgObj = LVT.loader.loadingMsgObj(msg);
+        loadingMsgObj.hash = tmpMsgObj.hash;
+        loadingMsgObj.ele.html(msg);
     }
 };
 if(!Tloader) var Tloader=LVT.loader;
 if(!$loader) var $loader=LVT.loader;
+
+/** 弹出一个浮动条显示信息，一段时间后自动隐藏 */
+LVT.toast = {
+    container : null,
+    threshold : 1500,
+    init : function(){
+        if(LVT.toast.container) return;
+        LVT.toast.container = jQuery('<div style="position:fixed;width:100%;height:100%;z-index:20000;display:none;">'
+            +'<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;">'
+            +'<div style="background-color:rgba(0,0,0,0.58);width:30%;min-height:30%;border-radius:20px;display:flex;align-items:center;justify-content:center;">'
+            +'<div class="lvt-toast-msger" style="word-break:break-all;word-wrap:break-word;text-align:center;vertical-align:middle;color:white;font-weight:bolder;font-size:xx-large;"></div>'
+        +'</div></div></div>');
+        LVT.toast.msger = LVT.toast.container.find('.lvt-toast-msger');
+        $('body').prepend(LVT.toast.container);
+    },
+    show : function(msg){
+        if(!msg) return;
+        LVT.toast.init();
+        LVT.toast.msger.text(msg);
+        LVT.toast.container.fadeIn(LVT.toast.threshold).fadeOut(LVT.toast.threshold);
+    }
+};
+if(!Ttoast) var Ttoast=LVT.toast;
+if(!$toast) var $toast=LVT.toast;
+
+LVT.params = function(url){
+    if(url==null) url=location.href;
+    var search = location.search;
+    if(!search) return {};
+    search = search.substring(1, search.length);
+    if(!search) return {};
+    search = search.split('&');
+    var params = {};
+    for(var i=0; i<search.length; i++){
+        var pair = search[i];
+        var ePos = pair.indexOf('=');
+        if(ePos<=-1) ePos=pair.length;
+        var key = pair.substring(0, ePos);
+        if(!key) continue;
+        params[key] = decodeURIComponent(pair.substring(ePos+1, pair.length));
+    }
+    return params;
+}
+if(!Tparams) var Tparams=LVT.params;
+if(!jQuery.params) jQuery.params=LVT.params;
+
 /**
  * 回避null,undefined,NaN,输出空字符串
  */
 LVT.ig = function(val){
     if(val==null || val==undefined) return '';
-    if(typeof val =='number' && isNaN(val)) return '';
+    if(typeof val =='number' && (isNaN(val) || !isFinite(val))) return '';
     return val;
 };
 if(!Tig) var Tig=LVT.ig;
@@ -246,7 +300,7 @@ LVT.obj = {
         }
         return true;
     },
-    /** 判断一个object是否为空 */
+    /** 计算object中键值对的个数 */
     size : function(obj){
         var size = 0;
         for(var key in obj) size++;
@@ -292,15 +346,15 @@ LVT.obj = {
 if(!Tobj) var Tobj=LVT.obj;
 if(!$obj) var $obj=LVT.obj;
 
-/** 匹配url的正则 */
-LVT.urlRegex = new RegExp('^(http|https|ftp)\://([a-zA-Z0-9\.\-]+(\:[a-zA-Z0-9\.&amp;%\$\-]+)*@)*((25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9])\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9]|0)\.(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[0-9])|localhost|([a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\.(com|edu|gov|int|mil|net|org|biz|arpa|info|name|pro|aero|coop|museum|[a-zA-Z]{2}))(\:[0-9]+)*(/($|[a-zA-Z0-9\.\,\?\'\\\+&amp;%\$#\=~_\-]+))*$');
-if(!TurlRegex) var TurlRegex=LVT.urlRegex;
-
 LVT.dateRegex = /^\d{4}-\d{1,2}-\d{1,2} \d{1,2}:\d{1,2}:\d{1,2}$/;
 if(!TdateRegex) var TdateRegex=LVT.dateRegex;
 
 LVT.timeRegex = /^(\d)+:(\d{1,2}):(\d{1,2})(:(\d{1,3}))?$/;
 if(!TtimeRegex) var TtimeRegex=LVT.timeRegex;
+
+/** 来自：http://urlregex.com */
+LVT.urlRegex = /^((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\?\=\.\!\/\\\w]*))?)$/;
+if(!TurlRegex) var TurlRegex=LVT.urlRegex;
 
 /** 时间戳格式化为'yyyy-MM-dd HH:mm:ss'函数 */
 LVT.timestampFormat = function(time){
@@ -329,10 +383,32 @@ LVT.timeFormat = function(time){
 if(!TtimeFormat) var TtimeFormat=LVT.timeFormat;
 if(!jQuery.timeFormat) jQuery.timeFormat=LVT.timeFormat;
 
+/** 时间戳格式化为'yyyy-MM-dd'函数 */
+LVT.dateFormat = function(time){
+    if(time==null) return;
+    time = new Date(time);
+    var year = time.getFullYear();
+    var month = time.getMonth() + 1 < 10 ? "0" + (time.getMonth() + 1) : time.getMonth() + 1;
+    var date = time.getDate() < 10 ? "0" + time.getDate() : time.getDate();
+    return year + "-" + month + "-" + date;
+};
+if(!TdateFormat) var TdateFormat=LVT.dateFormat;
+if(!jQuery.dateFormat) jQuery.dateFormat=LVT.dateFormat;
+
 /** 转换序列化的字符串为json数据,出现异常返回null */
 LVT.json = function(jsonStr){
+    var json;
     try{
-        return eval('('+jsonStr+')');
+        json = eval('('+jsonStr+')');
+        if(json) return json;
+    }catch(e){}
+    try{
+        json = JSON.parse(jsonStr);
+        if(json) return json;
+    }catch(e){}
+    try{
+        json = jQuery.parseJSON(jsonStr);
+        if(json) return json;
     }catch(e){}
     return null;
 };
@@ -340,15 +416,15 @@ if(!Tjson) var Tjson=LVT.json;
 if(!jQuery.json) jQuery.json=LVT.json;
 
 /** JSON.stringify简化方法名 */
-LVT.jsf = function(obj){
-    return JSON.stringify(obj);
+LVT.jsf = function(obj, replacer, space){
+    return JSON.stringify(obj, replacer, space);
 };
 if(!Tjsf) var Tjsf=LVT.jsf;
 if(!jQuery.jsf) jQuery.jsf=LVT.jsf;
 
 /** 返回参数列表中第一个非空的参数 */
 LVT.fnn = function(){
-    for( var i in arguments){
+    for(var i in arguments){
         var arg = arguments[i];
         if(arg!=null) return arg;
     }
@@ -380,7 +456,7 @@ LVT.float = function(str, def){
 if(!Tfloat) var Tfloat=LVT.float;
 if(!jQuery.float) jQuery.float=LVT.float;
 
-/** 满足LVT.timeRegex的时间格式转化为数值型时间长度 */
+/** 满足LVT.timeRegex的时间格式转化为数值型时间长度值 */
 LVT.time = function(str, def){
     var timeGroup = str.match(LVT.timeRegex);
     if(!timeGroup) return def;
@@ -392,6 +468,49 @@ LVT.time = function(str, def){
 };
 if(!Ttime) var Ttime=LVT.time;
 if(!jQuery.time) jQuery.time=LVT.time;
+
+/**
+ * 满足<br>
+ * yyyy<br>
+ * yyyy-MM<br>
+ * yyyy-MM-dd<br>
+ * yyyy-MM-dd HH<br>
+ * yyyy-MM-dd HH:mm<br>
+ * yyyy-MM-dd HH:mm:ss<br>
+ * yyyy-MM-dd HH:mm:ss:sss<br>
+ * yyyy-MM-dd HH:mm:ss:sss+08:00<br>
+ * yyyy-MM-dd HH:mm:ss:sssZ<br>
+ * (日期分割符'-'可以是'/',' '可以是'T',':'可以是',',时区部分忽略不处理)<br>
+ * 等日期格式转化为时间戳<br>
+ * 以避免不同浏览器对于new Date()的不兼容<br>
+ * str参数为null或遇到异常返回def
+ */
+LVT.date = function(str, def){
+    if(!str) return def;
+    var splits = str.split(/[ TZ+]/);
+    var datePart = splits[0];
+    if(!datePart) return def;
+    datePart = datePart.split(/[-//]/)
+    var timePart = (splits[1] || '').split(/[:,]/);
+    var zonePart = splits[2];
+    var y = Tint(datePart[0]);
+    if(y==null) return def;
+    var M = Tint(datePart[1]);
+    if(M==null) if(datePart[1]) return def; else M=1;
+    var d = Tint(datePart[2]);
+    if(d==null) if(datePart[2]) return def; else d=1;
+    var H = Tint(timePart[0]);
+    if(H==null) if(timePart[0]) return def; else H=0;
+    var m = Tint(timePart[1]);
+    if(m==null) if(timePart[1]) return def; else m=0;
+    var s = Tint(timePart[2]);
+    if(s==null) if(timePart[2]) return def; else s=0;
+    var ss = Tint(timePart[3]);
+    if(ss==null) if(timePart[3]) return def; else ss=0;
+    return new Date(y,M-1,d,H,m,s,ss).getTime();
+};
+if(!Tdate) var Tdate=LVT.date;
+if(!jQuery.date) jQuery.date=LVT.date;
 
 /** 以B为单位的文件大小转为G/M/K/B的 */
 LVT.GMKB = function(size){
@@ -407,22 +526,57 @@ if(!TGMKB) var TGMKB=LVT.GMKB;
 if(!jQuery.GMKB) jQuery.GMKB=LVT.GMKB;
 
 /**
+ * jQuery扩展函数，用于读取与设置元素的值，以布尔格式<br>
+ * 如果是INPUT，且为checkbox/radio，则prop('checked')<br>
+ * 如果是INPUT，且为其他type；或者SELECT；或者TEXTAREA：则读取值val()==''则是null，否则val()=='true',设置值val(''/'true'/'false')<br>
+ * 其他元素，读取值text()==''则是null，否则text()=='true',设置值text(''/'true'/'false')
+ */
+jQuery.fn.valAsBit = function(val){
+    switch(this.prop('tagName')){
+    case 'INPUT':
+        switch(this.prop('type')){
+        case 'checkbox':
+        case 'radio':
+            if(val==null) return this.prop('checked');
+            if('boolean' == typeof val) return this.prop('checked', val);
+            val = val=='true' || val==1;
+            return this.prop('checked', val);
+        }
+    case 'TEXTAREA':
+    case 'SELECT':
+        if(val==null) return this.val()==''?null:this.val()=='true';
+        if('boolean' == typeof val) return this.val(val?'true':'false');
+        if('string'==typeof val && ''==val) return this.val(val);
+        val = val=='true' || val==1;
+        return this.val(val?'true':'false');
+    default:
+        if(val==null) return this.val()==''?null:this.text()=='true';
+        if('boolean' == typeof val) return this.text(val?'true':'false');
+        if('string'==typeof val && ''==val) return this.text(val);
+        val = val=='true' || val==1;
+        return this.text(val?'true':'false');
+    }
+};
+/**
  * 表单框架<br>
  */
 LVT.form = {
     deserialize : function(form, data){
-        form.find('.valid-err').text('');
+        var valid=new LVT.form.Valid(form);
+        valid.init();
         var dataType = LVT.form.dataType.type(form, LVT.form.dataType.obj);
         if(!dataType) return;
         dataType.setter(form, data);
     },
-    serialize : function(form){
+    serialize : function(form, errMsgHolder){
+        var valid=new LVT.form.Valid(form);
+        valid.init();
         var dataType = LVT.form.dataType.type(form, LVT.form.dataType.obj);
         if(!dataType) return;
-        var valid=new LVT.form.Valid(form);
         var data = dataType.getter(form, valid);
+        if(valid.isSuccess()) return data;
         valid.show();
-        return data;
+        if(errMsgHolder) errMsgHolder.msg=valid.msg;
     },
     dataType : {
         type : function(ele, def){
@@ -435,22 +589,22 @@ LVT.form = {
         },
         text : {
             setter : function(ele, val){
-                ele.val(LVT.ig(val));
+                var func = LVT.form.dataAttr.func(ele);
+                ele[func](LVT.ig(val));
             },
             getter : function(ele, valid){
-                var val = ele.val();
+                var func = LVT.form.dataAttr.func(ele);
+                var val = ele[func]();
                 var required = LVT.form.dataAttr.required(ele);
                 if(required && !val) return valid.err(ele);
-                if(!required && !val) return null;
+                if(!required && !val) return;
                 var range = LVT.form.dataAttr.range(ele, valid);
                 if(valid.isFail()) return;
                 if(range){
                     var rangeNumBegin = range[0];
-                    if(rangeNumBegin!=null && val.length<rangeNumBegin) 
-                        return valid.err(ele);
+                    if(rangeNumBegin!=null && val.length<rangeNumBegin) return valid.err(ele);
                     var rangeNumEnd = range[1];
-                    if(rangeNumEnd!=null && val.length>rangeNumEnd)
-                        return valid.err(ele);
+                    if(rangeNumEnd!=null && val.length>rangeNumEnd) return valid.err(ele);
                 }
                 var regex = LVT.form.dataAttr.regex(ele, valid);
                 if(valid.isFail()) return;
@@ -460,16 +614,13 @@ LVT.form = {
         },
         date : {
             setter : function(ele, val){
-                ele.val('');
+                var func = LVT.form.dataAttr.func(ele);
+                ele[func]('');
                 if(val==null) return;
                 var time = val;
-                switch (typeof time){
+                switch(typeof time){
                 case 'string':
-                    try{
-                        time = new Date(time).getTime();
-                    }catch(e){
-                        return console.warn('尝试设置日期['+ele.attr('name')+']为['+val+']失败!');
-                    }
+                    time = LVT.date(time);
                     break;
                 case 'object':
                     time = time.time;
@@ -477,104 +628,157 @@ LVT.form = {
                 }
                 if('number'!=typeof time)
                     return console.warn('尝试设置日期['+ele.attr('name')+']为['+val+']失败!');
-                ele.val(LVT.timestampFormat(time));
+                ele[func](LVT.timestampFormat(time));
             },
             getter : function(ele, valid){
-                var val = ele.val();
+                var func = LVT.form.dataAttr.func(ele);
+                var val = ele[func]();
                 var required = LVT.form.dataAttr.required(ele);
                 if(required && !val) return valid.err(ele);
-                if(!required && !val) return null;
+                if(!required && !val) return;
                 if(!LVT.dateRegex.test(val)) return valid.err(ele);
+                val=LVT.date(val);
+                if(ele[func]() && val==null) return valid.err(ele);
+                var range = LVT.form.dataAttr.range(ele, valid);
+                if(valid.isFail()) return;
+                if(range){
+                    var rangeNumBegin = range[0];
+                    if(rangeNumBegin!=null && val<rangeNumBegin) return valid.err(ele);
+                    var rangeNumEnd = range[1];
+                    if(rangeNumEnd!=null && val>rangeNumEnd) return valid.err(ele);
+                }
                 var regex = LVT.form.dataAttr.regex(ele, valid);
                 if(valid.isFail()) return;
-                if(regex && !regex.test(val)) return valid.err(ele);
-                try{
-                    return new Date(val).getTime();
-                }catch(e){}
-                return valid.err(ele);
+                if(regex && !regex.test(ele[func]())) return valid.err(ele);
+                return val;
             }
         },
         time : {
             setter : function(ele, val){
-                ele.val('');
+                var func = LVT.form.dataAttr.func(ele);
+                ele[func]('');
                 if(val==null) return;
                 var time = val;
                 if('string'==typeof time) time = LVT.time(time);
                 if('number'!=typeof time)
                     return console.warn('尝试设置时间['+ele.attr('name')+']为['+val+']失败!');
-                ele.val(LVT.timeFormat(time));
+                ele[func](LVT.timeFormat(time));
             },
             getter : function(ele, valid){
-                var val = ele.val();
+                var func = LVT.form.dataAttr.func(ele);
+                var val = ele[func]();
                 var required = LVT.form.dataAttr.required(ele);
                 if(required && !val) return valid.err(ele);
-                if(!required && !val) return null;
+                if(!required && !val) return;
                 if(!LVT.timeRegex.test(val)) return valid.err(ele);
-                var regex = LVT.form.dataAttr.regex(ele, valid);
-                if(valid.isFail()) return;
-                if(regex && !regex.test(val)) return valid.err(ele);
-                return LVT.time(val);
-            }
-        },
-        url : {
-            setter : function(ele, val){
-                ele.val(LVT.ig(val));
-            },
-            getter : function(ele, valid){
-                var val = ele.val();
-                var required = LVT.form.dataAttr.required(ele);
-                if(required && !val) return valid.err(ele);
-                if(!required && !val) return null;
+                val = LVT.time(val);
+                if(ele[func]() && val==null) return valid.err(ele);
                 var range = LVT.form.dataAttr.range(ele, valid);
                 if(valid.isFail()) return;
                 if(range){
                     var rangeNumBegin = range[0];
-                    if(rangeNumBegin!=null && val.length<rangeNumBegin) 
-                        return valid.err(ele);
+                    if(rangeNumBegin!=null && val<rangeNumBegin) return valid.err(ele);
                     var rangeNumEnd = range[1];
-                    if(rangeNumEnd!=null && val.length>rangeNumEnd)
-                        return valid.err(ele);
+                    if(rangeNumEnd!=null && val>rangeNumEnd) return valid.err(ele);
                 }
-                if(!LVT.urlRegex.test(val)) return valid.err(ele);
                 var regex = LVT.form.dataAttr.regex(ele, valid);
                 if(valid.isFail()) return;
-                if(regex && val!=null && !regex.test(ele.val())) return valid.err(ele);
+                if(regex && !regex.test(ele[func]())) return valid.err(ele);
+                return val;
+            }
+        },
+        url : {
+            setter : function(ele, val){
+                var func = LVT.form.dataAttr.func(ele);
+                ele[func](LVT.ig(val));
+            },
+            getter : function(ele, valid){
+                var func = LVT.form.dataAttr.func(ele);
+                var val = ele[func]();
+                var required = LVT.form.dataAttr.required(ele);
+                if(required && !val) return valid.err(ele);
+                if(!required && !val) return null;
+                if(!LVT.urlRegex.test(val)) return valid.err(ele);
+                if(ele[func]() && val==null) return valid.err(ele);
+                var range = LVT.form.dataAttr.range(ele, valid);
+                if(valid.isFail()) return;
+                if(range){
+                    var rangeNumBegin = range[0];
+                    if(rangeNumBegin!=null && val.length<rangeNumBegin) return valid.err(ele);
+                    var rangeNumEnd = range[1];
+                    if(rangeNumEnd!=null && val.length>rangeNumEnd) return valid.err(ele);
+                }
+                var regex = LVT.form.dataAttr.regex(ele, valid);
+                if(valid.isFail()) return;
+                if(regex && !regex.test(ele[func]())) return valid.err(ele);
                 return val;
             }
         },
         int : {
             setter : function(ele, val){
-                ele.val(LVT.ig(val));
+                var func = LVT.form.dataAttr.func(ele);
+                ele[func](LVT.ig(val));
             },
             getter : function(ele, valid){
-                var val = LVT.int(ele.val());
+                var func = LVT.form.dataAttr.func(ele);
+                var val = ele[func]();
                 var required = LVT.form.dataAttr.required(ele);
-                if(required && val==null) return valid.err(ele);
-                if(!required && val==null) return null;
+                if(required && !val) return valid.err(ele);
+                if(!required && !val) return;
+                val = LVT.int(val);
+                if(ele[func]() && val==null) return valid.err(ele);
                 var range = LVT.form.dataAttr.range(ele, valid);
                 if(valid.isFail()) return;
                 if(range){
                     var rangeNumBegin = range[0];
-                    if(rangeNumBegin!=null && val<rangeNumBegin) 
-                        return valid.err(ele);
+                    if(rangeNumBegin!=null && val<rangeNumBegin) return valid.err(ele);
                     var rangeNumEnd = range[1];
-                    if(rangeNumEnd!=null && val>rangeNumEnd)
-                        return valid.err(ele);
+                    if(rangeNumEnd!=null && val>rangeNumEnd) return valid.err(ele);
                 }
                 var regex = LVT.form.dataAttr.regex(ele, valid);
                 if(valid.isFail()) return;
-                if(regex && val!=null){
-                    if(!regex.test(ele.val())) return valid.err(ele);
+                if(regex && !regex.test(ele[func]())) return valid.err(ele);
+                return val;
+            }
+        },
+        float : {
+            setter : function(ele, val){
+                var func = LVT.form.dataAttr.func(ele);
+                ele[func](LVT.ig(val));
+            },
+            getter : function(ele, valid){
+                var func = LVT.form.dataAttr.func(ele);
+                var val = ele[func]();
+                var required = LVT.form.dataAttr.required(ele);
+                if(required && !val) return valid.err(ele);
+                if(!required && !val) return;
+                val = LVT.float(val);
+                if(ele[func]() && val==null) return valid.err(ele);
+                var range = LVT.form.dataAttr.range(ele, valid);
+                if(valid.isFail()) return;
+                if(range){
+                    var rangeNumBegin = range[0];
+                    if(rangeNumBegin!=null && val<rangeNumBegin) return valid.err(ele);
+                    var rangeNumEnd = range[1];
+                    if(rangeNumEnd!=null && val>rangeNumEnd) return valid.err(ele);
                 }
+                var regex = LVT.form.dataAttr.regex(ele, valid);
+                if(valid.isFail()) return;
+                if(regex && !regex.test(ele[func]())) return valid.err(ele);
                 return val;
             }
         },
         bit : {
             setter : function(ele, val){
-                ele.prop('checked', val?true:false);
+                var func = LVT.form.dataAttr.func(ele);
+                ele[func](val==null?'':val);
             },
             getter : function(ele, valid){
-                return ele.prop('checked');
+                var func = LVT.form.dataAttr.func(ele);
+                var val = ele[func]();
+                var required = LVT.form.dataAttr.required(ele);
+                if(required && val==null) return valid.err(ele);
+                return val;
             }
         },
         obj : {
@@ -598,30 +802,28 @@ LVT.form = {
                 var data = {};
                 var eles = ele.findDirect('[name]');
                 for(var i=0; i<eles.length; i++){
-                    var ele = eles.eq(i);
-                    var dataType = LVT.form.dataType.type(ele);
+                    var eleInner = eles.eq(i);
+                    var dataType = LVT.form.dataType.type(eleInner);
                     if(!dataType){
-                        console.warn('无法获取', ele, '的值!');
+                        console.warn('无法获取', eleInner, '的值!');
                         continue;
                     }
-                    var val = dataType.getter(ele, valid);
+                    var val = dataType.getter(eleInner, valid);
                     if(valid.isFail()) return;
                     if(val==null) continue;
-                    data[ele.attr('name')] = val;
+                    data[eleInner.attr('name')] = val;
                 }
                 var required = LVT.form.dataAttr.required(ele);
                 if(required && LVT.obj.isEmpty(data)) return valid.err(ele);
-                if(!required && LVT.obj.isEmpty(data)) return null;
+                if(!required && LVT.obj.isEmpty(data)) return;
                 var range = LVT.form.dataAttr.range(ele, valid);
                 if(valid.isFail()) return;
                 if(range){
                     var size = LVT.obj.size(data);
                     var rangeNumBegin = range[0];
-                    if(rangeNumBegin!=null && size<rangeNumBegin) 
-                        return valid.err(ele);
+                    if(rangeNumBegin!=null && size<rangeNumBegin) return valid.err(ele);
                     var rangeNumEnd = range[1];
-                    if(rangeNumEnd!=null && size>rangeNumEnd)
-                        return valid.err(ele);
+                    if(rangeNumEnd!=null && size>rangeNumEnd) return valid.err(ele);
                 }
                 return data;
             }
@@ -647,18 +849,20 @@ LVT.form = {
                 var vals = [];
                 var eles = ele.findDirect('[name]');
                 for(var i=0; i<eles.length; i++){
-                    var ele = eles.eq(i);
-                    var dataType = LVT.form.dataType.type(ele);
+                    var eleInner = eles.eq(i);
+                    var dataType = LVT.form.dataType.type(eleInner);
                     if(!dataType){
-                        console.warn('无法获取', ele ,'的值!');
+                        console.warn('无法获取', eleInner ,'的值!');
                         continue;
                     }
-                    vals.push(dataType.getter(ele, valid));
+                    var val = dataType.getter(eleInner, valid);
                     if(valid.isFail()) return;
+                    if(val==null) continue;
+                    vals.push(val);
                 }
                 var required = LVT.form.dataAttr.required(ele);
                 if(required && vals.length==0) return valid.err(ele);
-                if(!required && vals.length==0) return null;
+                if(!required && vals.length==0) return;
                 var range = LVT.form.dataAttr.range(ele, valid);
                 if(valid.isFail()) return;
                 if(range){
@@ -677,6 +881,14 @@ LVT.form = {
         type : function(ele){
             return ele.attr('data-type');
         },
+        func : function(ele){
+            var func = ele.attr('data-func');
+            if(func) return func;
+            switch(ele.attr('data-type')||'text'){
+            case 'bit': return 'valAsBit';
+            default: return 'val';
+            }
+        },
         required : function(ele){
             return ele.attr('data-required')!=null;
         },
@@ -685,7 +897,7 @@ LVT.form = {
             if(!rangeStr) return;
             var rangeStrs = rangeStr.split('~');
             var rangeNumBegin = LVT.float(rangeStrs[0]);
-            var rangeNumEnd = LVT.int(rangeStrs[1]);
+            var rangeNumEnd = LVT.float(rangeStrs[1]);
             if(rangeNumBegin==null && rangeNumEnd==null) return valid.err(ele,
                     '[name='+ele.attr('name')+']的"data-range"属性错误,格式不为"[数值]~[数值]"!');
             var range = [];
@@ -715,6 +927,9 @@ LVT.form = {
             this.ele = ele;
             this.msg = msg;
             if(!this.msg) this.msg = LVT.form.dataAttr.err(ele);
+        };
+        this.init = function(){
+            this.form.find('.valid-err').text('');
         };
         this.show = function(){
             var validMsgEle = this.form.find('.valid-err');
@@ -766,12 +981,23 @@ jQuery.fn.scrollToMe = function(callback){
 
 /** 设置或提取元素的data数据,表现在其data属性上 */
 jQuery.fn.attrData = function(data){
-    if(data==null) return jQuery.json(this.attr('data'));
+    if(data==null) {
+        data = jQuery.json(this.attr('data'));
+        if(data!=null) return data;
+        try {
+            data = JSON.parse(this.attr('data'));
+            if(data!=null) return data;
+        }catch(e){}
+        try {
+            data = eval('('+this.attr('data')+')');
+            if(data!=null) return data;
+        }catch(e){}
+    }
     this.attr('data', jQuery.jsf(data));
 };
 
 /** 表单序列化及反序列化 */
-jQuery.fn.formData = function(data){
-    if(data) return LVT.form.deserialize(this, data);
-    return LVT.form.serialize(this);
+jQuery.fn.formData = function(data, errMsgHolder){
+    if(data==null) return LVT.form.serialize(this, errMsgHolder);
+    return LVT.form.deserialize(this, data);
 };

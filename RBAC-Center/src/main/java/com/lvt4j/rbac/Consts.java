@@ -1,6 +1,7 @@
 package com.lvt4j.rbac;
 
 import java.io.File;
+import java.util.Date;
 
 import com.lvt4j.basic.TPager;
 
@@ -32,7 +33,7 @@ public class Consts {
     }
     
     public static final Class<?>[] SupportHandlerMethodTypes = new Class<?>[]{
-        JSONObject.class, TPager.class, String[].class, int[].class};
+        JSONObject.class, TPager.class, String[].class, int[].class, Date.class};
     
     /** 各种错误码 */
     public static final class ErrCode{
