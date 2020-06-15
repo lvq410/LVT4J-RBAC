@@ -90,7 +90,7 @@ public class DataSourceConfig {
         File db = new File(dbFolder, "rbac.mv.db");
         if(!db.exists()) initDbFile("h2.mv.db", db);
         log.info("数据库H2-master:{}",db.getPath());
-        BasicDataSource dataSource = h2DataSource("jdbc:h2:"+dbFolder+"rbac");
+        BasicDataSource dataSource = h2DataSource("jdbc:h2:"+dbFolder+"rbac;FILE_LOCK=FILE");
         try{
             dataSource.getConnection().close();
         }catch(Exception e){
