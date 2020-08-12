@@ -1,0 +1,16 @@
+version = file('src/main/resources/com/lvt4j/rbac/version').text;
+
+jar{
+    manifest {
+        attributes 'Implementation-Title': 'rbac-client',
+                   'Implementation-Version': version
+    }
+    enabled true
+}
+
+dependencies {
+    testImplementation group: 'com.google.guava', name: 'guava', version: '16.0.1'
+
+    compileOnly ('javax.servlet:javax.servlet-api:+')
+    compileOnly ('org.springframework:spring-webmvc:+'){ exclude module: '*' }
+}

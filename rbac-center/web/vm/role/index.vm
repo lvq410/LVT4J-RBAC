@@ -1,0 +1,86 @@
+#set($navs=['角色管理'])
+#set($pageDesc='当前产品的角色的查询，修改与删除')
+#parse('/header.vm')
+
+<script src="/vm/role/index.js?${ResVer}"></script>
+
+##角色列表
+<div class="col-xs-3" style="padding-left:0">
+    <select id="qAccess" onchange="delayCall(queryRoles)" widget="select2" model="access" allow-clear="true" placeholder="请选择访问项" style="width:100%"></select>
+</div>
+<div class="col-xs-3">
+    <select id="qPermission" onchange="delayCall(queryRoles)" widget="select2" model="permission" allow-clear="true" placeholder="请选择授权项" style="width:100%"></select>
+</div>
+<div class="col-xs-6" style="padding-right:0">
+    <div class="input-group">
+        <input id="keyword" onenter="delayCall(queryRoles)" onkeyup="delayCall(queryRoles)" type="text" class="form-control input-sm" style="height:28px" placeholder="请输入关键词">
+        <span class="input-group-btn">
+            <button onclick="delayCall(queryRoles)" type="button" class="btn btn-purple btn-minier" style="height:28px">搜索<i class="ace-icon fa fa-search"></i></button>
+        </span>
+    </div>
+</div>
+<div id="rolesPager" widget="pager" show-count="true" show-page-count="true" show-go="true" show-page-size="true" class="pull-right" onpage="loadRoles()"></div>
+<table class="table table-striped table-bordered table-hover table-condensed" style="margin-bottom:0;">
+    <thead>
+        <tr>
+            <th style="width:15px;"></th>
+            <th title="角色的ID" style="min-width:100px;">ID</th>
+            <th title="角色的名称" style="min-width:100px;">名称</th>
+            <th title="角色拥有的访问项" style="width:300px;">访问项</th>
+            <th title="角色拥有的授权项" style="width:300px;">授权项</th>
+            <th style="width:88px;min-width:88px;">
+                <button onclick="addRole()" title="增加一个新角色" type="button" class="btn btn-primary btn-minier">新增</button>
+                <button onclick="sortRole()" title="保存访问项排序" type="button" class="btn btn-warning btn-minier">排序</button>
+            </th>
+        </tr>
+    </thead>
+    <tbody id="roles" widget="sortabler" sortable-handle=".sortabler-handler"></tbody>
+</table>
+
+##角色编辑
+<div id="editRoleDiv" class="form-horizontal" style="display:none;">
+    <p class="valid-err text-danger col-xs-11 col-xs-offset-1"></p>
+    <input name="autoId" data-type="int" type="hidden"/>
+    <input name="seq" data-type="int" type="hidden"/>
+    <div class="form-group">
+        <label class="col-xs-1 control-label">
+            <span title="角色ID,建议以字母数字和下划线组成">ID：</span>
+        </label>
+        <div class="col-xs-11">
+            <input name="id" data-required data-err="角色ID不能为空" autocomplete="off"
+                type="text" class="form-control" placeholder="角色ID,建议以字母数字和下划线组成"/>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-xs-1 control-label">
+            <span title="角色名称，短名称">名称：</span>
+        </label>
+        <div class="col-xs-11">
+            <input name="name" data-required data-err="角色名称不能为空" autocomplete="off"
+                type="text" class="form-control" placeholder="角色名称，短名称"/>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-xs-1 control-label">
+            <span title="角色描述">描述：</span>
+        </label>
+        <div class="col-xs-11">
+            <textarea name="des" autocomplete="off" type="text" class="form-control" style="min-height:150px;" placeholder="角色描述"></textarea>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-xs-1 control-label">访问项：</label>
+        <div class="col-xs-11">
+            <div id="accesses" auth-model="access" name="accessAutoIds" data-type="arr" widget="auth-chooser"></div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-xs-1 control-label">授权项：</label>
+        <div class="col-xs-11">
+            <div id="permissions" auth-model="permission" name="permissionAutoIds" data-type="arr" widget="auth-chooser"></div>
+        </div>
+    </div>
+</div>
+
+
+#parse('/footer.vm')

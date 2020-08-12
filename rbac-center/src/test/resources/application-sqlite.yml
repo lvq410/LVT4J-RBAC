@@ -1,0 +1,7 @@
+spring.boot.admin.client:
+  enabled: true
+  url: http://localhost:25020
+
+db.folder: ./test/sqlite
+
+logging.level.com.lvt4j.rbac: trace

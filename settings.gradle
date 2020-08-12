@@ -1,3 +1,3 @@
-include 'RBAC-Client'
-include 'RBAC-Center'
-include 'RBAC-Test'
+include 'rbac-client'
+include 'rbac-center'
+include 'rbac-test'

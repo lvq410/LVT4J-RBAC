@@ -1,0 +1,49 @@
+#set($navs=['系统信息'])
+#set($pageDesc='系统信息当前状态')
+#parse('/header.vm')
+
+<script src="/vm/cluster/index.js?${ResVer}"></script>
+
+<div class="row"><div class="widget-container-col">
+    <div class="widget-box">
+        <div class="widget-header">
+            <h4 class="widget-title">集群状态</h4>
+            <div class="widget-toolbar">
+                <a href="javascript:;" onclick="loadClusterStats()"><i class="ace-icon fa fa-refresh"></i></a>
+                <a href="#" data-action="collapse"><i class="ace-icon fa fa-chevron-up"></i></a>
+            </div>
+        </div>
+        <div id="clusterStatsBody" class="widget-body" style="display: block;">
+            <table class="table table-striped table-bordered table-hover table-condensed" style="margin-bottom:0;">
+                <thead>
+                    <tr><th colspan="3" class="text-center">集群节点清单</th></tr>
+                    <tr><th>节点</th><th>状态</th><th>客户端数</th></tr>
+                </thead>
+                <tbody id="members"></tbody>
+            </table>
+            <table class="table table-striped table-bordered table-hover table-condensed" style="margin-top:10px;margin-bottom:0;">
+                <thead>
+                    <tr><th colspan="2" class="text-center">客户端清单</th></tr>
+                    <tr><th>产品</th><th>客户端</th></tr>
+                </thead>
+                <tbody id="clients"></tbody>
+            </table>
+        </div>
+    </div>
+</div></div>
+
+<div id="cacheCleanDiv" class="row" style="margin-top:10px;">
+    <div class="col-xs-5" style="padding-left:0"><div class="input-group">
+        <span class="input-group-addon">清理缓存</span>
+        <select name="proId" widget="select2" model="product" allow-clear="true" class="form-control" placeholder="产品ID"></select>
+    </div></div>
+    <div class="col-xs-6"><div class="input-group">
+        <span class="input-group-addon">选择用户</span>
+        <select name="userId" widget="select2" model="user" allow-clear="true" class="form-control" placeholder="用户ID"></select>
+    </div></div>
+    <div class="col-xs-1" style="padding-right:0">
+        <button onclick="cacheClean()" type="button" class="btn btn-purple btn-minier btn-block" style="line-height:24px">通知执行</button>
+    </div>
+</div>
+
+#parse('/footer.vm')

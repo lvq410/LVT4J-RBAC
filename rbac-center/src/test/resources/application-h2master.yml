@@ -1,0 +1,13 @@
+spring:
+  application.name: rbac-center-h2-master
+  boot.admin.client:
+    enabled: true
+    url: http://localhost:25020
+
+#数据库类型
+db:
+  type: h2
+  folder: ./test/h2
+  backup.folder: ./test/h2/backup
+
+logging.level.com.lvt4j.rbac: trace

@@ -1,18 +1,37 @@
-subprojects {
+subprojects{
     apply plugin: 'java'
+    apply plugin: 'java-library'
     apply plugin: 'eclipse'
     apply plugin: 'idea'
     
     group = 'com.lvt4j.rbac'
-    
     repositories {
-        maven { url "http://maven.aliyun.com/nexus/content/groups/public/" }
-        jcenter()
-        mavenCentral()
+        maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
     }
     
+    configurations.all {
+        resolutionStrategy.cacheDynamicVersionsFor 1, 'seconds'
+    }
+    dependencies {
+        testImplementation 'junit:junit:4.12'
+        testAnnotationProcessor 'org.projectlombok:lombok:1.18.6'
+        testCompileOnly 'org.projectlombok:lombok:1.18.6'
+        
+        annotationProcessor 'org.projectlombok:lombok:1.18.6'
+        compileOnly 'org.projectlombok:lombok:1.18.6'
+    }
     tasks.withType(JavaCompile){
-        options.encoding = "UTF-8"
+        options.encoding = 'UTF-8'
     }
     
+    task sourcesJar(type: Jar) {
+        archiveClassifier = 'sources'
+        from sourceSets.main.allJava
+    }
+    
+    task javadocJar(type: Jar) {
+        archiveClassifier = 'javadoc'
+        from javadoc.destinationDir
+    }
+
 }
