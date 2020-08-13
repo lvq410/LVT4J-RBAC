@@ -114,7 +114,7 @@ public class ProductAuthCaches {
         private Product product;
         
         private ProductAuth4Center(Product product){
-            super(product.id, new ConcurrentHashMapProductAuthCache());
+            super(product.id, new ConcurrentHashMapProductAuthCache(false));
             this.product = product;
         }
         

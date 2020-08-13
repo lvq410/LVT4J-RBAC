@@ -20,7 +20,10 @@ class LruLinkedHashMapProductAuthCache extends LocalProductAuthCache {
     private long missCount;
     
     public LruLinkedHashMapProductAuthCache(int capacity) {
-        super();
+        this(true, capacity);
+    }
+    public LruLinkedHashMapProductAuthCache(boolean supportAsyncRefresh, int capacity) {
+        super(supportAsyncRefresh);
         this.capacity = capacity;
         map = new LruLinkedHashMap(capacity);
     }

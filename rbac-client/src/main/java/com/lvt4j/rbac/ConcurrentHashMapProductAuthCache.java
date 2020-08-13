@@ -15,6 +15,13 @@ class ConcurrentHashMapProductAuthCache extends LocalProductAuthCache {
     private final AtomicLong hitCount = new AtomicLong();
     private final AtomicLong missCount = new AtomicLong();
     
+    public ConcurrentHashMapProductAuthCache() {
+        this(true);
+    }
+    public ConcurrentHashMapProductAuthCache(boolean supportAsyncRefresh) {
+        super(supportAsyncRefresh);
+    }
+    
     @Override
     public final UserAuth getOrLoad(String userId) {
         return map.compute(userId, (id,orig)->{

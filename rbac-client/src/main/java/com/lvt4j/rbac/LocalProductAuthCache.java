@@ -21,8 +21,8 @@ abstract class LocalProductAuthCache extends ProductAuthCache {
 
     private final AsyncRefresher asyncRefresher;
     
-    LocalProductAuthCache() {
-        asyncRefresher = new AsyncRefresher();
+    LocalProductAuthCache(boolean supportAsyncRefresh) {
+        asyncRefresher = supportAsyncRefresh?new AsyncRefresher():null;
     }
     
     public abstract boolean contains(String userId);
@@ -31,6 +31,10 @@ abstract class LocalProductAuthCache extends ProductAuthCache {
     
     @Override
     public void invalidateAsync(String userId) {
+        if(asyncRefresher==null){
+            super.invalidateAsync(userId);
+            return;
+        }
         if(log.isLoggable(FINEST)) log.finest(String.format("重载用户[%s]缓存", userId));
         if(userId==null || userId.isEmpty()){
             asyncRefresher.refresh(cachedUserIds());
@@ -41,7 +45,7 @@ abstract class LocalProductAuthCache extends ProductAuthCache {
     
     @Override
     public void close() throws IOException {
-        asyncRefresher.destory();
+        if(asyncRefresher!=null) asyncRefresher.destory();
     }
     
     /**

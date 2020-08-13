@@ -7,13 +7,13 @@ server:
     accesslog:
       directory: ./
       enabled: true
-      pattern: "%s %m %U%q %Dms %bB %a"
+      pattern: "%t %s %m %U%q %Dms %bB %a"
   max-http-header-size: 16KB
   master: true #是否master节点，sqlite数据库类型时固定master节点
-  publish_host: ${localIp}
-  publish_port: ${server.port}
-  master_host: ${localIp}
-  master_port: ${server.port}
+  publish_host: ${localIp} #slave节点将该地址通知给master以使master通过该地址与slave节点建立连接
+  publish_port: ${server.port} #同上
+  master_host: ${localIp} #slave节点连接master节点地址
+  master_port: ${server.port} #同上
 
 management:
   server.port: 81
