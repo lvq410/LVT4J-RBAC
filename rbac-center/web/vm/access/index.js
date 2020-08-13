@@ -51,29 +51,35 @@ function sortAccess() {
 
 function editAccess(btn) {
     var access = $(btn).closest('tr').attrData();
-    $('#editAccessDiv').formData(access);
-    $('#testPatternUri').val('');
-    $('#testPatternRst').text('');
-    $('#editAccessDiv').dialog({
-        title:'修改访问项',
-        minWidth:1000,
-        buttons:{'保存':editAccessSave}
-    });
+    q('/edit/access/get.json', {autoId:access.autoId}, function(data){
+        if(!data){
+            loadAccesses();
+            return alert('访问项不存在');
+        }
+        $('#editAccessDiv').formData(data);
+        $('#testPatternUri').val('');
+        $('#testPatternRst').text('');
+        $('#editAccessDiv').dialog({
+            title:'修改访问项',
+            minWidth:1000,
+            buttons:{'保存':editAccessSave}
+        });
+    }, '获取访问项中' );
 }
 
-function testPattern() {
-    var uri = $('#testPatternUri').val();
-    if(!uri) return $('#testPatternRst').removeClass('text-danger').addClass('text-info').text('');
-    q('/edit/access/patternMatch.json',
+function testMatch() {
+    var text = $('#testMatchText').val();
+    if(!text) return $('#testMatchRst').removeClass('text-danger').addClass('text-info').text('');
+    q('/edit/testMatch.json',
         {
-            pattern: $('#pattern').val(),
-            uri: $('#testPatternUri').val()
+            regex: $('#pattern').val(),
+            text: text
         },
         function(match){
             if(match) {
-                $('#testPatternRst').removeClass('text-danger').addClass('text-info').text('匹配');
+                $('#testMatchRst').removeClass('text-danger').addClass('text-info').text('匹配');
             } else {
-                $('#testPatternRst').removeClass('text-info').addClass('text-danger').text('不匹配');
+                $('#testMatchRst').removeClass('text-info').addClass('text-danger').text('不匹配');
             }
         }, '验证uri匹配pattern中'
     );
@@ -83,7 +89,7 @@ function editAccessSave() {
     var access = $('#editAccessDiv').formData();
     if(!access) return;
     try {
-        new RegExp($('#pattern').val())
+        new RegExp(access.pattern)
     } catch (e) {
         $('#editAccessDiv .valid-err').text('pattern不是一个正则表达式!');
         $('#pattern').focusMe();

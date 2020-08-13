@@ -38,18 +38,18 @@
             <span title="访问项的pattern是一个正则表达式,用以与请求的URI进行匹配,判断用户是否有访问某些URI的权限">pattern<i class="text-danger">*</i>：</span>
         </label>
         <div class="col-xs-11">
-            <input id="pattern" name="pattern" data-required data-err="pattern不能为空" autocomplete="off"
-                type="text" class="form-control" placeholder="访问项的pattern是一个正则表达式,用以与请求的URI进行匹配,判断用户是否有访问某些URI的权限"/><br>
-            <div class="col-xs-12">            
+            <input id="pattern" name="pattern" onenter="testMatch()" onkeyup="testMatch()" data-required data-err="pattern不能为空" autocomplete="off"
+                type="text" class="form-control" placeholder="访问项的pattern是一个正则表达式,用以与请求的URI进行匹配,判断用户是否有访问某些URI的权限"/>
+            <div class="col-xs-12" style="margin-top:10px;">
                 <div style="display:inline-block">
                     <div class="input-group" style="width:400px;">
                         <span class="input-group-btn">
-                            <button type="button" class="btn btn-purple btn-minier" onclick="testPattern()">检查匹配</button>
+                            <button type="button" class="btn btn-purple btn-minier" onclick="testMatch()">检查匹配</button>
                         </span>
-                        <input id="testPatternUri" onenter="testPattern()" onkeyup="testPattern()" type="text" class="form-control" autocomplete="off" style="height:22px;" title="测试用uri" placeholder="请输入URI">
+                        <input id="testMatchText" onenter="testMatch()" onkeyup="testMatch()" type="text" class="form-control" autocomplete="off" style="height:22px;" title="测试用uri" placeholder="请输入URI">
                     </div>
                 </div>
-                <div id="testPatternRst" class="text-info" style="line-height:22px;display:inline-block;vertical-align:top;"></div>
+                <div id="testMatchRst" class="text-info" style="line-height:22px;display:inline-block;vertical-align:top;"></div>
             </div>
         </div>
     </div>

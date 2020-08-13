@@ -16,7 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.lvt4j.rbac.Consts;
 
 /**
- * @author lichenxi
+ * @author LV
  */
 public class VelocityTplLoader extends ResourceLoader{
 

@@ -6,7 +6,7 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 
 /**
  *
- * @author lichenxi on 2020年7月24日
+ * @author LV on 2020年7月24日
  */
 public class DbIsSqlite implements Condition {
 

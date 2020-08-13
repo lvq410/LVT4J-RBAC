@@ -48,12 +48,18 @@ function sortUser() {
 
 function editUser(btn) {
     var user = $(btn).closest('tr').attrData();
-    $('#editUserDiv').formData(user);
-    $('#editUserDiv').dialog({
-        title:'修改用户',
-        minWidth:1000,
-        buttons:{'保存':editUserSave}
-    })
+    q('/edit/user/get.json', {autoId:user.autoId}, function(data){
+        if(!data){
+            loadUsers();
+            return alert('用户不存在');
+        }
+        $('#editUserDiv').formData(data);
+        $('#editUserDiv').dialog({
+            title:'修改用户',
+            minWidth:1000,
+            buttons:{'保存':editUserSave}
+        });
+    }, '加载用户中' );
 }
 
 function editUserSave() {

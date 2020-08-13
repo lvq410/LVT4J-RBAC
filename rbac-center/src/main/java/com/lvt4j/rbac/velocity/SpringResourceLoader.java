@@ -1,9 +1,3 @@
-/**
- * @(#)SpringResourceLoader.java, 2019年6月10日. 
- * 
- * Copyright 2019 Yodao, Inc. All rights reserved.
- * YODAO PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
- */
 package com.lvt4j.rbac.velocity;
 
 import java.io.IOException;
@@ -20,7 +14,7 @@ import org.springframework.util.StringUtils;
 
 /**
  *
- * @author lichenxi on 2019年6月10日
+ * @author LV on 2019年6月10日
  */
 public class SpringResourceLoader extends ResourceLoader {
 

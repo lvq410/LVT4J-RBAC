@@ -49,12 +49,18 @@ function sortProduct() {
 
 function editProduct(btn) {
     var product = $(btn).closest('tr').attrData();
-    $('#editProductDiv').formData(product);
-    $('#editProductDiv').dialog({
-        title:'修改产品',
-        minWidth:1000,
-        buttons:{'保存':editProductSave}
-    });
+    q('/edit/product/get.json',{autoId:product.autoId}, function(data){
+        if(!data){
+            loadProducts();
+            return alert('产品不存在');
+        }
+        $('#editProductDiv').formData(data);
+        $('#editProductDiv').dialog({
+            title:'修改产品',
+            minWidth:1000,
+            buttons:{'保存':editProductSave}
+        });
+    }, '加载产品中');
 }
 
 function editProductSave() {

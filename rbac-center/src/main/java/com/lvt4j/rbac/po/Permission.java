@@ -51,7 +51,7 @@ public class Permission implements Entity{
     @Data@Builder
     @NoArgsConstructor@AllArgsConstructor
     public static class Query implements MybatisPlusQuery<Permission> {
-        public int proAutoId;
+        public Integer proAutoId;
         public Integer autoId,autoIdNot;
         public String id;
         public String keyword;

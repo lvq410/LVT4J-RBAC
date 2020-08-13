@@ -44,7 +44,7 @@
     <input name="seq" data-type="int" type="hidden"/>
     <div class="form-group">
         <label class="col-xs-1 control-label">
-            <span title="角色ID,建议以字母数字和下划线组成">ID：</span>
+            <span title="角色ID,建议以字母数字和下划线组成">ID<i class="text-danger">*</i>：</span>
         </label>
         <div class="col-xs-11">
             <input name="id" data-required data-err="角色ID不能为空" autocomplete="off"
@@ -53,7 +53,7 @@
     </div>
     <div class="form-group">
         <label class="col-xs-1 control-label">
-            <span title="角色名称，短名称">名称：</span>
+            <span title="角色名称，短名称">名称<i class="text-danger">*</i>：</span>
         </label>
         <div class="col-xs-11">
             <input name="name" data-required data-err="角色名称不能为空" autocomplete="off"

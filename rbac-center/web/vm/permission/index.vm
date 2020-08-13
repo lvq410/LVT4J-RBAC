@@ -37,8 +37,19 @@
             <span title="授权项ID,建议以字母数字下划线组成">ID：</span>
         </label>
         <div class="col-xs-11">
-            <input name="id" data-required data-err="授权项ID不能为空" autocomplete="off"
+            <input name="id" onenter="testMatch()" onkeyup="testMatch()" data-required data-err="授权项ID不能为空" autocomplete="off"
                 type="text" class="form-control" placeholder="授权项ID,建议以字母数字下划线组成"/>
+             <div class="col-xs-12" style="margin-top:10px;">
+                <div style="display:inline-block">
+                    <div class="input-group" style="width:400px;">
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-purple btn-minier" onclick="testMatch()">检查匹配</button>
+                        </span>
+                        <input id="testMatchText" onenter="testMatch()" onkeyup="testMatch()" type="text" class="form-control" autocomplete="off" style="height:22px;" title="测试用授权" placeholder="请输入待测授权">
+                    </div>
+                </div>
+                <div id="testMatchRst" class="text-info" style="line-height:22px;display:inline-block;vertical-align:top;"></div>
+            </div>
         </div>
     </div>
     <div class="form-group">

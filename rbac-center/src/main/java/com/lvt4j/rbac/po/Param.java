@@ -51,7 +51,7 @@ public class Param implements Entity{
     @Data@Builder
     @NoArgsConstructor@AllArgsConstructor
     public static class Query implements MybatisPlusQuery<Param> {
-        public int proAutoId;
+        public Integer proAutoId;
         public Integer autoId,autoIdNot;
         public String key;
         public String keyword;

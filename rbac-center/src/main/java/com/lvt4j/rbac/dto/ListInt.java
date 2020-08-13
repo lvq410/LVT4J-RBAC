@@ -5,7 +5,7 @@ import java.util.Collection;
 
 /**
  * int列表，存储在数据库为jsonarr
- * @author lichenxi on 2018年3月22日
+ * @author LV on 2018年3月22日
  */
 public class ListInt extends ArrayList<Integer> {
     private static final long serialVersionUID = 7232042635255952301L;

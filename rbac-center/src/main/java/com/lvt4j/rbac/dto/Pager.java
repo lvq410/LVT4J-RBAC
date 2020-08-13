@@ -8,7 +8,7 @@ import lombok.Data;
 
 /**
  * 分页信息数据结构
- * @author lichenxi on 2019年4月11日
+ * @author LV on 2019年4月11日
  */
 @Data
 public class Pager implements Serializable {

@@ -41,13 +41,18 @@ function sortParam() {
 
 function editParam(btn) {
     var param = $(btn).closest('tr').attrData();
-    param.oldKey = param.key;
-    $('#editParamDiv').formData(param);
-    $('#editParamDiv').dialog({
-        title:'修改配置项',
-        minWidth:1000,
-        buttons:{'保存':editParamSave}
-    });
+    q('/edit/param/get.json', {autoId:param.autoId}, function(data){
+        if(!data){
+            loadParams();
+            return alert('配置项不存在');
+        }
+        $('#editParamDiv').formData(data);
+        $('#editParamDiv').dialog({
+            title:'修改配置项',
+            minWidth:1000,
+            buttons:{'保存':editParamSave}
+        });
+    }, '加载配置项中');
 }
 
 function editParamSave() {

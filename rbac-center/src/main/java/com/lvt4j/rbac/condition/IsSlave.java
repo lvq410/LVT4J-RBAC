@@ -5,7 +5,7 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 
 /**
  * 是否从节点
- * @author lichenxi on 2020年7月10日
+ * @author LV on 2020年7月10日
  */
 public class IsSlave extends IsMaster {
 

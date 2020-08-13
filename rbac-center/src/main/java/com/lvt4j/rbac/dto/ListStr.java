@@ -5,7 +5,7 @@ import java.util.Collection;
 
 /**
  * String列表
- * @author lichenxi on 2019年5月7日
+ * @author LV on 2019年5月7日
  */
 public class ListStr extends ArrayList<String> {
     private static final long serialVersionUID = 7232042635255952301L;

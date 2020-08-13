@@ -7,7 +7,7 @@ import com.lvt4j.rbac.condition.DbIsH2;
 
 /**
  *
- * @author lichenxi on 2020年7月24日
+ * @author LV on 2020年7月24日
  */
 @Component
 @Conditional(DbIsH2.class)

@@ -1,9 +1,3 @@
-/**
- * @(#)ClientService.java, 2020年8月3日. 
- * 
- * Copyright 2020 Yodao, Inc. All rights reserved.
- * YODAO PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
- */
 package com.lvt4j.rbac.service;
 
 import static com.lvt4j.rbac.Utils.sse;
@@ -32,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 所有连接的客户端管理
- * @author lichenxi on 2020年8月3日
+ * @author LV on 2020年8月3日
  */
 @Slf4j
 @Service

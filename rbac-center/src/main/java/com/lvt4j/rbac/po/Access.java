@@ -52,7 +52,7 @@ public class Access implements Entity{
     @Data@Builder
     @NoArgsConstructor@AllArgsConstructor
     public static class Query implements MybatisPlusQuery<Access> {
-        public int proAutoId;
+        public Integer proAutoId;
         public Integer autoId,autoIdNot;
         public String pattern;
         public String keyword;

@@ -18,6 +18,10 @@ dependencyManagement {
     }
 }
 
+jar {
+    enabled=true
+}
+
 gitProperties {
     extProperty = 'gitProps'
     dateFormat = 'yyyy-MM-dd HH:mm:ss'

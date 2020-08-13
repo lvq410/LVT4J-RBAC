@@ -55,15 +55,21 @@ function sortRole() {
 
 function editRole(btn) {
     var role = $(btn).closest('tr').attrData();
-    $('#editRoleDiv').formData(role);
-    $('#accesses').html(tpl_auths(role.accesses, 1));
-    $('#permissions').html(tpl_auths(role.permissions, 1));
-    $('.q-auth-search').val('');
-    $('#editRoleDiv').dialog({
-        title:'修改角色',
-        minWidth:1200,
-        buttons:{'保存':editRoleSave}
-    });
+    q('/edit/role/get.json', {autoId:role.autoId,needAuth:true}, function(data){
+        if(!data){
+            loadRoles();
+            return alert('角色不存在');
+        }
+        $('#editRoleDiv').formData(data);
+        $('#accesses').html(tpl_auths(data.accesses, 1));
+        $('#permissions').html(tpl_auths(data.permissions, 1));
+        $('.q-auth-search').val('');
+        $('#editRoleDiv').dialog({
+            title:'修改角色',
+            minWidth:1200,
+            buttons:{'保存':editRoleSave}
+        });
+    }, '加载角色中');
 }
 
 function editRoleSave() {

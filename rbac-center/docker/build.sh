@@ -1,14 +1,18 @@
 #!/bin/sh
 #############################
-#docker镜像构建脚本
-#本地构建要求有docker环境，默认jdk18，默认gradle 2.12+
+#docker镜像构建与推送脚本
+#本地构建要求有docker环境，默认jdk18，默认gradle5.0+
+#文件夹名为镜像名，分支名为标签名
 #############################
 set -e
 #切换至工作目录
 shellDir=`dirname $0`
 cd $shellDir/..
 shellDir=`pwd`
-echo "开始构建rbac-center:latest镜像,项目路径："$shellDir
+#分支名为标签名
+tag=`git branch | grep '*' | awk -F ' ' '{print $2}'`
+echo "当前分支"$tag
+echo "开始构建rbac:"$tag"镜像,项目路径："$shellDir
 #用gradle打出jar
 gradle clean
 gradle bootRepackage
@@ -20,6 +24,6 @@ sed 's/^M//g' ./docker/start.sh > ./build/docker/start.sh
 cp -r ./web ./build/docker/
 cd ./build/docker
 #打镜像
-#docker build -t lvq410/rbac:latest . 
+#docker build -t lvq410/rbac:$tag . 
 #推镜像
-#docker push lvq410/rbac:latest
+#docker push lvq410/rbac:$tag
