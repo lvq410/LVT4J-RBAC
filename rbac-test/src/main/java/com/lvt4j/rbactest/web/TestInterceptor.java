@@ -6,7 +6,7 @@ import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jmx.export.annotation.ManagedAttribute;
@@ -15,6 +15,7 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.lvt4j.rbac.RbacInterceptor;
+import com.lvt4j.rbactest.RbacConfig;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -40,12 +41,15 @@ public class TestInterceptor extends RbacInterceptor implements WebMvcConfigurer
     @Setter(onMethod=@__({@ManagedAttribute}))
     private boolean onForbidden;
     
-    @Value("${rbac.center-addr}")
-    private String centerAddr;
+    @Autowired
+    private RbacConfig rbacConfig;
     
     @PostConstruct
     private void init() {
-        setRbacCenterAddr(centerAddr);
+        setRbacCenterAddr(rbacConfig.getCenterAddr());
+        setProId(rbacConfig.getProId());
+        setCacheCapacity(rbacConfig.getCacheCapacity());
+        setRbacCenterTimeout(rbacConfig.getCenterTimeout());
     }
     
     @Override
@@ -86,7 +90,6 @@ public class TestInterceptor extends RbacInterceptor implements WebMvcConfigurer
     
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        setProId("test");
         registry.addInterceptor(this);
     }
     

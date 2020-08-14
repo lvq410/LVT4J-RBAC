@@ -27,6 +27,10 @@ logging.level:
   com.lvt4j.rbactest: trace
 
 test-filter: false
-test-interceptor: true
+test-interceptor: false
+
 rbac:
-  center-addr: 127.0.0.1:90
+  centerAddr: 127.0.0.1:80
+  proId: test
+  cacheCapacity: 0
+  centerTimeout: 200

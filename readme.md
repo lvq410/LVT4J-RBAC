@@ -4,9 +4,9 @@
 * [使用方法](#使用方法)
   * [启动授权中心](#启动授权中心)
   * [接入授权中心](#接入授权中心)
-    * [Spring - HandlerInterceptor](#使用Spring的HandlerInterceptor)
-    * [Servlet - Filter](#或者使用Javax.servlet的Filter)
-    * [RESTful - API](#使用RESTful-API方式)
+    * [Spring - HandlerInterceptor](#使用spring的handlerinterceptor)
+    * [Servlet - Filter](#或者使用javax.servlet的filter)
+    * [RESTful - API](#使用restful-api方式)
 
 # 概述
 LVT4J-RBAC是以RBAC(role-based access control,基于角色的权限控制)为核心思想制作的权限管理系统。适用于在一个封闭的企业环境内有多个项目产品(软件系统)需要进行人员权限管理时的情况。

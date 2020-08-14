@@ -36,7 +36,7 @@ public class InnerController{
         if(log.isTraceEnabled()) log.trace("客户端检查产品[{}]最近修改时间", proId);
         ProductAuth4Center productAuth = productAuthCaches.get(proId);
         long lastModify = productAuth==null?0L:productAuth.getLastModify();
-        Map<String, Object> rst = new HashMap<String, Object>();
+        Map<String, Object> rst = new HashMap<String, Object>(1);
         rst.put("lastModify", lastModify);
         mapCompress2Stream(rst, response.getOutputStream());
     }
@@ -63,7 +63,7 @@ public class InnerController{
                 userAuth.userId = origUserAuth.userId;
             }
         }
-        Map<String, Object> rst = new HashMap<String, Object>();
+        Map<String, Object> rst = new HashMap<String, Object>(2);
         rst.put("lastModify", productAuth==null?0L:productAuth.getLastModify());
         rst.put("userAuth", userAuth);
         mapCompress2Stream(rst, response.getOutputStream());
