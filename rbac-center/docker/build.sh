@@ -15,7 +15,7 @@ echo "当前分支"$tag
 echo "开始构建rbac:"$tag"镜像,项目路径："$shellDir
 #用gradle打出jar
 gradle clean
-gradle bootRepackage
+gradle bootJar
 #整理打镜像用文件
 mkdir ./build/docker
 mv ./build/libs/*.jar ./build/docker/app.jar
@@ -24,6 +24,6 @@ sed 's/^M//g' ./docker/start.sh > ./build/docker/start.sh
 cp -r ./web ./build/docker/
 cd ./build/docker
 #打镜像
-#docker build -t lvq410/rbac:$tag . 
+docker build -t lvq410/rbac:$tag . 
 #推镜像
-#docker push lvq410/rbac:$tag
+docker push lvq410/rbac:$tag
