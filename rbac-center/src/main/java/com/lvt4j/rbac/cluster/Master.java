@@ -24,6 +24,8 @@ import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.jmx.export.annotation.ManagedOperation;
+import org.springframework.jmx.export.annotation.ManagedResource;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -49,6 +51,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @Conditional(IsMaster.class)
+@ManagedResource(objectName="Master:type=Master")
 class Master implements EventBusPublisher, ClusterStator {
     
     private static final TypeReference<Collection<ClientInfo>> ClientsRef = new TypeReference<Collection<ClientInfo>>() {};
@@ -92,6 +95,10 @@ class Master implements EventBusPublisher, ClusterStator {
         
         SseEmitter emitter = new SseEmitter(0L);
         
+        emitter.onTimeout(()->slaves.remove(emitter));
+        emitter.onError(e->slaves.remove(emitter));
+        emitter.onCompletion(()->slaves.remove(emitter));
+        
         singleThreader.enqueue(()->{
             sse(emitter, new Handshake(masterTerm, eventbusMsgIdx.get()), this::onSendException);
             slaves.put(emitter, slaveInfo);
@@ -113,8 +120,8 @@ class Master implements EventBusPublisher, ClusterStator {
         });
     }
     
-    @Scheduled(cron="*/10 * * * * *")
     @SneakyThrows
+    @Scheduled(cron="0/10 * * * * ?")
     public void heartbeat() {
         singleThreader.enqueue(()->{
             ssesRaw(slaves.keySet(), EMPTY, this::onSendException);
@@ -129,6 +136,7 @@ class Master implements EventBusPublisher, ClusterStator {
     }
 
     @Override
+    @ManagedOperation
     public List<MemberStatus> getMemberStats() {
         List<MemberStatus> stats = new LinkedList<>();
         MemberStatus master = new MemberStatus();

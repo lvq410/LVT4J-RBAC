@@ -52,6 +52,10 @@ public class ClientService {
         
         SseEmitter emitter = new SseEmitter(0L);
         
+        emitter.onTimeout(()->clients.remove(emitter));
+        emitter.onError(e->clients.remove(emitter));
+        emitter.onCompletion(()->clients.remove(emitter));
+        
         singleThreader.enqueue(()->{
             sse(emitter, broadcastMsgHandler.handshake().toClient(), this::onSendException);
             clients.put(emitter, clientInfo);
@@ -66,8 +70,8 @@ public class ClientService {
         });
     }
     
-    @Scheduled(cron="*/10 * * * * *")
     @SneakyThrows
+    @Scheduled(cron="0/10 * * * * ?")
     public void heartbeat() {
         singleThreader.enqueue(()->{
             ssesRaw(clients.keySet(), EMPTY, this::onSendException);
