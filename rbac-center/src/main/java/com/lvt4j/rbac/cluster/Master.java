@@ -52,7 +52,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Conditional(IsMaster.class)
 @ManagedResource(objectName="Master:type=Master")
-class Master implements EventBusPublisher, ClusterStator {
+public class Master implements EventBusPublisher, ClusterStator {
     
     private static final TypeReference<Collection<ClientInfo>> ClientsRef = new TypeReference<Collection<ClientInfo>>() {};
     
