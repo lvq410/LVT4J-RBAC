@@ -1,0 +1,14 @@
+spring:
+  application.name: rbac-center-mysql-master
+  boot.admin.client:
+    enabled: true
+    url: http://localhost:25020
+
+db:
+  type: mysql
+  mysql:
+    url: jdbc:mysql://localhost:3306/rbac?useSSL=false&maxAllowedPacket=16777216&pinGlobalTxToPhysicalConnection=true&autoReconnect=true&failOverReadOnly=false&useLegacyDatetimeCode=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+
+logging.level.com.lvt4j.rbac: trace

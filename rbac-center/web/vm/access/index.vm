@@ -1,0 +1,75 @@
+#set($navs=['访问项管理'])
+#set($pageDesc='当前产品的访问项的查询，修改与删除')
+#parse('/header.vm')
+
+<script src="/vm/access/index.js?${ResVer}"></script>
+
+##访问项列表
+<div class="input-group">
+    <input id="keyword" type="text" onenter="delayCall(queryAccesses)" onkeyup="delayCall(queryAccesses)" class="form-control" placeholder="请输入关键词">
+    <span class="input-group-btn">
+        <button onclick="delayCall(queryAccesses)" type="button" class="btn btn-purple btn-minier" style="height:34px;">搜索<i class="ace-icon fa fa-search"></i></button>
+    </span>
+</div>
+<div id="accessesPager" widget="pager" show-count="true" show-page-count="true" show-page-size="true" show-go="true" class="pull-right" onpage="loadAccesses()"></div>
+<table class="table table-striped table-bordered table-hover table-condensed" style="margin-bottom:0;">
+    <thead>
+        <tr>
+            <th style="width:15px;"></th>
+            <th style="width:30%;" title="访问项的pattern">pattern</th>
+            <th title="访问项的名称">名称</th>
+            <th style="width:88px;">
+                <button onclick="addAccess()" title="增加一个新访问项" type="button" class="btn btn-primary btn-minier">新增</button>
+                <button onclick="sortAccess()" title="保存访问项排序" type="button" class="btn btn-warning btn-minier">排序</button>
+            </th>
+        </tr>
+    </thead>
+    <tbody id="accesses" widget="sortabler" sortable-handle=".sortabler-handler"></tbody>
+</table>
+
+
+##访问项编辑
+<div id="editAccessDiv" class="form-horizontal" style="display:none;">
+    <p class="valid-err text-danger col-xs-11 col-xs-offset-1"></p>
+    <input name="autoId" data-type="int" type="hidden"/>
+    <input name="seq" data-type="int" type="hidden"/>
+    <div class="form-group">
+        <label class="col-xs-1 control-label">
+            <span title="访问项的pattern是一个正则表达式,用以与请求的URI进行匹配,判断用户是否有访问某些URI的权限">pattern<i class="text-danger">*</i>：</span>
+        </label>
+        <div class="col-xs-11">
+            <input id="pattern" name="pattern" onenter="testMatch()" onkeyup="testMatch()" data-required data-err="pattern不能为空" autocomplete="off"
+                type="text" class="form-control" placeholder="访问项的pattern是一个正则表达式,用以与请求的URI进行匹配,判断用户是否有访问某些URI的权限"/>
+            <div class="col-xs-12" style="margin-top:10px;">
+                <div style="display:inline-block">
+                    <div class="input-group" style="width:400px;">
+                        <span class="input-group-btn">
+                            <button type="button" class="btn btn-purple btn-minier" onclick="testMatch()">检查匹配</button>
+                        </span>
+                        <input id="testMatchText" onenter="testMatch()" onkeyup="testMatch()" type="text" class="form-control" autocomplete="off" style="height:22px;" title="测试用uri" placeholder="请输入URI">
+                    </div>
+                </div>
+                <div id="testMatchRst" class="text-info" style="line-height:22px;display:inline-block;vertical-align:top;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-xs-1 control-label">
+            <span title="访问项名称，短名称">名称<i class="text-danger">*</i>：</span>
+        </label>
+        <div class="col-xs-11">
+            <input name="name" data-required data-err="访问项名称不能为空" autocomplete="off"
+                type="text" class="form-control" placeholder="访问项名称，短名称"/>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-xs-1 control-label">
+            <span title="访问项描述">描述：</span>
+        </label>
+        <div class="col-xs-11">
+            <textarea name="des" autocomplete="off" type="text" class="form-control" style="min-height:150px;" placeholder="访问项描述"></textarea>
+        </div>
+    </div>
+</div>
+
+#parse('/footer.vm')

@@ -1,0 +1,36 @@
+#服务端口
+server.port: 8180
+
+management:
+  server.port: 8181
+  endpoints:
+    enabled-by-default: true
+    web.exposure.include: "*"
+  endpoint.health.show-details: never
+  health:
+    defaults.enabled: false
+    db.enabled: false
+
+spring:
+  application.name: rbac-test
+  main.banner-mode: "OFF"
+  boot.admin.client:
+    enabled: true
+    url: http://localhost:25020
+    instance.prefer-ip: true
+    auto-deregistration: true
+
+#日志
+logging.level:
+  root: INFO
+  com.lvt4j.rbac: trace
+  com.lvt4j.rbactest: trace
+
+test-filter: false
+test-interceptor: false
+
+rbac:
+  centerAddr: 127.0.0.1:80
+  proId: test
+  cacheCapacity: 0
+  centerTimeout: 200

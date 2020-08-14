@@ -1,0 +1,13 @@
+#set($navs=[$statusCode])
+#set($pageDesc=$statusCode)
+#parse('/header.vm')
+<div class="row">
+    <div class="col-xs-12">
+        <span class="red bigger-300">$statusCode</span>
+        <h3 class="text-danger">$!msg</h3>
+        #if($rbac.exist && $stack)
+            <pre style="tab-size:2;">$stack</pre>
+        #end
+    </div>
+</div>
+#parse('/footer.vm')

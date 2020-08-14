@@ -1,12 +1,20 @@
-[TOC]
+
+* [概述](#概述)
+* [名词约定](#名词约定)
+* [使用方法](#使用方法)
+  * [启动授权中心](#启动授权中心)
+  * [接入授权中心](#接入授权中心)
+    * [Spring - HandlerInterceptor](#使用spring的handlerinterceptor)
+    * [Servlet - Filter](#或者使用javax.servlet的filter)
+    * [RESTful - API](#使用restful-api方式)
 
 # 概述
-LVT4J-RBAC是以RBAC(role-based access control,基于角色的权限控制)为核心思想制作的权限管理系统。适用于在一个封闭的企业环境内有多个项目产品需要进行人员权限管理时的情况。
-# 特点
-LVT4J-RBAC的使用方式不是高度集成到需要权限控制的项目中，而是建立一个权限控制的中心服务，其他项目通过引入一个客户端或者调用中心服务的RESTfull接口来查询和控制用户的权限。
+LVT4J-RBAC是以RBAC(role-based access control,基于角色的权限控制)为核心思想制作的权限管理系统。适用于在一个封闭的企业环境内有多个项目产品(软件系统)需要进行人员权限管理时的情况。
+## 特点
+LVT4J-RBAC的使用方式不是高度集成到需要权限控制的项目中，而是建立一个权限控制的中心服务，其他项目通过引入一个客户端或者调用中心服务的RESTfull接口来查询和控制用户的权限。本质上是一个可视化的用户权限数据仓库。
 # 名词约定
 ## 产品(product)
-任何需要使用LVT4J-RBAC来进行权限控制的项目即称为产品
+任何需要使用LVT4J-RBAC来进行权限控制的项目(软件系统)即称为产品
 ## 用户(user)
 受权限约束的产品的使用者即为用户。在LVT4J-RBAC中，用户是全局的，与产品无关。即用户既可以使用产品A，又可以使用产品B，但在这两个产品下的权限不同。
 ## 配置项(param)
@@ -30,13 +38,13 @@ docker run -p 80:80 lvq410/rbac:latest
 依赖:JAVA1.8+、gradle
 ```shell
 git clone https://github.com/lvq410/LVT4J-RBAC.git rbac
-cd ./rbac/RBAC-Center
+cd ./rbac/rbac-center
 sh ./run/start.sh
 ```
 ### 数据库模式
-内置两种数据库模式：SQLite（默认）和H2
+支持三种数据库模式：SQLite（默认）、H2和Mysql
 
-SQLite模式只能单例部署，若要达成HA，需要使用H2模式
+SQLite模式只能单例部署，若要达成HA，需要使用H2/Mysql
 
 #### H2模式的集群部署
 H2数据库模式提供一个master-slave模式的集群部署方式。
@@ -45,52 +53,90 @@ H2数据库模式提供一个master-slave模式的集群部署方式。
 
 master节点部署配置
 ```
+server.master=true #是master
 db.type=h2 #数据库类型
 db.folder=./ #数据库文件位置
-db.h2.master=true #是master
 ```
 salve节点部署配置
 ```
+server.master=false #是slave
+server.master_host= #master节点host
+server.master_port= #master节点的server.port
 db.type=h2 #数据库类型
 db.folder=./ #master节点的数据库文件位置
-db.h2.master=false #是slave
-db.h2.master.host=master-host #master节点地址
+db.h2.master.tcp.port= #master节点的tcp端口
 ```
+#### Mysql模式的集群部署
+Mysql模式也是一主多从的集群部署方式。
+
+Mysql模式的主从节点都直连数据库，节点角色不同仅用于做数据变更广播等。
+
+master节点部署配置
+```
+server.master=true #是master
+db.type=mysql #数据库类型
+db.mysql.url= #数据库jdbc连接
+```
+salve节点部署配置
+```
+server.master=false #是slave
+server.master_host= #master节点host
+server.master_port= #master节点的server.port
+db.type=mysql #数据库类型
+db.mysql.url= #数据库jdbc连接
+```
+
 #### 备份
-默认启动备份，相关配置参考`配置说明`
+嵌入式数据库时（Sqlit,H2）默认启动备份，相关配置参考`配置说明`
 
 ### 配置说明
 采用Spring配置方式，可以用环境变量方式（如db_type=h2）修改
 ```
-db.type=sqlite/h2 #数据库类型
-db.folder=./ #数据库文件夹
+db: #数据库
+  type: sqlite #数据库类型h2 mysql
+  folder: ./ #嵌入式数据库类型时数据库文件夹
+  backup: #嵌入式数据库类型时 数据库备份
+    folder: ./backup #数据库备份文件夹
+    cron: 0 0 0 * * * #数据库定时备份cron
+    max: 10 #备份文件最多保留数量
+  h2: #H2数据库类型相关配置
+    filelock: FILE #h2数据库文件锁方式：FILE/SOCKET/FS/NO
+    web.port: 8082 #master节点时的数据库web管理端口
+    tcp.port: 9123 #master节点时的数据库tcp端口
+    master.tcp.port: ${db.h2.tcp.port} #slave节点时要连接的master节点的tcp端口
+  mysql:
+    url: jdbc:mysql://localhost:3306/rbac?useSSL=false&maxAllowedPacket=16777216&pinGlobalTxToPhysicalConnection=true&autoReconnect=true&failOverReadOnly=false&useLegacyDatetimeCode=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
 
-db.backup.folder=./backup #数据库备份文件夹
-db.backup.cron=0 0 0 * * * #数据库定时备份cron
-db.backup.max=10 #备份文件最多保留数量
+server:
+  port: 80
+  master: true #是否master节点，sqlite数据库类型时固定master节点
+  publish_host: ${localIp} #slave节点将该地址通知给master以使master通过该地址与slave节点建立连接
+  publish_port: ${server.port} #同上
+  master_host: ${localIp} #slave节点连接master节点地址
+  master_port: ${server.port} #同上
 
-db.h2.master=true #是否h2 master节点
-db.h2.web.port=8082 #master节点时的数据库web管理端口
-db.h2.tcp.port=9123 #master节点时的数据库tcp端口
-db.h2.master.host=localhost #slave节点时要连接的master节点的地址
-db.h2.master.tcp.port=${db.h2.tcp.port} #slave节点时要连接的master节点的tcp端口
+oplog.maxdays: 30 #操作日志保留天数，集群模式时仅master节点执行清理日志
 
-oplog.maxdays=30 #操作日志保留天数，h2模式时仅master节点生效
 
-admin.userId=pwd #管理员账户密码
+spring.boot.admin.client: #支持sping-boot-client
+  enabled: false
+  url: http://localhost:82
 ```
 
 ### 管理员账户密码管理
-Http Basic Auth验权模式。可以配置在Spring配置里，也可以配置在./config/admin.properties里。admin.properties支持实时修改生效。有相同账号时，以Spring配置的为准。支持配置多个管理员账号。H2集群模式时，要注意各个节点的配置尽量一致，否则做同一域名的反向代理时会有问题。
+Http Basic Auth验权模式。需要配置在./config/admin.properties里。admin.properties支持实时修改生效。有相同账号时，以Spring配置的为准。支持配置多个管理员账号。集群模式时，要注意各个节点的配置尽量一致，否则做同一域名的反向代理时会有问题。
 
 ## 接入授权中心
-注意LVT4J-RBAC并不负责处理计算用户ID，因此查询用户权限需各项目自己提供用户的ID
+注意LVT4J-RBAC并不负责认证（获取用户ID），因此查询用户权限需产品自身提供用户的ID。
 ### 使用RBAC-Client的jar包方式
 #### 加入client的jar依赖
-需要JAVA1.6+
+需要JAVA1.8+
 **TODO**
 #### 使用Spring的`HandlerInterceptor`
 RBAC-Client可使用`org.springframework.web.servlet.HandlerInterceptor`的方式来拦截用户访问和注入用户权限信息。要使用该方法，需要继承`com.lvt4j.rbac.RbacInterceptor`类，并实现其方法`getUserId`，同时配置文件中声明其产品ID。
+
 ```java
 public class ExampleInterceptor extends RbacInterceptor {
     @Override
@@ -100,6 +146,7 @@ public class ExampleInterceptor extends RbacInterceptor {
     }
 }
 ```
+
 Spring配置
 ```xml
 <mvc:interceptor>
@@ -110,19 +157,18 @@ Spring配置
 
         <!-- 除了proId必填外，还提供了以下可选配置 -->
         
-        <!-- 最大为多少用户缓存权限,默认1000个 -->
-        <property name="cacheCapacity" value="1000"/>
+        <!-- 最大为多少用户缓存权限,默认0,即无限 -->
+        <property name="cacheCapacity" value="0"/>
         <!-- 与授权中心同步使用的协议,默认http -->
         <property name="rbacCenterProtocol" value="http"/>
         <!-- 授权中心服务地址,[host](:[port])形式,默认127.0.0.1:80 -->
         <property name="rbacCenterAddr" value="127.0.0.1:80"/>
-        <!-- 与授权中心服务同步时间间隔,单位分钟,默认5分钟 -->
-        <property name="rbacCenterSyncInterval" value="5"/>
-        <!-- 与授权中心同步超时时间,单位毫秒,默认200ms -->
-        <property name="rbacCenterSyncTimeout" value="200"/>
+        <!-- 从授权中心读取数据超时时间,单位毫秒,默认200ms -->
+        <property name="rbacCenterTimeout" value="200"/>
     </bean>
 </mvc:interceptor>
 ```
+
 ##### Spring Interceptor的特殊控制
 基于Spring-MVC框架丰富的特性，提供了一些特殊的权限控制方式
 ###### 注解 `@RbacIgnore`
@@ -159,10 +205,10 @@ web.xml配置
 
     <!-- 与Spring配置类似，除了proId必填外，还提供了以下可选配置 -->
 
-    <!-- 最大为多少用户缓存权限,默认1000个 -->
+    <!-- 最大为多少用户缓存权限,默认0,即不限 -->
     <init-param>
         <param-name>cacheCapacity</param-name>
-        <param-value>1000</param-value>
+        <param-value>0</param-value>
     </init-param>
     <!-- 与授权中心同步使用的协议,默认http -->
     <init-param>
@@ -174,14 +220,9 @@ web.xml配置
         <param-name>rbacCenterAddr</param-name>
         <param-value>127.0.0.1:80</param-value>
     </init-param>
-    <!-- 与授权中心服务同步时间间隔,单位分钟,默认5分钟 -->
+    <!-- 从授权中心加载数据超时时间,单位毫秒,默认200ms -->
     <init-param>
-        <param-name>rbacCenterSyncInterval</param-name>
-        <param-value>5</param-value>
-    </init-param>
-    <!-- 与授权中心同步超时时间,单位毫秒,默认200ms -->
-    <init-param>
-        <param-name>rbacCenterSyncTimeout</param-name>
+        <param-name>rbacCenterTimeout</param-name>
         <param-value>200</param-value>
     </init-param>
 </filter>
@@ -190,6 +231,7 @@ web.xml配置
     <url-pattern>/*</url-pattern>
 </filter-mapping>
 ```
+
 ##### 使用Javax.servlet的`Filter`的权限控制流程图
 ![Filter的权限控制流程图](https://raw.githubusercontent.com/lvq410/LVT4J-RBAC/master/readme/RbacFilter-flowchart.png)
 
@@ -231,35 +273,35 @@ Spring Intercepter提供了其他一些处理，参见Spring Intercepter的流�
 如果在一个非web项目中或在一个项目中需要获取多个不同项目的权限，可以直接使用权限client端
 ```java
 //创建client端
-ProductAuth4Client productAuth = new ProductAuth4Client("examplePro", "127.0.0.1:80");
+ProductAuthClient productAuth = new ProductAuthClient("examplePro", "127.0.0.1:80");
 //判断用户是否有权限访问指定uri
 productAuth.allowAccess("userId","uri");
 //判断用户是否有指定授权项的权限
 productAuth.permit("userId","permissionId");
 //或者获取用户权限pojo
 UserAuth userAuth = productAuth.getUserAuth("userId");
-//不用时销毁
-productAuth.destory();
+//不用时切记要销毁
+productAuth.close();
 ```
 
 #### 用户权限POJO
 若用户通过验证，会向`request`的`attribute`里写入`key`为`UserAuth.ReqAttr //即'rbac'`的用户权限POJO，该POJO提供以下属性及方法
 ```java
-/** 用户ID */
+/** 用户ID，null代表游客 */
 public String userId;
-/** 用户名称 */
+/** 用户名称，可为null */
 public String userName;
-/** 用户描述 */
+/** 用户描述，可为null */
 public String userDes;
 /** 用户在授权中心是否存在 */
 public boolean exist;
-/** 用户的所有配置项 */
+/** 用户的所有配置项，不会为null，但可能为空map */
 public Map<String, String> params;
-/** 用户的所有角色 */
+/** 用户的所有角色，不会为null，但可能为空Set */
 public Set<String> roles;
-/** 用户的所有访问项 */
+/** 用户的所有访问项，不会为null，但可能为空Set */
 public Set<String> accesses;
-/** 用户的所有授权项 */
+/** 用户的所有授权项，不会为null，但可能为空Set */
 public Set<String> permissions;
 
 /** 用户是否有权限访问指定uri */

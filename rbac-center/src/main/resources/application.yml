@@ -1,0 +1,72 @@
+server:
+  port: 80
+  tomcat:
+    max-http-post-size: -1
+    max-swallow-size: -1
+    basedir: logs
+    accesslog:
+      directory: ./
+      enabled: true
+      pattern: "%t %s %m %U%q %Dms %bB %a"
+  max-http-header-size: 16KB
+  master: true #是否master节点，sqlite数据库类型时固定master节点
+  publish_host: ${localIp} #slave节点将该地址通知给master以使master通过该地址与slave节点建立连接
+  publish_port: ${server.port} #同上
+  master_host: ${localIp} #slave节点连接master节点地址
+  master_port: ${server.port} #同上
+
+management:
+  server.port: 81
+  endpoints:
+    enabled-by-default: true
+    web.exposure.include: "*"
+  endpoint.health.show-details: never
+  health:
+    defaults.enabled: false
+    db.enabled: false
+  info.git.mode: full
+
+spring:
+  application.name: rbac-center
+  main.banner-mode: "OFF"
+  mvc:
+    throw-exception-if-no-handler-found: true
+    favicon.enabled: false
+    pathmatch.use-suffix-pattern: true
+  boot.admin.client:
+    enabled: false
+    url: http://localhost:82
+    instance.prefer-ip: true
+    auto-deregistration: true
+
+mybatis-plus:
+  global-config:
+    banner: false
+    db-config.field-strategy: ignored
+  configuration.map-underscore-to-camel-case: false
+
+db: #数据库
+  type: sqlite #数据库类型h2 mysql
+  folder: ./ #嵌入式数据库类型时数据库文件夹
+  backup: #嵌入式数据库类型时 数据库备份
+    folder: ./backup #数据库备份文件夹
+    cron: 0 0 0 * * * #数据库定时备份cron
+    max: 10 #备份文件最多保留数量
+  h2: #H2数据库类型相关配置
+    filelock: FILE #h2数据库文件锁方式：FILE/SOCKET/FS/NO
+    web.port: 8082 #master节点时的数据库web管理端口
+    tcp.port: 9123 #master节点时的数据库tcp端口
+    master.tcp.port: ${db.h2.tcp.port} #slave节点时要连接的master节点的tcp端口
+  mysql:
+    url: jdbc:mysql://localhost:3306/rbac?useSSL=false&maxAllowedPacket=16777216&pinGlobalTxToPhysicalConnection=true&autoReconnect=true&failOverReadOnly=false&useLegacyDatetimeCode=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+
+oplog.maxdays: 30 #操作日志最大保留天数
+
+logging:
+  file: logs/rbac.log
+  file.max-history: 30
+  level:
+    root: info
+    com.lvt4j.rbac: info
