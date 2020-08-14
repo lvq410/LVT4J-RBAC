@@ -1,0 +1,8 @@
+test-filter: true
+test-interceptor: false
+
+rbac:
+  centerAddr: 127.0.0.1:80
+  proId: test
+  cacheCapacity: 0
+  centerTimeout: 200
