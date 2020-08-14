@@ -5,7 +5,8 @@
   * [启动授权中心](#启动授权中心)
   * [接入授权中心](#接入授权中心)
     * [Spring - HandlerInterceptor](#使用spring的handlerinterceptor)
-    * [Servlet - Filter](#或者使用javax.servlet的filter)
+    * [Servlet - Filter](#或者使用javaxservlet的filter)
+    * [ProductAuthClient](#直接使用权限client端)
     * [RESTful - API](#使用restful-api方式)
 
 # 概述
