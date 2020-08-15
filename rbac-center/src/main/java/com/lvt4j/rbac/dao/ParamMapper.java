@@ -14,7 +14,7 @@ import com.lvt4j.rbac.mybatis.PlusMapper;
 @Mapper
 public interface ParamMapper extends PlusMapper<com.lvt4j.rbac.po.Param>,SequenceSetter {
 
-    @Update("update param set key=#{param.key}, name=#{param.name}, des=#{param.des} where autoId=#{param.autoId} ")
+    @Update("update param set `key`=#{param.key}, name=#{param.name}, des=#{param.des} where autoId=#{param.autoId} ")
     public void set(@Param("param") com.lvt4j.rbac.po.Param param);
     
     @Update("update param set seq=#{seq} where autoId=#{autoId} ")

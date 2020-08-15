@@ -7,6 +7,7 @@ import javax.validation.constraints.Positive;
 import org.hibernate.validator.constraints.Length;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -38,6 +39,7 @@ public class Param implements Entity{
     
     @NotBlank(message="key不能为空")
     @Length(max=200,message="key过长")
+    @TableField("`key`")
     public String key;
     
     @NotBlank(message="名称不能为空")
@@ -63,8 +65,8 @@ public class Param implements Entity{
             eqWrapper(wrapper, "proAutoId", proAutoId);
             neWrapper(wrapper, "autoId", autoIdNot);
             eqWrapper(wrapper, "autoId", autoId);
-            eqWrapper(wrapper, "key", key);
-            multiLikeWrapper(wrapper, keyword, "key", "name");
+            eqWrapper(wrapper, "`key`", key);
+            multiLikeWrapper(wrapper, keyword, "`key`", "name");
             return wrapper;
         }
         
