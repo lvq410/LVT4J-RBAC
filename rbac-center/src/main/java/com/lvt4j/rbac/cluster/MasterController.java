@@ -34,10 +34,18 @@ class MasterController {
     /** 从节点应通过该接口与主节点建立连接并订阅 */
     @RequestMapping("subscribe")
     public SseEmitter subscribe(HttpServletRequest request,
+            @RequestParam String id,
             @RequestParam String host,
             @RequestParam int port) throws Exception {
-        log.info("从节点[{}:{}]接入", host, port);
-        return master.subscribe(host, port);
+        log.trace("从节点[{}({}:{})]请求接入", id, host, port);
+        return master.subscribe(id, host, port);
+    }
+    
+    /** 从节点应定时由本接口通知主节点心跳 */
+    @RequestMapping("heartbeat/4slave")
+    public void heartbeat(@RequestParam String id) {
+        log.trace("从节点[{}]心跳", id);
+        master.onHeartbeat(id);
     }
     
     /**

@@ -14,6 +14,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -64,11 +65,15 @@ public class Slave extends Thread implements EventBusPublisher,ClusterStator {
     @Getter(onMethod=@__({@ManagedAttribute}))
     private String masterOrigin;
     
+    private final String id = UUID.randomUUID().toString();;
+    
     private URL masterPubUrl;
     
     private URL masterSubUrl;
     
     private URL masterStatsUrl;
+    
+    private URL masterHeartbeat;
     
     @Autowired
     private ObjectMapper objectMapper;
@@ -84,9 +89,11 @@ public class Slave extends Thread implements EventBusPublisher,ClusterStator {
         
         masterOrigin = "http://"+masterHost+":"+masterPort;
         masterSubUrl = UriComponentsBuilder.fromHttpUrl(masterOrigin+"/cluster/subscribe")
-            .queryParam("host", host).queryParam("port", port).build().toUri().toURL();
+            .queryParam("id", id).queryParam("host", host).queryParam("port", port).build().toUri().toURL();
         masterPubUrl = new URL(masterOrigin+"/cluster/publish/4slave");
         masterStatsUrl = new URL(masterOrigin+"/cluster/stats/4slave");
+        masterHeartbeat = UriComponentsBuilder.fromHttpUrl(masterOrigin+"/cluster/heartbeat/4slave")
+            .queryParam("id", id).build().toUri().toURL();
         setName("Slave");
         start();
     }
@@ -109,9 +116,10 @@ public class Slave extends Thread implements EventBusPublisher,ClusterStator {
                 subMaster();
             }catch(Throwable e){
                 if(destory) return;
-                log.error("与主节点的连接断开", e);
+                log.error("与主节点的连接异常", e);
             }
             if(destory) return;
+            log.info("与主节点的连接断开");
             try{
                 Thread.sleep(10000);
             }catch(Exception ig){}
@@ -120,17 +128,21 @@ public class Slave extends Thread implements EventBusPublisher,ClusterStator {
     private void subMaster() throws Throwable {
         @Cleanup("disconnect") HttpURLConnection cnn = (HttpURLConnection) masterSubUrl.openConnection();
         cnn.setConnectTimeout(1000);
+        cnn.setReadTimeout(30000);
         @Cleanup InputStream is = cnn.getInputStream();
         log.info("连接主节点[{}:{}]成功", masterHost, masterPort);
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));
         String line = null;
         while(!destory){
             line = reader.readLine();
-            if(line==null) continue;
+            if(line==null) return;
             if(log.isTraceEnabled()) log.trace("广播消息:{}", line);
             if(!line.startsWith("data:")) continue;
             line = line.substring(5);
-            if(StringUtils.isBlank(line)) continue;
+            if(StringUtils.isBlank(line)) { //空信息为心跳信号，回复心跳
+                heartbeat();
+                continue;
+            }
             ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(Base64.getDecoder().decode(line)));
             BroadcastMsg4Center msg;
             try{
@@ -159,6 +171,18 @@ public class Slave extends Thread implements EventBusPublisher,ClusterStator {
             @Cleanup InputStream is = cnn.getInputStream();
         }catch(Throwable e){
             log.warn("请求主节点发广播:{}失败", msg, e);
+        }
+    }
+    
+    private void heartbeat() { //发送心跳到主节点
+        if(log.isTraceEnabled()) log.trace("向主节点发心跳");
+        try{
+            @Cleanup("disconnect") HttpURLConnection cnn = (HttpURLConnection) masterHeartbeat.openConnection();
+            cnn.setConnectTimeout(1000);
+            cnn.setReadTimeout(1000);
+            @Cleanup InputStream is = cnn.getInputStream();
+        }catch(Throwable e){
+            log.warn("向主节点发心跳", e);
         }
     }
     

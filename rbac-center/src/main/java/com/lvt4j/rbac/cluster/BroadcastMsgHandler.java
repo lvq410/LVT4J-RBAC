@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.lvt4j.rbac.BroadcastMsg4Center;
 import com.lvt4j.rbac.BroadcastMsg4Center.CacheClean;
+import com.lvt4j.rbac.BroadcastMsg4Center.ClientHeartbeat;
 import com.lvt4j.rbac.BroadcastMsg4Center.Handshake;
 import com.lvt4j.rbac.ProductAuthCaches;
 import com.lvt4j.rbac.service.ClientService;
@@ -47,10 +48,14 @@ public class BroadcastMsgHandler {
             return;
         }
         
-        clientService.clientsPublish(msg);
+        if(msg instanceof ClientHeartbeat){
+            clientHeartbeat((ClientHeartbeat) msg);
+            return;
+        }
         
         if(msg instanceof CacheClean){
             cacheClean((CacheClean) msg);
+            clientService.clientsPublish(msg);
             return;
         }
     }
@@ -60,6 +65,15 @@ public class BroadcastMsgHandler {
         masterTerm = msg.masterTerm;
         broadMsgIdx = msg.msgIdx;
     }
+    
+    /**
+     * 未注册指定客户端的节点收到了节点的心跳后广播了出去
+     * @param heartbeat
+     */
+    private void clientHeartbeat(ClientHeartbeat heartbeat) {
+        clientService.onHeartbeat(heartbeat.id);
+    }
+    
     /** 缓存清理 */
     private void cacheClean(CacheClean msg) {
         if(!Objects.equals(masterTerm, msg.masterTerm)){ //master变更

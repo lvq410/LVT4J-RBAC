@@ -1,6 +1,7 @@
 package com.lvt4j.rbac;
 
 import java.io.Serializable;
+import java.util.concurrent.atomic.AtomicLong;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,7 +19,7 @@ public abstract class BroadcastMsg4Center implements Serializable {
     public final long msgIdx;
     
     /** 设置消息编号 */
-    public abstract BroadcastMsg4Center msgIdx(long masterTerm, long msgIdx);
+    public abstract BroadcastMsg4Center msgIdx(long masterTerm, AtomicLong msgIdx);
     
     public abstract BroadcastMsg toClient();
     
@@ -36,8 +37,8 @@ public abstract class BroadcastMsg4Center implements Serializable {
         }
         
         @Override
-        public BroadcastMsg4Center msgIdx(long masterTerm, long msgIdx) {
-            return new Handshake(masterTerm, msgIdx);
+        public BroadcastMsg4Center msgIdx(long masterTerm, AtomicLong msgIder) {
+            return new Handshake(masterTerm, msgIder.get());
         }
         
         @Override
@@ -62,13 +63,40 @@ public abstract class BroadcastMsg4Center implements Serializable {
         }
         
         @Override
-        public BroadcastMsg4Center msgIdx(long masterTerm, long msgIdx) {
-            return new CacheClean(masterTerm, msgIdx, proId, userId);
+        public BroadcastMsg4Center msgIdx(long masterTerm, AtomicLong msgIder) {
+            return new CacheClean(masterTerm, msgIder.incrementAndGet(), proId, userId);
         }
         
         @Override
         public BroadcastMsg toClient() {
             return new BroadcastMsg.CacheClean(masterTerm, msgIdx, proId, userId);
+        }
+        
+    }
+    
+    /**
+     * 任意一个节点收到客户端心跳后，如果客户端未在该节点注册
+     * 需要将这个心跳信息广播出去
+     * @author LV on 2020年8月15日
+     */
+    public static class ClientHeartbeat extends BroadcastMsg4Center {
+        private static final long serialVersionUID = 4610570391858746115L;
+        
+        public final String id;
+        
+        public ClientHeartbeat(long masterTerm, long msgIdx, String id) {
+            super(masterTerm, msgIdx);
+            this.id = id;
+        }
+
+        @Override
+        public BroadcastMsg4Center msgIdx(long masterTerm, AtomicLong msgIder) {
+            return new ClientHeartbeat(masterTerm, msgIder.get(), id);
+        }
+
+        @Override
+        public BroadcastMsg toClient() {
+            return null;
         }
         
     }

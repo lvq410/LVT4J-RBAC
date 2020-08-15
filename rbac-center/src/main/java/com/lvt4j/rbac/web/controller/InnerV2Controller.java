@@ -14,9 +14,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import com.lvt4j.rbac.BroadcastMsg4Center;
 import com.lvt4j.rbac.ProductAuthCaches;
 import com.lvt4j.rbac.ProductAuthCaches.ProductAuth4Center;
 import com.lvt4j.rbac.UserAuth;
+import com.lvt4j.rbac.cluster.EventBusPublisher;
 import com.lvt4j.rbac.db.lock.Read;
 import com.lvt4j.rbac.service.ClientService;
 
@@ -37,22 +39,35 @@ public class InnerV2Controller {
     @Autowired
     private ClientService clientSevice;
     
+    @Autowired
+    private EventBusPublisher eventBusPublisher;
+    
     @RequestMapping("subscribe")
     public SseEmitter subscribe(HttpServletRequest request,
+            @RequestParam String id,
+            @RequestParam String host,
             @RequestParam String proId,
-            @RequestParam String clientId,
             @RequestParam String version) {
-        log.info("客户端[{}-{}]接入", clientId, version);
-        return clientSevice.onClientSub(parseIPFromReq(request), request.getRemotePort(), proId, clientId, version);
+        if(log.isTraceEnabled()) log.trace("客户端[{},{},{},{}]请求接入", id, host, proId, version);
+        return clientSevice.onClientSub(id, host, parseIPFromReq(request), request.getRemotePort(), proId, version);
+    }
+    
+    @RequestMapping("heartbeat")
+    public void heartbeat(@RequestParam String id) {
+        if(log.isTraceEnabled()) log.trace("收到客户端心跳[{}]", id);
+        boolean heartbeated = clientSevice.onHeartbeat(id);
+        if(heartbeated) return;
+        //如果未在本机注册，需要广播出去
+        if(log.isTraceEnabled()) log.trace("客户端心跳[{}]未在本机注册，广播", id);
+        eventBusPublisher.publish(new BroadcastMsg4Center.ClientHeartbeat(0, 0, id));
     }
     
     @Read
     @RequestMapping("userAuth")
     public void userAuth(HttpServletResponse res,
             @RequestParam String proId,
-            @RequestParam(required=false) String userId,
-            @RequestParam(defaultValue="") String clientId) throws Exception {
-        if(log.isTraceEnabled()) log.trace("客户端[{}]请求产品[{}]用户[{}]权限", clientId, proId, userId);
+            @RequestParam(required=false) String userId) throws Exception {
+        if(log.isTraceEnabled()) log.trace("客户端请求产品[{}]用户[{}]权限", proId, userId);
         UserAuth userAuth = null;
         ProductAuth4Center productAuth = productAuthCaches.get(proId);
         if(productAuth==null){ //产品为空返回空的用户权限

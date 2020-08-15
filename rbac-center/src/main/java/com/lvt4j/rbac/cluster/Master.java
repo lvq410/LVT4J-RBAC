@@ -1,5 +1,6 @@
 package com.lvt4j.rbac.cluster;
 
+import static com.lvt4j.rbac.Utils.dateFormat;
 import static com.lvt4j.rbac.Utils.sse;
 import static com.lvt4j.rbac.Utils.sses;
 import static com.lvt4j.rbac.Utils.ssesRaw;
@@ -16,6 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.annotation.PostConstruct;
@@ -35,8 +37,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lvt4j.rbac.BroadcastMsg4Center;
 import com.lvt4j.rbac.BroadcastMsg4Center.Handshake;
 import com.lvt4j.rbac.condition.IsMaster;
+import com.lvt4j.rbac.dto.ClientInfo;
 import com.lvt4j.rbac.service.ClientService;
-import com.lvt4j.rbac.service.ClientService.ClientInfo;
 import com.lvt4j.rbac.service.SingleThreader;
 
 import lombok.Cleanup;
@@ -53,7 +55,8 @@ import lombok.extern.slf4j.Slf4j;
 @Conditional(IsMaster.class)
 @ManagedResource(objectName="Master:type=Master")
 public class Master implements EventBusPublisher, ClusterStator {
-    
+    /** 过久未收到从节点心跳的从节点会被移除 */
+    private static final long SlaveKeepaliveThreshold = TimeUnit.SECONDS.toMillis(30);
     private static final TypeReference<Collection<ClientInfo>> ClientsRef = new TypeReference<Collection<ClientInfo>>() {};
     
     @Value("${server.publish_host}")
@@ -79,7 +82,7 @@ public class Master implements EventBusPublisher, ClusterStator {
     private final AtomicLong eventbusMsgIdx = new AtomicLong();
     
     /** 所有从节点长链 */
-    private final Map<SseEmitter, SlaveInfo> slaves = new ConcurrentHashMap<>();
+    private final Map<String, SlaveMeta> slaves = new ConcurrentHashMap<>();
     
     @PostConstruct
     private void init() {
@@ -88,22 +91,18 @@ public class Master implements EventBusPublisher, ClusterStator {
         handler.onBroadcastMsg(new Handshake(masterTerm, eventbusMsgIdx.get()));
     }
     
-    public SseEmitter subscribe(String host, int port) throws Exception {
-        SlaveInfo slaveInfo = new SlaveInfo();
-        slaveInfo.host = host;
-        slaveInfo.port = port;
-        
-        SseEmitter emitter = new SseEmitter(0L);
-        
-        emitter.onTimeout(()->slaves.remove(emitter));
-        emitter.onError(e->slaves.remove(emitter));
-        emitter.onCompletion(()->slaves.remove(emitter));
-        
+    public SseEmitter subscribe(String id, String host, int port) throws Exception {
+        SlaveMeta slave = new SlaveMeta();
+        slave.id = id;
+        slave.host = host;
+        slave.port = port;
+        slave.regTime = slave.lastHeartbeatTime = System.currentTimeMillis();
+        SseEmitter emitter = slave.emitter = new SseEmitter(0L);
         singleThreader.enqueue(()->{
             sse(emitter, new Handshake(masterTerm, eventbusMsgIdx.get()), this::onSendException);
-            slaves.put(emitter, slaveInfo);
+            slaves.put(id, slave);
+            log.info("从节点[{}]接入", slave.txt());
         });
-        
         return emitter;
     }
     
@@ -112,27 +111,45 @@ public class Master implements EventBusPublisher, ClusterStator {
     public void publish(BroadcastMsg4Center msg) {
         if(log.isTraceEnabled()) log.trace("入队广播消息{}", msg);
         singleThreader.enqueue(()->{
-            BroadcastMsg4Center m = msg.msgIdx(masterTerm, eventbusMsgIdx.incrementAndGet());
+            BroadcastMsg4Center m = msg.msgIdx(masterTerm, eventbusMsgIdx);
             if(log.isTraceEnabled()) log.trace("广播消息{}", m);
             handler.onBroadcastMsg(m);
             
-            sses(slaves.keySet(), m, this::onSendException);
+            sses(emitters(), m, this::onSendException);
         });
     }
     
     @SneakyThrows
-    @Scheduled(cron="0/10 * * * * ?")
+    @Scheduled(fixedRate=10000)
     public void heartbeat() {
+        if(slaves.isEmpty()) return;
         singleThreader.enqueue(()->{
-            ssesRaw(slaves.keySet(), EMPTY, this::onSendException);
+            ssesRaw(emitters(), EMPTY, this::onSendException);
+        });
+        long now = System.currentTimeMillis();
+        slaves.values().parallelStream().filter(s->now-s.lastHeartbeatTime>SlaveKeepaliveThreshold).forEach(s->{
+            log.info("从节点[{}]移除：因为过久未心跳(上次{})", s.txt(), dateFormat(s.lastHeartbeatTime));
+            slaves.remove(s.id);
         });
     }
     
+    /** 收到从节点心跳 */
+    public void onHeartbeat(String id) {
+        SlaveMeta slave = slaves.get(id);
+        if(slave==null) return;
+        slave.lastHeartbeatTime = System.currentTimeMillis();
+    }
+    
+    private Collection<SseEmitter> emitters() {
+        if(slaves.isEmpty()) return Collections.emptyList();
+        return slaves.values().stream().map(s->s.emitter).collect(toList());
+    }
+    
     private void onSendException(SseEmitter emitter) {
-        SlaveInfo slaveInfo = slaves.get(emitter);
-        if(slaveInfo==null) return;
-        log.info("断开从节点[{}:{}]的连接", slaveInfo.host, slaveInfo.port);
-        slaves.remove(emitter);
+        SlaveMeta slave = slaves.values().stream().filter(s->s.emitter==emitter).findFirst().orElse(null);
+        if(slave==null) return;
+        log.info("断开从节点[{}]的连接", slave.txt());
+        slaves.remove(slave.id);
     }
 
     @Override
@@ -146,6 +163,8 @@ public class Master implements EventBusPublisher, ClusterStator {
         stats.add(master);
         slaves.values().parallelStream().map(slave->{
             MemberStatus m = new MemberStatus();
+            m.id = slave.id;
+            m.regTime = slave.regTime;
             m.address = slave.host+":"+slave.port;
             m.status = "slave";
             String clientsRaw = slave.http("/cluster/clients");
@@ -159,15 +178,22 @@ public class Master implements EventBusPublisher, ClusterStator {
                 }
             }
             return m;
-        }).collect(toList()).forEach(stats::add);
-        Collections.sort(stats, (m1,m2)->m1.address.compareTo(m2.address));
+        }).sorted((m1,m2)->m1.address.compareTo(m2.address)).collect(toList()).forEach(stats::add);
         return stats;
     }
     
     @Data
-    static class SlaveInfo {
+    class SlaveMeta {
+        public String id;
+        public long regTime;
         public String host;
         public int port;
+        public SseEmitter emitter;
+        public long lastHeartbeatTime;
+        
+        public String txt() {
+            return id+"("+host+":"+port+")";
+        }
         
         public String http(String path) {
             try{

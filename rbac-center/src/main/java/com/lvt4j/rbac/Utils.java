@@ -14,6 +14,7 @@ import java.util.function.Consumer;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import lombok.extern.slf4j.Slf4j;
@@ -55,6 +56,10 @@ public class Utils {
         return stack(stacks, e.getCause());
     }
     
+    public static final String dateFormat(long date) {
+        return DateFormatUtils.format(date, "yyyy-MM-dd HH:mm:ss");
+    }
+    
     public static String parseIPFromReq(HttpServletRequest req) {
         String ip = req.getHeader("X-Forwarded-For");
         if(StringUtils.isNotBlank(ip) && !"unknown".equalsIgnoreCase(ip)) return ip.split(",")[0];
@@ -87,6 +92,7 @@ public class Utils {
         ssesRaw(emitters, seriaBase64(msg), onException);
     }
     public static void ssesRaw(Collection<SseEmitter> emitters, Object msg, Consumer<SseEmitter> onException) {
+        if(emitters.isEmpty()) return;
         emitters.parallelStream().forEach(emitter->sseRaw(emitter, msg, onException));
     }
     public static void sseRaw(SseEmitter emitter, Object msg, Consumer<SseEmitter> onException) {

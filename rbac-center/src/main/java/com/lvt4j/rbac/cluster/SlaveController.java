@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.lvt4j.rbac.condition.IsSlave;
+import com.lvt4j.rbac.dto.ClientInfo;
 import com.lvt4j.rbac.service.ClientService;
-import com.lvt4j.rbac.service.ClientService.ClientInfo;
 
 /**
  *
