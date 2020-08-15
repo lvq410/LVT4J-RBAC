@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.lvt4j.rbac.BroadcastMsg4Center.CacheClean;
+import com.lvt4j.rbac.BroadcastMsg4Center.ForceCacheClean;
 import com.lvt4j.rbac.cluster.EventBusPublisher;
 import com.lvt4j.rbac.dto.JsonResult;
 
@@ -24,7 +24,7 @@ public class CacheController {
     public JsonResult clean(
             @RequestParam(required=false) String proId,
             @RequestParam(required=false) String userId) {
-        eventBusPublisher.publish(new CacheClean(0,0, proId, userId));
+        eventBusPublisher.publish(new ForceCacheClean(proId, userId));
         return JsonResult.success();
     }
     

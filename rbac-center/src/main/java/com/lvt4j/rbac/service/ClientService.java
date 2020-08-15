@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.lvt4j.rbac.BroadcastMsg4Center;
-import com.lvt4j.rbac.cluster.BroadcastMsgHandler;
+import com.lvt4j.rbac.BroadcastMsg4Center.Handshake;
 import com.lvt4j.rbac.dto.ClientInfo;
 
 import lombok.Data;
@@ -43,9 +43,6 @@ public class ClientService {
     @Autowired
     private SingleThreader singleThreader;
     
-    @Autowired
-    private BroadcastMsgHandler broadcastMsgHandler;
-    
     /** 所有客户端长链 */
     private final Map<String, ClientMeta> clients = new ConcurrentHashMap<>();
     
@@ -65,7 +62,7 @@ public class ClientService {
         SseEmitter emitter = client.emitter = new SseEmitter(0L);
         
         singleThreader.enqueue(()->{
-            sse(emitter, broadcastMsgHandler.handshake().toClient(), this::onSendException);
+            sse(emitter, Handshake.Instance.toClient(), this::onSendException);
             clients.put(id, client);
             log.info("客户端[{}]接入", info.txt());
         });

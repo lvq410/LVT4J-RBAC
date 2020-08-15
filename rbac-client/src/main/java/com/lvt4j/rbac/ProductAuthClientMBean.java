@@ -6,7 +6,9 @@ package com.lvt4j.rbac;
  */
 public interface ProductAuthClientMBean extends AbstractProductAuthMBean {
 
-    public String getClientId();
+    public String getId();
+    
+    public String getHost();
     
     public String getRbacCenter();
     

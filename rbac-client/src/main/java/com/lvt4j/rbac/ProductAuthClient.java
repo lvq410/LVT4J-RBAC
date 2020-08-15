@@ -12,22 +12,21 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.UnsupportedEncodingException;
-import java.lang.management.ManagementFactory;
 import java.net.HttpURLConnection;
 import java.net.Inet4Address;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Base64;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
+import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 
 import com.lvt4j.rbac.BroadcastMsg.CacheClean;
-import com.lvt4j.rbac.BroadcastMsg.Handshake;
+import com.lvt4j.rbac.BroadcastMsg.ForceCacheClean;
 
+import lombok.Cleanup;
 import lombok.Getter;
+import lombok.SneakyThrows;
 
 /**
  * 从权限中心获取指定项目的用户权限的客户端<br>
@@ -37,8 +36,6 @@ import lombok.Getter;
  */
 public class ProductAuthClient extends AbstractProductAuth implements ProductAuthClientMBean{
     private static final Logger log = Logger.getLogger(ProductAuthClient.class.getName());
-    
-    private static final AtomicInteger ClientIder = new AtomicInteger();
     
     /** 默认产品用户权限缓存容量:0即不限 */
     public static final int CacheCapacityDef = 0;
@@ -67,22 +64,37 @@ public class ProductAuthClient extends AbstractProductAuth implements ProductAut
             }
         }
     }
+    @Getter
+    private final String host = loadHost();
+    private static String loadHost() {
+        try{
+            return Inet4Address.getLocalHost().getHostAddress();
+        }catch(Exception e){
+            log.log(SEVERE, "获取本机IP异常", e);
+            return "unknownhost";
+        }
+    }
     
     /** 授权中心订阅的接口地址 */
     private static final String Path_Sub = "/inner/v2/subscribe";
+    /** 心跳接口路径 */
+    private static final String Path_Heartbeat = "/inner/v2/heartbeat";
     /** 加载用户权限的接口路径 */
     private static final String Path_UserAuth = "/inner/v2/userAuth";
     
-    
-    /** 客户端ID，由本机IP:产品ID:进程ID:递增数 构成 */
+    /** 唯一id */
     @Getter
-    private final String clientId;
+    private final String id = UUID.randomUUID().toString();
+    
+    
     
     /** 权限中心根地址 */
     @Getter
     private final String rbacCenter;
     /** 产品同步的URL */
-    private final String url_Sub;
+    private final URL url_Sub;
+    /** 心跳URL */
+    private final URL url_Heatbeat;
     /** 加载用户权限的URL */
     private final String url_UserAuth;
     
@@ -147,24 +159,10 @@ public class ProductAuthClient extends AbstractProductAuth implements ProductAut
             throw new IllegalArgumentException(String.format("不支持的协议:%s", rbacCenterProtocol));
         
         rbacCenter = rbacCenterProtocol+"://"+rbacCenterAddr;
-        url_Sub = rbacCenter+Path_Sub;
+        url_Sub = url(rbacCenter+Path_Sub, "id", id, "host", host, "proId", proId, "version", Version) ;
+        url_Heatbeat = url(rbacCenter+Path_Heartbeat, "id", id);
         url_UserAuth = rbacCenter+Path_UserAuth;
         this.rbacCenterTimeoutInMillis = rbacCenterTimeoutInMillis;
-        String host = null;
-        try{
-            host = Inet4Address.getLocalHost().getHostAddress();
-        }catch(Exception e){
-            log.log(SEVERE, "获取本机IP异常", e);
-            host = "unknownhost";
-        }
-        String pid = null;
-        try{
-            pid = ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
-        }catch (Throwable e) {
-            log.log(SEVERE, "获取进程ID异常", e);
-            pid = "unknownpid";
-        }
-        clientId = host+":"+proId+":"+pid+":"+ClientIder.incrementAndGet();
         
         subscriber = new CenterSubscriber();
     }
@@ -181,8 +179,7 @@ public class ProductAuthClient extends AbstractProductAuth implements ProductAut
         HttpURLConnection cnn = null;
         InputStream in = null;
         try{
-            String userAuthUrl = url(url_UserAuth, "proId", proId, "userId", userId, "clientId", clientId);
-            cnn = (HttpURLConnection) new URL(userAuthUrl).openConnection();
+            cnn = (HttpURLConnection) url(url_UserAuth, "proId", proId, "userId", userId).openConnection();
             cnn.setConnectTimeout(rbacCenterTimeoutInMillis);
             cnn.setReadTimeout(rbacCenterTimeoutInMillis);
             cnn.connect();
@@ -211,7 +208,8 @@ public class ProductAuthClient extends AbstractProductAuth implements ProductAut
         }
     }
     
-    private String url(String uri, Object... params) {
+    @SneakyThrows
+    private URL url(String uri, Object... params) {
         StringBuilder url = new StringBuilder(uri).append('?');
         for(int i=0; i<params.length; i++){
             try{
@@ -223,13 +221,10 @@ public class ProductAuthClient extends AbstractProductAuth implements ProductAut
                 url.append(params[i++]).append('=').append(URLEncoder.encode(params[i].toString(),"utf8"));
             }catch(UnsupportedEncodingException ig){}
         }
-        return url.toString();
+        return new URL(url.toString());
     }
     
     class CenterSubscriber extends Thread {
-        
-        private long masterTerm;
-        private long broadMsgIdx;
         
         private volatile boolean destory;
         
@@ -246,9 +241,10 @@ public class ProductAuthClient extends AbstractProductAuth implements ProductAut
                     subCenter();
                 }catch(Throwable e){
                     if(destory) return;
-                    log.log(WARNING, "与授权中心的连接断开", e);
+                    log.log(WARNING, "与授权中心的连接异常", e);
                 }
                 if(destory) return;
+                log.info("与授权中心的连接断开");
                 try{
                     Thread.sleep(10000);
                 }catch(Exception ig){}
@@ -256,26 +252,30 @@ public class ProductAuthClient extends AbstractProductAuth implements ProductAut
             if(log.isLoggable(FINEST)) log.finest("CenterSubscriber退出");
         }
         private void subCenter() throws Throwable {
-            String url = url(url_Sub, "proId", proId, "clientId", clientId, "version", Version);
             HttpURLConnection cnn = null;
             InputStream in = null;
             try{
-                cnn = (HttpURLConnection) new URL(url).openConnection();
-                cnn.setConnectTimeout(rbacCenterTimeoutInMillis);
+                cnn = (HttpURLConnection) url_Sub.openConnection();
+                cnn.setConnectTimeout(1000);
+                cnn.setReadTimeout(30000);
                 in = cnn.getInputStream();
-                log.log(Level.INFO, String.format("连接授权中心[%s]成功", rbacCenter));
+                log.info(String.format("连接授权中心[%s]成功", rbacCenter));
                 BufferedReader reader = new BufferedReader(new InputStreamReader(in));
                 String line = null;
                 while(!destory){
                     line = reader.readLine();
+                    if(line==null) return;
                     if(log.isLoggable(FINEST)) log.log(FINEST, String.format("订阅原始消息:%s", line));
                     if(!line.startsWith("data:")) continue;
                     line = line.substring(5);
-                    if(line.isEmpty()) continue;
+                    if(line.isEmpty()) { //空信息为心跳信号，回复心跳
+                        heartbeat();
+                        continue;
+                    }
                     ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(Base64.getDecoder().decode(line)));
-                    Object msg;
+                    BroadcastMsg msg;
                     try{
-                        msg = ois.readObject();
+                        msg = (BroadcastMsg) ois.readObject();
                     }catch(Throwable e){
                         log.log(WARNING, String.format("非法的广播消息:%s", line), e);
                         continue;
@@ -302,41 +302,36 @@ public class ProductAuthClient extends AbstractProductAuth implements ProductAut
             }
         }
         
-        public void onMessage(Object msg) throws Throwable {
-            if(msg instanceof Handshake){
-                onHandeshake((Handshake) msg);
-            }else if (msg instanceof CacheClean) {
+        public void onMessage(BroadcastMsg msg) throws Throwable {
+            if(msg instanceof CacheClean){ 
                 onCacheClean((CacheClean) msg);
+            }else if(msg instanceof ForceCacheClean){
+                forceCacheClean((ForceCacheClean) msg);
             }
         }
-        /** 握手信号，初次建立连接 */
-        private void onHandeshake(Handshake msg) {
-            masterTerm = msg.masterTerm;
-            broadMsgIdx = msg.msgIdx;
-        }
+        /** 数据变更后的清理缓存，异步清理 */
         private void onCacheClean(CacheClean msg) {
-            if(!Objects.equals(masterTerm, msg.masterTerm)){ //master变更
-                log.info("授权中心主节点变更");
-                masterTerm = msg.masterTerm;
-                broadMsgIdx = msg.msgIdx;
-                invalidateAsync(null);
-                return;
-            }
-            long msgIdxDiff = msg.msgIdx-broadMsgIdx;
-            if(msgIdxDiff>1 || msgIdxDiff<0){ //漏消息
-                log.info("漏授权中心消息");
-                masterTerm = msg.masterTerm;
-                broadMsgIdx = msg.msgIdx;
-                invalidateAsync(null);
-                return;
-            }
-            
-            masterTerm = msg.masterTerm;
-            broadMsgIdx = msg.msgIdx;
-            if(msg.proId!=null && !proId.equals(msg.proId)) return;
-            
+            if(msg.proId!=null && !proId.equals(msg.proId)) return; //非本产品
             if(log.isLoggable(FINEST)) log.finest(String.format("根据广播消息重载产品[%s]用户[%s]缓存", proId, msg.userId));
             invalidateAsync(msg.userId);
+        }
+        /** 手动强制清理缓存 */
+        private void forceCacheClean(ForceCacheClean msg) {
+            if(msg.proId!=null && !proId.equals(msg.proId)) return; //非本产品
+            if(log.isLoggable(FINEST)) log.finest(String.format("根据广播消息强制清理产品[%s]用户[%s]缓存", proId, msg.userId));
+            invalidate(msg.userId);
+        }
+        
+        private void heartbeat() {
+            if(log.isLoggable(FINEST)) log.finest("向授权中心发心跳");
+            try{
+                @Cleanup("disconnect") HttpURLConnection cnn = (HttpURLConnection) url_Heatbeat.openConnection();
+                cnn.setConnectTimeout(1000);
+                cnn.setReadTimeout(1000);
+                @Cleanup InputStream is = cnn.getInputStream();
+            }catch(Throwable e){
+                log.log(WARNING, "向授权中心发心跳异常", e);
+            }
         }
         
         @Override

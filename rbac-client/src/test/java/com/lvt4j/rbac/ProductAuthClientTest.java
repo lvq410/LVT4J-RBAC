@@ -1,7 +1,11 @@
 package com.lvt4j.rbac;
 
+import static java.util.logging.Level.ALL;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Logger;
 
 /**
  *
@@ -10,6 +14,12 @@ import java.io.InputStreamReader;
 public class ProductAuthClientTest {
 
     public static void main(String[] args) throws Exception {
+        Logger log = Logger.getLogger(ProductAuthClient.class.getName());
+        ConsoleHandler handler = new ConsoleHandler();
+        handler.setLevel(ALL);
+        log.addHandler(handler);
+        log.setLevel(ALL);
+        
         ProductAuthClient client = new ProductAuthClient("test", "127.0.0.1:80");
         
         String line = null;

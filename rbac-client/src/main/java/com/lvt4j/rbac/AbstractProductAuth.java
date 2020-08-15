@@ -13,6 +13,8 @@ import java.util.logging.Logger;
 
 import javax.management.ObjectName;
 
+import lombok.Getter;
+
 /**
  * 产品下用户的配置项、访问项、授权项<br>
  * 抽象类,具体实现需要采用懒加载机制
@@ -27,6 +29,7 @@ abstract class AbstractProductAuth implements AbstractProductAuthMBean,Closeable
     }
     
     /** 产品id */
+    @Getter
     protected final String proId;
     /** 用户权限缓存 */
     private final ProductAuthCache cache;

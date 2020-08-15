@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 import javax.annotation.PostConstruct;
 
@@ -76,19 +75,14 @@ public class Master implements EventBusPublisher, ClusterStator {
     @Autowired
     private ClientService clientService;
     
-    /** master任期 */
-    private final long masterTerm = System.currentTimeMillis();
-    /** 广播消息的递增id */
-    private final AtomicLong eventbusMsgIdx = new AtomicLong();
-    
-    /** 所有从节点长链 */
+    /** 所有从节点 */
     private final Map<String, SlaveMeta> slaves = new ConcurrentHashMap<>();
     
     @PostConstruct
     private void init() {
         log.info("本节点为主节点：{}:{}", host, port);
         
-        handler.onBroadcastMsg(new Handshake(masterTerm, eventbusMsgIdx.get()));
+        handler.onBroadcastMsg(Handshake.Instance);
     }
     
     public SseEmitter subscribe(String id, String host, int port) throws Exception {
@@ -99,7 +93,7 @@ public class Master implements EventBusPublisher, ClusterStator {
         slave.regTime = slave.lastHeartbeatTime = System.currentTimeMillis();
         SseEmitter emitter = slave.emitter = new SseEmitter(0L);
         singleThreader.enqueue(()->{
-            sse(emitter, new Handshake(masterTerm, eventbusMsgIdx.get()), this::onSendException);
+            sse(emitter, Handshake.Instance, this::onSendException);
             slaves.put(id, slave);
             log.info("从节点[{}]接入", slave.txt());
         });
@@ -111,11 +105,10 @@ public class Master implements EventBusPublisher, ClusterStator {
     public void publish(BroadcastMsg4Center msg) {
         if(log.isTraceEnabled()) log.trace("入队广播消息{}", msg);
         singleThreader.enqueue(()->{
-            BroadcastMsg4Center m = msg.msgIdx(masterTerm, eventbusMsgIdx);
-            if(log.isTraceEnabled()) log.trace("广播消息{}", m);
-            handler.onBroadcastMsg(m);
+            if(log.isTraceEnabled()) log.trace("广播消息{}", msg);
+            handler.onBroadcastMsg(msg);
             
-            sses(emitters(), m, this::onSendException);
+            sses(emitters(), msg, this::onSendException);
         });
     }
     

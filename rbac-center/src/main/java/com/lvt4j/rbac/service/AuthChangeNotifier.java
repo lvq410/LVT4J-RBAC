@@ -21,7 +21,7 @@ public class AuthChangeNotifier {
     @Async
     public void notify(String proId, String userId){
         try{ Thread.sleep(1000L); }catch(Throwable ig){}
-        eventBusPublisher.publish(new CacheClean(0,0,proId, userId));
+        eventBusPublisher.publish(new CacheClean(proId, userId));
     }
     
 }

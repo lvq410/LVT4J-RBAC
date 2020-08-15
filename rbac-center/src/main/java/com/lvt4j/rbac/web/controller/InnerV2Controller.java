@@ -59,7 +59,7 @@ public class InnerV2Controller {
         if(heartbeated) return;
         //如果未在本机注册，需要广播出去
         if(log.isTraceEnabled()) log.trace("客户端心跳[{}]未在本机注册，广播", id);
-        eventBusPublisher.publish(new BroadcastMsg4Center.ClientHeartbeat(0, 0, id));
+        eventBusPublisher.publish(new BroadcastMsg4Center.ClientHeartbeat(id));
     }
     
     @Read

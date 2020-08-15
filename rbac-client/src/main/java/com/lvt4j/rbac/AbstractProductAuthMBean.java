@@ -6,6 +6,9 @@ package com.lvt4j.rbac;
  */
 public interface AbstractProductAuthMBean {
     
+    /** 产品ID */
+    public String getProId();
+    
     /** 缓存设定容量 */
     public int getCapacity();
     /** 缓存当前容量 */
