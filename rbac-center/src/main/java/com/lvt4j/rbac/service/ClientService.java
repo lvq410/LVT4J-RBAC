@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.jmx.export.annotation.ManagedResource;
@@ -23,6 +24,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.lvt4j.rbac.BroadcastMsg4Center;
 import com.lvt4j.rbac.BroadcastMsg4Center.Handshake;
+import com.lvt4j.rbac.BroadcastMsg4Center.ProIdBroadcastMsg;
 import com.lvt4j.rbac.dto.ClientInfo;
 
 import lombok.Data;
@@ -74,7 +76,11 @@ public class ClientService {
         Serializable msg4Client = msg.toClient();
         if(msg4Client==null) return;
         singleThreader.enqueue(()->{
-            sses(emitters(), msg4Client, this::onSendException);
+            String proId = null;
+            if(msg instanceof ProIdBroadcastMsg){
+                proId = ((ProIdBroadcastMsg)msg).getProId();
+            }
+            sses(emitters(proId), msg4Client, this::onSendException);
         });
     }
     
@@ -83,7 +89,7 @@ public class ClientService {
     public void heartbeat() {
         if(clients.isEmpty()) return;
         singleThreader.enqueue(()->{
-            ssesRaw(emitters(), EMPTY, this::onSendException);
+            ssesRaw(emitters(null), EMPTY, this::onSendException);
         });
         long now = System.currentTimeMillis();
         clients.values().parallelStream().filter(c->now-c.lastHeartbeatTime>ClientKeepaliveThreshold).forEach(c->{
@@ -109,9 +115,10 @@ public class ClientService {
         return true;
     }
     
-    private Collection<SseEmitter> emitters() {
+    private Collection<SseEmitter> emitters(String proId) {
         if(clients.isEmpty()) return Collections.emptyList();
-        return clients.values().stream().map(c->c.emitter).collect(toList());
+        if(StringUtils.isBlank(proId)) return clients.values().stream().map(c->c.emitter).collect(toList());
+        return clients.values().stream().filter(c->proId.equals(c.info.proId)).map(c->c.emitter).collect(toList());
     }
     
     private void onSendException(SseEmitter emitter) {
