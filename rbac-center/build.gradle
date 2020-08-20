@@ -66,6 +66,8 @@ dependencies {
     api 'org.apache.velocity:velocity:1.7'
     api 'velocity-tools:velocity-tools-view:1.4'
     
+    api 'com.hazelcast:hazelcast:4.0.2'
+    
     api 'org.xerial:sqlite-jdbc:3.16.1'
     api 'com.h2database:h2:1.4.200'
     api 'mysql:mysql-connector-java:6.0.6'
