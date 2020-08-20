@@ -207,7 +207,7 @@ public class ProductAuthCaches {
             dbLock.readLock();
             try{
                 Product proNow = productMapper.selectById(product.autoId);
-                if(proNow!=null) proNow = product;
+                if(proNow!=null) product = proNow;
             }finally{
                 dbLock.readUnLock();
             }
