@@ -109,7 +109,7 @@ public class ProductAuthCaches {
     }
     
     
-    public class ProductAuth4Center extends AbstractProductAuth{
+    public class ProductAuth4Center extends AbstractProductAuth implements ProductAuth4CenterMBean{
         
         private Product product;
         
@@ -204,7 +204,6 @@ public class ProductAuthCaches {
         @Override
         public void invalidate(String userId) {
             super.invalidate(userId);
-            if(StringUtils.isNotBlank(userId)) return;
             dbLock.readLock();
             try{
                 Product proNow = productMapper.selectById(product.autoId);
@@ -215,4 +214,9 @@ public class ProductAuthCaches {
         }
         
     }
+    
+    public interface ProductAuth4CenterMBean extends AbstractProductAuthMBean{
+        public long getLastModify();
+    }
+    
 }
