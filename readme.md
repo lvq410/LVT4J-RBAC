@@ -289,16 +289,8 @@ UserAuth userAuth = productAuth.getUserAuth("userId");
 productAuth.close();
 ```
 
-##### 关于缓存
-无论是Filter方式还是Interceptor方式，内部都是创建了对应的ProductAuthClient来做的。
-
-默认地ProductAuthClient内部会维护一个缓存，默认实现为ConcurrentHashMap，该实现未设缓存上线，且永不过期。
-如果使用ProductAuthClient构造函数中，设置缓存上限，缓存实现会变为LinkedHashMap，缺点是同步锁问题只能支持一个并发。
-
-使用方也可以自己实现ProductAuthCache，然后传入ProductAuthClient中，来自己实现缓存（比如采用分布式缓存）。
-
 #### 用户权限POJO
-若用户通过验证，会向`request`的`attribute`里写入`key`为`UserAuth.ReqAttr //即'rbac'`的用户权限POJO，该POJO提供以下属性及方法
+Filter方式或Interceptor方式，若用户通过验证，会向`request`的`attribute`里写入`key`为`UserAuth.ReqAttr //即'rbac'`的用户权限POJO。client方式需要直接使用`getUserAuth`方法。该POJO提供以下属性及方法
 ```java
 /** 用户ID，null代表游客 */
 public String userId;
@@ -326,6 +318,15 @@ public boolean permit(String permissionId) {}
 ```java
 UserAuth userAuth = request.getAttribute(UserAuth.ReqAttr);
 ```
+
+##### 关于缓存
+无论是Filter方式还是Interceptor方式，内部都是创建了对应的ProductAuthClient来做的。
+
+默认地ProductAuthClient内部会维护一个缓存，默认实现为ConcurrentHashMap，该实现未设缓存上线，且永不过期。
+如果使用ProductAuthClient构造函数中，设置缓存上限，缓存实现会变为LinkedHashMap，缺点是同步锁问题只能支持一个并发。
+
+使用方也可以自己实现ProductAuthCache，然后传入ProductAuthClient中，来自己实现缓存（比如采用分布式缓存）。
+
 
 ### 使用RESTful-API方式
 授权中心提供了一些接口来查询和验证用户权限
