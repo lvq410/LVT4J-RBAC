@@ -92,8 +92,8 @@ public class RoleController extends AbstractEditController {
             @RequestParam(defaultValue="[]") ListInt permissionAutoIds) {
         role.id = role.id.trim();
         role.name = role.name.trim();
-        Role duplicated = mapper.selectOne(Role.Query.builder().autoIdNot(role.autoId).id(role.id).build().toWrapperWithoutSort());
-        Checker.isTrue(duplicated==null, CONFLICT, "角色ID[%s]冲突", role.id);
+        int duplicated = mapper.selectCount(Role.Query.builder().autoIdNot(role.autoId).proAutoId(role.proAutoId).id(role.id).build().toWrapperWithoutSort());
+        Checker.isTrue(duplicated==0, CONFLICT, "角色ID[%s]冲突", role.id);
         
         RoleVo now = new RoleVo();
         copier.copy(role, now, null);

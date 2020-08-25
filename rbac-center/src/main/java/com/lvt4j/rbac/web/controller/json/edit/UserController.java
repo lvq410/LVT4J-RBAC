@@ -74,8 +74,8 @@ class UserController extends AbstractEditController {
             @Valid User user) {
         user.id = user.id.trim();
         user.name = user.name.trim();
-        User duplicated = mapper.selectOne(User.Query.builder().autoIdNot(user.autoId).id(user.id).build().toWrapperWithoutSort());
-        Checker.isTrue(duplicated==null, CONFLICT, "用户ID[%s]冲突", user.id);
+        int duplicated = mapper.selectCount(User.Query.builder().autoIdNot(user.autoId).id(user.id).build().toWrapperWithoutSort());
+        Checker.isTrue(duplicated==0, CONFLICT, "用户ID[%s]冲突", user.id);
         
         User orig = null;
         OpLog opLog = OpLog.create(null);
