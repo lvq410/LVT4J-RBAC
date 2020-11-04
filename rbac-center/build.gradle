@@ -62,6 +62,7 @@ dependencies {
     api 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.0.1'
     api 'com.baomidou:mybatis-plus-boot-starter:3.1.0'
     api 'de.codecentric:spring-boot-admin-starter-client:2.1.6'
+    api 'io.micrometer:micrometer-registry-prometheus'
     
     api 'org.apache.velocity:velocity:1.7'
     api 'velocity-tools:velocity-tools-view:1.4'
