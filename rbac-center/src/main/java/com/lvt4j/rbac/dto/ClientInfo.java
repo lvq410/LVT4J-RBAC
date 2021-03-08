@@ -1,20 +1,27 @@
 package com.lvt4j.rbac.dto;
 
+import java.io.Serializable;
+
+import lombok.Data;
+
 /**
  *
  * @author LV on 2020年8月15日
  */
-public class ClientInfo {
-    public String id;
+@Data
+public class ClientInfo implements Serializable {
+    private static final long serialVersionUID = 3585080369261730299L;
+
+    private final String id;
     
-    public long regTime;
+    private final long regTime;
     
-    public String host;
-    public String fromHost;
-    public int fromPort;
+    private final String host;
+    private final String fromHost;
+    private final int fromPort;
     
-    public String proId;
-    public String version;
+    private final String proId;
+    private final String version;
     
     public String txt() {
         return String.format("%s(%s,%s,%s,%s)", id, host, fromHost, proId, version);

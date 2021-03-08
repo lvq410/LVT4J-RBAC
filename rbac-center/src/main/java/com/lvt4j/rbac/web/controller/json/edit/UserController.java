@@ -97,8 +97,10 @@ class UserController extends AbstractEditController {
         
         //数据变更通知
         String origId = Optional.ofNullable(orig).map(User::getId).orElse(null);
-        if(!user.id.equals(origId)){
-            if(origId!=null) onDataChange(null, origId, null);
+        String origName = Optional.ofNullable(orig).map(User::getName).orElse(null);
+        String origDes = Optional.ofNullable(orig).map(User::getDes).orElse(null);
+        if(!user.id.equals(origId) || !user.name.equals(origName) || !user.des.equals(origDes)){
+            if(origId!=null && !user.id.equals(origId)) onDataChange(null, origId, null);
             onDataChange(null, user.id, null);
         }
         

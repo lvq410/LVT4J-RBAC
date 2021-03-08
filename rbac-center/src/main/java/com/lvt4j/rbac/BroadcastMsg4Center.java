@@ -15,21 +15,8 @@ public abstract class BroadcastMsg4Center implements Serializable {
 
     public abstract BroadcastMsg toClient();
     
-    /** 从节点/客户端 建立连接成功后，服务端返回握手信号 */
-    public static class Handshake extends BroadcastMsg4Center{
-        private static final long serialVersionUID = 1619469277716503431L;
-        
-        public static final Handshake Instance = new Handshake();
-        
-        @Override
-        public String toString() {
-            return "Handshake";
-        }
-        @Override
-        public BroadcastMsg toClient() {
-            return BroadcastMsg.Handshake.Instance;
-        }
-    }
+    /** 客户端 建立连接成功后，服务端返回握手信号 */
+    public static BroadcastMsg ClientHandshake = BroadcastMsg.Handshake.Instance;
     
     /**
      * 任意一个节点收到客户端心跳后，如果客户端未在该节点注册

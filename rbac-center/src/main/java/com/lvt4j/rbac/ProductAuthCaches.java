@@ -16,6 +16,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
+import com.lvt4j.rbac.cluster.ProductAuthCacheFactory;
 import com.lvt4j.rbac.dao.ProductMapper;
 import com.lvt4j.rbac.dao.RoleMapper;
 import com.lvt4j.rbac.dao.UserMapper;
@@ -35,6 +36,9 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class ProductAuthCaches {
 
+    @Autowired
+    private ProductAuthCacheFactory productAuthCacheFactory;
+    
     @Autowired
     private ProductMapper productMapper;
     @Autowired
@@ -114,7 +118,7 @@ public class ProductAuthCaches {
         private Product product;
         
         private ProductAuth4Center(Product product){
-            super(product.id, new ConcurrentHashMapProductAuthCache(false));
+            super(product.id, productAuthCacheFactory.build(product.id));
             this.product = product;
         }
         

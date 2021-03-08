@@ -7,9 +7,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Component;
 
+import com.lvt4j.rbac.cluster.Cluster;
+import com.lvt4j.rbac.cluster.OnMasterChangedListener;
 import com.lvt4j.rbac.condition.DbIsH2;
-import com.lvt4j.rbac.condition.IsMaster;
 import com.lvt4j.rbac.dao.ManageMapper;
+import com.lvt4j.rbac.dto.NodeInfo;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,16 +21,24 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Component
-@Conditional({DbIsH2.class,IsMaster.class})
-class H2Backuper extends Backuper {
+@Conditional({DbIsH2.class})
+class H2Backuper extends Backuper implements OnMasterChangedListener {
 
+    @Autowired
+    private Cluster cluster;
+    
     @Autowired
     private ManageMapper mapper;
     
     @PostConstruct
     private void init() {
+        Cluster.addMasterChangeListener(this);
+        initBackup();
+    }
+    private void initBackup() {
+        if(!cluster.isLocalMaster()) return;
         log.info("H2数据库定时{}备份于:{}", cron, folder);
-        initScheduler(this::backup);
+        initScheduleBackup(this::backup, "H2Backuper");
     }
     
     private void backup() {
@@ -38,6 +48,16 @@ class H2Backuper extends Backuper {
         }catch(Exception e){
             log.error("h2 backup ex", e);
         }
+    }
+    
+    @Override public int getOrder() { return Order_H2Backuper; }
+    @Override
+    public void beforeMasterChange() throws Throwable {
+        destory();
+    }
+    @Override
+    public void afterMasterChanged(boolean isLocalMaster, NodeInfo masterInfo) throws Throwable {
+        initBackup();
     }
     
 }
