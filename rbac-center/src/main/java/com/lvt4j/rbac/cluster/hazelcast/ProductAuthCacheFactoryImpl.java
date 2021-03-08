@@ -52,7 +52,7 @@ class ProductAuthCacheFactoryImpl implements ProductAuthCacheFactory {
             }
             missCount.incrementAndGetAsync();
             orig = loader.apply(userId);
-            map.putIfAbsent(userId, orig);
+            map.putAsync(userId, orig);
             return orig;
         }
         
