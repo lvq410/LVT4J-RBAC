@@ -5,6 +5,7 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.security.MessageDigest;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -16,6 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
@@ -23,6 +25,7 @@ import org.springframework.scheduling.concurrent.ConcurrentTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -109,6 +112,14 @@ public class Utils {
             emitter.complete();
             if(onException!=null) onException.accept(emitter);
         }
+    }
+    
+    /** md5编码，大写返回 */
+    @SneakyThrows
+    public static String md5(String text) {
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        md.update(text.getBytes());
+        return DatatypeConverter.printHexBinary(md.digest());
     }
     
     public static abstract class Scheduler {

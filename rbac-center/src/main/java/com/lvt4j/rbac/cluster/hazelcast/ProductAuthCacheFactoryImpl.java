@@ -20,7 +20,7 @@ import com.lvt4j.rbac.condition.DbIsClusterable;
  */
 @Component
 @Conditional(DbIsClusterable.class)
-public class ProductAuthCacheFactoryImpl implements ProductAuthCacheFactory {
+class ProductAuthCacheFactoryImpl implements ProductAuthCacheFactory {
 
     @Autowired
     private HazelcastInstance hazelcast;

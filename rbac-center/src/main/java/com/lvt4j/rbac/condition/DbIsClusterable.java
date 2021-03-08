@@ -13,8 +13,11 @@ public class DbIsClusterable implements Condition {
 
     @Override
     public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
-        String dbType = context.getEnvironment().getProperty("db.type");
-        return "h2".equals(dbType) || "mysql".equals(dbType);
+        return isClusterableDb(context.getEnvironment().getProperty("db.type"));
     }
 
+    public static boolean isClusterableDb(String dbType) {
+        return "h2".equals(dbType) || "mysql".equals(dbType);
+    }
+    
 }

@@ -11,4 +11,9 @@ public interface Discover {
     
     public List<String> getSeeds() throws Throwable;
     
+    
+    public static boolean isValidMode(String discoverMode) {
+        return "rancher".equals(discoverMode) || "seed".equals(discoverMode);
+    }
+    
 }

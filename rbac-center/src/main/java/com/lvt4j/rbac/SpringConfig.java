@@ -15,6 +15,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy;
 import java.util.concurrent.TimeUnit;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.validation.Validator;
 
@@ -32,6 +33,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lvt4j.rbac.cluster.hazelcast.Discover;
+import com.lvt4j.rbac.condition.DbIsClusterable;
 import com.lvt4j.rbac.dto.NodeInfo;
 
 /**
@@ -50,8 +53,23 @@ public class SpringConfig implements WebMvcConfigurer, AsyncConfigurer, Scheduli
     @Value("${db.h2.tcp.port}")
     private int h2TcpPort;
     
+    @Value("${db.type}")
+    private String dbType;
+    
+    @Value("${hazelcast.discover.mode}")
+    private String hazelcastDiscoverMode;
+    
     private ThreadPoolExecutor asyncExecutor;
     private ScheduledExecutorService scheduleExecutor;
+    
+    @PostConstruct
+    private void init() {
+        if(DbIsClusterable.isClusterableDb(dbType) && !Discover.isValidMode(hazelcastDiscoverMode)){
+            throw new IllegalArgumentException(String.format("数据库类型[%s]为支持分布式类型，请配置合法的hazelcast.discover.mode(rancher or seeds but [%s])", dbType, hazelcastDiscoverMode));
+        }else if(!DbIsClusterable.isClusterableDb(dbType) && Discover.isValidMode(hazelcastDiscoverMode)){
+            throw new IllegalArgumentException(String.format("数据库类型[%s]不支持分布式，请配置hazelcast.discover.mode为none", dbType, hazelcastDiscoverMode));
+        }
+    }
     
     @Bean("localNodeInfo")
     public NodeInfo localNodeInfo() {

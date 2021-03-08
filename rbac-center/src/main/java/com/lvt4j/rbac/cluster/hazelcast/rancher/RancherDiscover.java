@@ -64,7 +64,7 @@ class RancherDiscover extends Thread implements Discover {
     private String projectId;
     /** kubernetes在每个容器上建立的namespace文件路径 */
     @Setter
-    private String k8sNamespaceFile;
+    private String k8sNamespaceFile = "/var/run/secrets/kubernetes.io/serviceaccount/namespace";
     /** pod部署的namespaceId */
     @Setter
     private String namespaceId;

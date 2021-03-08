@@ -52,44 +52,62 @@ sh ./run/start.sh
 SQLite模式只能单例部署，若要达成HA，需要使用H2/Mysql
 
 #### H2模式的集群部署
-H2数据库模式提供一个master-slave模式的集群部署方式。
+节点部署配置
+```
+db.type: h2 #数据库类型
+db.folder: ./ #数据库文件位置。注意每个节点需要挂载同一个文件位置。可以使用分布式文件系统如nfs、mfs等。
 
-其中master节点包含数据库，只能部署一个。slave节点可以部署多个，连接并使用master节点的数据库。
+hazelcast.xxx #组建集群的配置，见下文
+```
 
-master节点部署配置
-```
-server.master=true #是master
-db.type=h2 #数据库类型
-db.folder=./ #数据库文件位置
-```
-salve节点部署配置
-```
-server.master=false #是slave
-server.master_host= #master节点host
-server.master_port= #master节点的server.port
-db.type=h2 #数据库类型
-db.folder=./ #master节点的数据库文件位置
-db.h2.master.tcp.port= #master节点的tcp端口
-```
 #### Mysql模式的集群部署
-Mysql模式也是一主多从的集群部署方式。
+```
+db.type: mysql #数据库类型
+db.mysql.url: #数据库jdbc连接
 
-Mysql模式的主从节点都直连数据库，节点角色不同仅用于做数据变更广播等。
+hazelcast.xxx #组建集群的配置，见下文
+```
 
-master节点部署配置
+### 组建集群
+H2和Mysql支持多节点，也即集群模式运行。采用hazelcast来进行集群的组建。
+
+节点发现模式有两种，seed和rancher
+
+#### seed模式节点发现
+该模式为在节点的配置文件中配置节点清单
+
 ```
-server.master=true #是master
-db.type=mysql #数据库类型
-db.mysql.url= #数据库jdbc连接
+hazelcast:
+  port: 83
+  discover:
+    mode: seed
+    seed:
+      quorum: 2
+      seeds: node1:10183,node2:10283
 ```
-salve节点部署配置
+
+> 新启动的集群以配置文件中的quorum值作为初始quorum值。
+提供一个SeedQuorum的JMX及Actuator接口来进行quorum的修改。扩/缩容时通过该接口进行调整。
+
+#### rancher模式节点发现
+该方式要求服务部署在rancher管理的k8s上，并且仅部署在同一workload内，通过rancher提供的api接口来获取集群状态。
+
 ```
-server.master=false #是slave
-server.master_host= #master节点host
-server.master_port= #master节点的server.port
-db.type=mysql #数据库类型
-db.mysql.url= #数据库jdbc连接
+hazelcast:
+  port: 83
+  discover:
+    mode: rancher
+    rancher:
+      prefix: https://your-rancher/v3 #rancher api 地址前缀
+      accessKey: #rancher api 用accessKey
+      secretKey: #rancher api 用secretKey
+      projectId: #pod部署的projectId，可不填，会自动探测
+      k8sNamespaceFile: /var/run/secrets/kubernetes.io/serviceaccount/namespace #k8s在每个容器上建立的namespace文件路径
+      namespaceId: #pod部署的namespaceId，可不填，会自动探测
+      workloadId: #pod部署的workloadId，可不填，会自动探测
 ```
+
+> 该方式无需配置与管理quorum值。rancher上workload配置的副本数的n/2+1就是quorum值。会自动根据rancher配置的变化而变化（实时获取）
 
 #### 备份
 嵌入式数据库时（Sqlit,H2）默认启动备份，相关配置参考`配置说明`
@@ -108,22 +126,18 @@ db: #数据库
     filelock: FILE #h2数据库文件锁方式：FILE/SOCKET/FS/NO
     web.port: 8082 #master节点时的数据库web管理端口
     tcp.port: 9123 #master节点时的数据库tcp端口
-    master.tcp.port: ${db.h2.tcp.port} #slave节点时要连接的master节点的tcp端口
   mysql:
     url: jdbc:mysql://localhost:3306/rbac?useSSL=false&maxAllowedPacket=16777216&pinGlobalTxToPhysicalConnection=true&autoReconnect=true&failOverReadOnly=false&useLegacyDatetimeCode=false&serverTimezone=Asia/Shanghai
     username: root
     password: root
 
-server:
-  port: 80
-  master: true #是否master节点，sqlite数据库类型时固定master节点
-  publish_host: ${localIp} #slave节点将该地址通知给master以使master通过该地址与slave节点建立连接
-  publish_port: ${server.port} #同上
-  master_host: ${localIp} #slave节点连接master节点地址
-  master_port: ${server.port} #同上
+hazelcast:
+  port: 83
+  discover:
+    mode: none #集群节点发现模式见上文
+    initClusterTimeout: 30000 #组建/加入集群的超时时间(ms)
 
 oplog.maxdays: 30 #操作日志保留天数，集群模式时仅master节点执行清理日志
-
 
 spring.boot.admin.client: #支持sping-boot-client
   enabled: false
@@ -131,7 +145,7 @@ spring.boot.admin.client: #支持sping-boot-client
 ```
 
 ### 管理员账户密码管理
-Http Basic Auth验权模式。需要配置在./config/admin.properties里。admin.properties支持实时修改生效。有相同账号时，以Spring配置的为准。支持配置多个管理员账号。集群模式时，要注意各个节点的配置尽量一致，否则做同一域名的反向代理时会有问题。
+Http Basic Auth验权模式。需要配置在./config/admin.properties里。admin.properties支持实时修改生效。也支持配置在Spring中。有相同账号时，以该文件配置的为准。支持配置多个管理员账号。集群模式时，要注意各个节点的配置保持一致(手动维护多节点的文件比较繁琐，建议挂载目标位置相同的分布式文件系统，或仅用Spring配置方式)，否则做同一域名的反向代理时会有问题。
 
 ## 接入授权中心
 注意LVT4J-RBAC并不负责认证（获取用户ID），因此查询用户权限需产品自身提供用户的ID。

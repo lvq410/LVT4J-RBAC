@@ -1,0 +1,3 @@
+db.type: mysql
+
+hazelcast.discover.mode: none
