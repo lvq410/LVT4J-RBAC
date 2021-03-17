@@ -38,7 +38,7 @@ var tpl_clients = $tpl(function(memberStats){
         });
     });
     for(var proId in proClients){
-        /*<tr><td>{Tigh(proId)}</td><td>*/
+        /*<tr><td><div style="width:max-content;">{Tigh(proId)}</div></td><td>*/
         proClients[proId].forEach(function(client){
             /*<span class="badge badge-{getBadge(client.host)} msg-tooltiper" style="cursor:default;">
                 <span class="auth-name">{Tigh(client.host)}</span>
