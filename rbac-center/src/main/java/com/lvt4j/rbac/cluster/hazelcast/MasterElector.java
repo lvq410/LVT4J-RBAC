@@ -1,6 +1,6 @@
 package com.lvt4j.rbac.cluster.hazelcast;
 
-import java.util.LinkedList;
+import java.util.Stack;
 import java.util.concurrent.locks.Lock;
 
 import javax.annotation.PostConstruct;
@@ -111,7 +111,7 @@ class MasterElector extends Thread implements EntryListener<String, Object> {
         this.masterInfo = masterInfo;
         if(log.isWarnEnabled()) log.warn("主节点变更为:{}", masterInfo.address());
         boolean isLocalMaster = localNodeInfo.equals(masterInfo);
-        LinkedList<OnMasterChangedListener> listenersStack = new LinkedList<>();
+        Stack<OnMasterChangedListener> listenersStack = new Stack<>();
         for(OnMasterChangedListener listener : Cluster.MasterChangedListeners){
             try{
                 listener.beforeMasterChange();
