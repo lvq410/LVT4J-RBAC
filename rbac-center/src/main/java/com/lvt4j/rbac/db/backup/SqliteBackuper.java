@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Component;
 
 import com.lvt4j.rbac.condition.DbIsSqlite;
-import com.lvt4j.rbac.condition.IsMaster;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Component
-@Conditional({DbIsSqlite.class, IsMaster.class})
+@Conditional({DbIsSqlite.class})
 class SqliteBackuper extends Backuper {
 
     @Value("${db.folder}")
@@ -31,7 +30,7 @@ class SqliteBackuper extends Backuper {
     private void init() {
         if(!dbFolder.endsWith("/")) dbFolder += "/";
         log.info("Sqlite数据库定时{}备份于:{}", cron, folder);
-        initScheduler(this::backup);
+        initScheduleBackup(this::backup, "SqliteBackuper");
     }
     
     private void backup() {

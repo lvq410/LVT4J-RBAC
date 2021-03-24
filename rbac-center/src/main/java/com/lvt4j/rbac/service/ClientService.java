@@ -10,6 +10,7 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -23,8 +24,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.lvt4j.rbac.BroadcastMsg4Center;
-import com.lvt4j.rbac.BroadcastMsg4Center.Handshake;
 import com.lvt4j.rbac.BroadcastMsg4Center.ProIdBroadcastMsg;
+import com.lvt4j.rbac.cluster.Cluster;
 import com.lvt4j.rbac.dto.ClientInfo;
 
 import lombok.Data;
@@ -44,6 +45,8 @@ public class ClientService {
     
     @Autowired
     private SingleThreader singleThreader;
+    @Autowired
+    private Cluster cluster;
     
     /** 所有客户端长链 */
     private final Map<String, ClientMeta> clients = new ConcurrentHashMap<>();
@@ -51,22 +54,18 @@ public class ClientService {
     public SseEmitter onClientSub(String id, String host, String fromHost, int fromPort, String proId, String version) {
         ClientMeta client = new ClientMeta();
         
-        ClientInfo info = client.info = new ClientInfo();
-        info.id = id;
-        info.host = host;
-        info.fromHost = fromHost;
-        info.fromPort = fromPort;
-        info.proId = proId;
-        info.version = version;
+        ClientInfo info = client.info = new ClientInfo(id, System.currentTimeMillis(), host, fromHost, fromPort, proId, version);
         
-        info.regTime = client.lastHeartbeatTime = System.currentTimeMillis();
+        client.lastHeartbeatTime = info.getRegTime();
         
         SseEmitter emitter = client.emitter = new SseEmitter(0L);
         
         singleThreader.enqueue(()->{
-            sse(emitter, Handshake.Instance.toClient(), this::onSendException);
+            sse(emitter, BroadcastMsg4Center.ClientHandshake, this::onSendException);
             clients.put(id, client);
             log.info("客户端[{}]接入", info.txt());
+//            cluster.setLocalStatusClients(getClients());
+            cluster.addLocalClient(info);
         });
         return emitter;
     }
@@ -94,7 +93,9 @@ public class ClientService {
         long now = System.currentTimeMillis();
         clients.values().parallelStream().filter(c->now-c.lastHeartbeatTime>ClientKeepaliveThreshold).forEach(c->{
             log.info("客户端[{}]移除：因为过久未心跳(上次{})", c.info.txt(), dateFormat(c.lastHeartbeatTime));
-            clients.remove(c.info.id);
+            clients.remove(c.info.getId());
+//            cluster.setLocalStatusClients(getClients());
+            cluster.removeLocalClient(c.info);
         });
     }
     
@@ -118,7 +119,7 @@ public class ClientService {
     private Collection<SseEmitter> emitters(String proId) {
         if(clients.isEmpty()) return Collections.emptyList();
         if(StringUtils.isBlank(proId)) return clients.values().stream().map(c->c.emitter).collect(toList());
-        return clients.values().stream().filter(c->proId.equals(c.info.proId)).map(c->c.emitter).collect(toList());
+        return clients.values().stream().filter(c->proId.equals(c.info.getProId())).map(c->c.emitter).collect(toList());
     }
     
     private void onSendException(SseEmitter emitter) {
@@ -126,10 +127,12 @@ public class ClientService {
         if(client==null) return;
         log.info("断开客户端[{}]的连接", client.info.txt());
         clients.remove(emitter);
+//        cluster.setLocalStatusClients(getClients());
+        cluster.removeLocalClient(client.info);
     }
     
     @ManagedOperation
-    public Collection<ClientInfo> getClients() {
+    public List<ClientInfo> getClients() {
         if(clients.isEmpty()) return Collections.emptyList();
         return clients.values().stream().map(c->c.info).collect(toList());
     }

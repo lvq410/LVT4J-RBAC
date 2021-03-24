@@ -4,8 +4,6 @@ import static java.util.stream.Collectors.toList;
 
 import java.io.File;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Stream;
 
 import javax.annotation.PostConstruct;
@@ -13,8 +11,8 @@ import javax.annotation.PreDestroy;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.concurrent.ConcurrentTaskScheduler;
-import org.springframework.scheduling.support.CronTrigger;
+
+import com.lvt4j.rbac.Utils.Scheduler;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author LV on 2020年8月5日
  */
 @Slf4j
-abstract class Backuper {
+abstract class Backuper extends Scheduler {
 
     @Value("${db.backup.cron}")
     protected String cron;
@@ -32,17 +30,13 @@ abstract class Backuper {
     @Value("${db.backup.max}")
     protected int max;
     
-    private ScheduledExecutorService scheduler;
-    
     @PostConstruct
     private void init() {
         if(!folder.endsWith("/")) folder += "/";
     }
     
-    protected final void initScheduler(Runnable backup) {
-        scheduler = Executors.newScheduledThreadPool(1);
-        new ConcurrentTaskScheduler(scheduler)
-            .schedule(()->{cleanOldBackup();backup.run();}, new CronTrigger(cron));
+    protected final void initScheduleBackup(Runnable backup, String poolName) {
+        initScheduler(cron, ()->{cleanOldBackup();backup.run();}, poolName);
     }
     
     private void cleanOldBackup() {
@@ -63,8 +57,8 @@ abstract class Backuper {
     }
     
     @PreDestroy
-    private void destory() {
-        if(scheduler!=null) scheduler.shutdownNow();
+    protected void destory() {
+        destoryScheduler();
     }
     
 }

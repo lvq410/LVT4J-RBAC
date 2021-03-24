@@ -1,0 +1,3 @@
+logging.level:
+  com.lvt4j.rbac: trace
+  com.lvt4j.rbac.velocity: error

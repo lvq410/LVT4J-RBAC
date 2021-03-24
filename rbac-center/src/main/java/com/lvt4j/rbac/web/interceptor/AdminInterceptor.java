@@ -1,5 +1,6 @@
 package com.lvt4j.rbac.web.interceptor;
 
+import static com.lvt4j.rbac.Utils.md5;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import java.io.File;
@@ -100,21 +101,18 @@ class AdminInterceptor implements WebMvcConfigurer, HandlerInterceptor {
     }
     
     public boolean isAdmin(String userId, String pwd) {
-        if(isBlank(userId) || isBlank(userId)) return false;
-        if(isAdminInProp(userId, pwd)) return true;
-        if(isAdminInSpring(userId, pwd)) return true;
-        return false;
+        if(isBlank(userId) || isBlank(pwd)) return false;
+        return isAdminInProp(userId, md5(pwd));
     }
-    private boolean isAdminInProp(String userId, String pwd) {
-        String storedPwd = props.getString("admin."+userId);
-        if(isBlank(storedPwd)) return false;
-        if(!storedPwd.equals(pwd)) return false;
-        return true;
+    private boolean isAdminInProp(String userId, String pwdMd5) {
+        if(!props.containsKey("admin."+userId)) return isAdminInSpring(userId, pwdMd5);
+        String storedPwdMd5 = props.getString("admin."+userId);
+        if(isBlank(storedPwdMd5)) return false;
+        return storedPwdMd5.equalsIgnoreCase(pwdMd5);
     }
-    private boolean isAdminInSpring(String userId, String pwd) {
-        String storedPwd = env.getProperty("admin."+userId);
-        if(isBlank(storedPwd)) return false;
-        if(!storedPwd.equals(pwd)) return false;
-        return true;
+    private boolean isAdminInSpring(String userId, String pwdMd5) {
+        String storedPwdMd5 = env.getProperty("admin."+userId);
+        if(isBlank(storedPwdMd5)) return false;
+        return storedPwdMd5.equalsIgnoreCase(pwdMd5);
     }
 }

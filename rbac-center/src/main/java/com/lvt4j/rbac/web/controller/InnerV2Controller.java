@@ -17,8 +17,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import com.lvt4j.rbac.BroadcastMsg4Center;
 import com.lvt4j.rbac.ProductAuthCaches;
 import com.lvt4j.rbac.ProductAuthCaches.ProductAuth4Center;
+import com.lvt4j.rbac.cluster.Cluster;
 import com.lvt4j.rbac.UserAuth;
-import com.lvt4j.rbac.cluster.EventBusPublisher;
 import com.lvt4j.rbac.db.lock.Read;
 import com.lvt4j.rbac.service.ClientService;
 
@@ -40,7 +40,7 @@ public class InnerV2Controller {
     private ClientService clientSevice;
     
     @Autowired
-    private EventBusPublisher eventBusPublisher;
+    private Cluster cluster;
     
     @RequestMapping("subscribe")
     public SseEmitter subscribe(HttpServletRequest request,
@@ -59,7 +59,7 @@ public class InnerV2Controller {
         if(heartbeated) return;
         //如果未在本机注册，需要广播出去
         if(log.isTraceEnabled()) log.trace("客户端心跳[{}]未在本机注册，广播", id);
-        eventBusPublisher.publish(new BroadcastMsg4Center.ClientHeartbeat(id));
+        cluster.publish(new BroadcastMsg4Center.ClientHeartbeat(id));
     }
     
     @Read

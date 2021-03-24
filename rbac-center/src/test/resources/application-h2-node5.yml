@@ -1,0 +1,24 @@
+server:
+  port: 10580
+
+management:
+  server.port: 10581
+
+spring:
+  application.name: rbac-center-h2
+  boot.admin.client:
+    enabled: true
+    url: http://localhost:25020
+
+db:
+  type: h2
+  folder: ./test/h2
+  backup.folder: ./test/h2/backup
+
+hazelcast:
+  port: 10583
+  discover:
+    mode: seed
+    seed:
+      quorum: 2
+      seeds: ${localIp}:10183,${localIp}:10283,${localIp}:10383,${localIp}:10483,${localIp}:10583

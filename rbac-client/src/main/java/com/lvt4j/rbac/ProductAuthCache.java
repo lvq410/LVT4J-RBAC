@@ -16,7 +16,7 @@ public abstract class ProductAuthCache implements Closeable {
     }
 
     /**
-     * 实现放需要满足以下逻辑：从缓存中查询，如果缓存中没有，则调用{@link #loader}加载
+     * 实现方需要满足以下逻辑：从缓存中查询，如果缓存中没有，则调用{@link #loader}加载
      * loader返回结果不为null时，结果应当缓存起来
      * @param userId
      * @param loader 

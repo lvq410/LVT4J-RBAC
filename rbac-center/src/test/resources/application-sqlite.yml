@@ -4,4 +4,6 @@ spring.boot.admin.client:
 
 db.folder: ./test/sqlite
 
-logging.level.com.lvt4j.rbac: trace
+logging.level:
+  com.lvt4j.rbac: trace
+  com.lvt4j.rbac.velocity: error

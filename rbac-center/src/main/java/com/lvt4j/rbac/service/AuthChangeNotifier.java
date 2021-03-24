@@ -5,7 +5,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.lvt4j.rbac.BroadcastMsg4Center.CacheClean;
-import com.lvt4j.rbac.cluster.EventBusPublisher;
+import com.lvt4j.rbac.cluster.Cluster;
 
 /**
  * 权限变更后需要走事件总线将变更信息
@@ -16,12 +16,12 @@ import com.lvt4j.rbac.cluster.EventBusPublisher;
 public class AuthChangeNotifier {
 
     @Autowired
-    private EventBusPublisher eventBusPublisher;
+    private Cluster cluster;
     
     @Async
     public void notify(String proId, String userId){
         try{ Thread.sleep(1000L); }catch(Throwable ig){}
-        eventBusPublisher.publish(new CacheClean(proId, userId));
+        cluster.publish(new CacheClean(proId, userId));
     }
     
 }

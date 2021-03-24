@@ -9,11 +9,6 @@ server:
       enabled: true
       pattern: "%t %s %m %U%q %Dms %bB %a"
   max-http-header-size: 16KB
-  master: true #是否master节点，sqlite数据库类型时固定master节点
-  publish_host: ${localIp} #slave节点将该地址通知给master以使master通过该地址与slave节点建立连接
-  publish_port: ${server.port} #同上
-  master_host: ${localIp} #slave节点连接master节点地址
-  master_port: ${server.port} #同上
 
 management:
   server.port: 81
@@ -56,11 +51,27 @@ db: #数据库
     filelock: FILE #h2数据库文件锁方式：FILE/SOCKET/FS/NO
     web.port: 8082 #master节点时的数据库web管理端口
     tcp.port: 9123 #master节点时的数据库tcp端口
-    master.tcp.port: ${db.h2.tcp.port} #slave节点时要连接的master节点的tcp端口
   mysql:
     url: jdbc:mysql://localhost:3306/rbac?useSSL=false&maxAllowedPacket=16777216&pinGlobalTxToPhysicalConnection=true&autoReconnect=true&failOverReadOnly=false&useLegacyDatetimeCode=false&serverTimezone=Asia/Shanghai
     username: root
     password: root
+
+hazelcast:
+  port: 83
+  discover:
+    mode: none
+    initClusterTimeout: 30000
+#    rancher:
+#      prefix:
+#      accessKey:
+#      secretKey:
+#      projectId:
+#      k8sNamespaceFile:
+#      namespaceId:
+#      workloadId:
+#    seed:
+#      quorum:
+#      seeds:
 
 oplog.maxdays: 30 #操作日志最大保留天数
 
