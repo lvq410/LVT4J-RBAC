@@ -14,6 +14,7 @@ import java.util.logging.Logger;
 import javax.management.ObjectName;
 
 import lombok.Getter;
+import lombok.SneakyThrows;
 
 /**
  * 产品下用户的配置项、访问项、授权项<br>
@@ -33,6 +34,7 @@ abstract class AbstractProductAuth implements AbstractProductAuthMBean,Closeable
     protected final String proId;
     /** 用户权限缓存 */
     private final ProductAuthCache cache;
+    private final ObjectName objectName;
     
     /** 游客权限 */
     protected UserAuth visitorAuth;
@@ -45,18 +47,22 @@ abstract class AbstractProductAuth implements AbstractProductAuthMBean,Closeable
     protected AbstractProductAuth(String proId, ProductAuthCache cache){
         this.proId = proId;
         this.cache = cache;
+        objectName = objectName();
         cache.setLoader(this::innerLoad);
         
         try{
-            Hashtable<String, String> kvs = new Hashtable<>();
-            kvs.put("type", getClass().getSimpleName());
-            kvs.put("proId", proId);
-            kvs.put("hash", String.valueOf(hashCode()));
-            
-            ManagementFactory.getPlatformMBeanServer().registerMBean(this, new ObjectName("RbacProductAuth", kvs));
+            ManagementFactory.getPlatformMBeanServer().registerMBean(this, objectName);
         }catch(Exception e){
             log.log(SEVERE, "ProductAuth注册JMX异常", e);
         }
+    }
+    @SneakyThrows
+    private ObjectName objectName() {
+        Hashtable<String, String> kvs = new Hashtable<>();
+        kvs.put("type", getClass().getSimpleName());
+        kvs.put("proId", proId);
+        kvs.put("hash", String.valueOf(hashCode()));
+        return new ObjectName("RbacProductAuth", kvs);
     }
     
     /** 查询用户权限,若userId为空,或用户未在权限中心注册,返回游客权限 */
@@ -165,6 +171,13 @@ abstract class AbstractProductAuth implements AbstractProductAuthMBean,Closeable
     
     @Override
     public void close() throws IOException {
+        if(objectName!=null){
+            try{
+                ManagementFactory.getPlatformMBeanServer().unregisterMBean(objectName);
+            }catch(Exception e){
+                log.log(SEVERE, "ProductAuth注销JMX异常", e);
+            }
+        }
         cache.close();
     }
     

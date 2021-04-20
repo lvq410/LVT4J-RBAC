@@ -1,6 +1,5 @@
 package com.lvt4j.rbac.cluster.hazelcast;
 
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PreDestroy;
@@ -12,7 +11,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 
-import com.hazelcast.cluster.Member;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.JoinConfig;
 import com.hazelcast.config.ListenerConfig;
@@ -25,13 +23,11 @@ import com.hazelcast.config.TcpIpConfig;
 import com.hazelcast.config.TopicConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.splitbrainprotection.SplitBrainProtectionFunction;
 import com.hazelcast.topic.MessageListener;
 import com.lvt4j.rbac.BroadcastMsg4Center;
 import com.lvt4j.rbac.cluster.BroadcastMsgHandler;
 import com.lvt4j.rbac.condition.DbIsClusterable;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -90,12 +86,7 @@ class HazelcastConfig {
         
         SplitBrainProtectionConfig splitBrainProtectionConfig = new SplitBrainProtectionConfig("by-discover", true)
             .setMinimumClusterSize(2)
-            .setFunctionImplementation(new SplitBrainProtectionFunction() {
-                @Override @SneakyThrows
-                public boolean apply(Collection<Member> members) {
-                    return members.size()>=discover.getQuorum();
-                }
-        });
+            .setFunctionImplementation(members->members.size()>=discover.getQuorumByCache());
         config.addSplitBrainProtectionConfig(splitBrainProtectionConfig);
         
         ReplicatedMapConfig metaMapConfig = new ReplicatedMapConfig("meta")
@@ -119,7 +110,7 @@ class HazelcastConfig {
         
         MapConfig proAuthCacheMapConfig = new MapConfig("pro-auth-*")
             .setBackupCount(0).setAsyncBackupCount(1).setReadBackupData(true)
-            .setTimeToLiveSeconds((int)TimeUnit.DAYS.toSeconds(1L));
+            .setMaxIdleSeconds((int)TimeUnit.DAYS.toSeconds(1L));
         config.addMapConfig(proAuthCacheMapConfig);
         
         config.getCPSubsystemConfig()

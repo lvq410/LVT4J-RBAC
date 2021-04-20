@@ -25,4 +25,9 @@ public class SeedDiscover implements Discover {
     
     private List<String> seeds;
     
+    @Override
+    public int getQuorumByCache() {
+        return quorum;
+    }
+    
 }

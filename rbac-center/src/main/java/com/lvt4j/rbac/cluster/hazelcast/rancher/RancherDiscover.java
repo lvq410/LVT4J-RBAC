@@ -72,6 +72,9 @@ class RancherDiscover extends Thread implements Discover {
     @Setter
     private String workloadId;
     
+    /** quorum检查的最小间隔 */
+    @Setter
+    private long quorumCheckMinInterval = 1000L;
     //======================================================================变量
     private String hostname;
     
@@ -80,6 +83,8 @@ class RancherDiscover extends Thread implements Discover {
     private volatile boolean destory;
     
     private int quorum = 1;
+    
+    private volatile long lastQuorumCheckTime;
     
     @Autowired
     private ObjectMapper objectMapper;
@@ -116,18 +121,23 @@ class RancherDiscover extends Thread implements Discover {
     
     @Override
     public int getQuorum() throws Throwable {
-        synchronized (this) {
-            notify();
+        return quorum = workloadReplica(10000)/2+1;
+    }
+    
+    @Override
+    public int getQuorumByCache() {
+        if(System.currentTimeMillis()-lastQuorumCheckTime>quorumCheckMinInterval){
+            synchronized (this) { notify(); }
         }
         return quorum;
     }
-    
     
     @Override
     public void run() {
         while(!destory){
             try{
-                quorum = workloadReplica(1000)/2+1;
+                quorum = workloadReplica(10000)/2+1;
+                lastQuorumCheckTime = System.currentTimeMillis();
             }catch(Throwable e){
                 if(destory) return;
                 log.warn("刷新Hazelcast quorum异常", e);

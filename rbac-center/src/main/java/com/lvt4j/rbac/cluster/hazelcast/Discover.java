@@ -9,6 +9,8 @@ public interface Discover {
 
     public int getQuorum() throws Throwable;
     
+    public int getQuorumByCache();
+    
     public List<String> getSeeds() throws Throwable;
     
     
