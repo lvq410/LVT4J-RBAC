@@ -11,6 +11,6 @@ jar{
 dependencies {
     testImplementation group: 'com.google.guava', name: 'guava', version: '16.0.1'
 
-    compileOnly ('javax.servlet:javax.servlet-api:+')
-    compileOnly ('org.springframework:spring-webmvc:+'){ exclude module: '*' }
+    compileOnly ('javax.servlet:javax.servlet-api:4.0.1')
+    compileOnly ('org.springframework:spring-webmvc:5.3.6'){ exclude module: '*' }
 }
