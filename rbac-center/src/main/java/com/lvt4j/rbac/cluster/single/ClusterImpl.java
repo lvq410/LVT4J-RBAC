@@ -1,11 +1,6 @@
 package com.lvt4j.rbac.cluster.single;
 
-import static java.util.Collections.emptyList;
-import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
-
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +11,9 @@ import com.lvt4j.rbac.BroadcastMsg4Center;
 import com.lvt4j.rbac.cluster.BroadcastMsgHandler;
 import com.lvt4j.rbac.cluster.Cluster;
 import com.lvt4j.rbac.condition.DbIsSingleOnly;
-import com.lvt4j.rbac.dto.ClientInfo;
 import com.lvt4j.rbac.dto.MemberStatus;
 import com.lvt4j.rbac.dto.NodeInfo;
+import com.lvt4j.rbac.service.ClientService;
 
 /**
  *
@@ -34,7 +29,8 @@ public class ClusterImpl implements Cluster {
     @Autowired
     private BroadcastMsgHandler broadcastMsgHandler;
     
-    private List<ClientInfo> clients = Collections.synchronizedList(new LinkedList<>());
+    @Autowired
+    private ClientService clientService;
     
     @Override
     public boolean isLocalMaster() {
@@ -47,22 +43,20 @@ public class ClusterImpl implements Cluster {
     }
 
     @Override
-    public void addLocalClient(ClientInfo client) {
-        clients.add(client);
-    }
-    
-    @Override
-    public void removeLocalClient(ClientInfo client) {
-        clients.remove(client);
+    public List<MemberStatus> getMemberShortStats() {
+        MemberStatus s = new MemberStatus();
+        s.id = localNodeInfo.address();
+        s.status = "master";
+        return Arrays.asList(s);
     }
     
     @Override
     public List<MemberStatus> getMemberStats() {
         MemberStatus s = new MemberStatus();
-        s.id = s.address = localNodeInfo.address();
+        s.id = localNodeInfo.address();
         s.regTime = localNodeInfo.getRegTime();
         s.status = "master";
-        s.clients = defaultIfNull(clients, emptyList());
+        s.clients = clientService.getClients();
         return Arrays.asList(s);
     }
     

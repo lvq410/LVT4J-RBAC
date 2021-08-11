@@ -23,14 +23,13 @@ public class ClusterController implements InfoContributor {
     private Cluster cluster;
     
     @RequestMapping("stats")
-    public JsonResult stats() {
+    public JsonResult stats() throws Throwable {
         return JsonResult.success(cluster.getMemberStats());
     }
-    
 
     @Override
     public void contribute(Builder builder) {
-        builder.withDetail("cluster", cluster.getMemberStats().stream().map(m->m.address+" "+m.status).collect(joining("\n")));
+        builder.withDetail("cluster", cluster.getMemberShortStats().stream().map(m->m.id+" "+m.status).collect(joining("\n")));
     }
     
 }

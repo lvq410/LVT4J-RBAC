@@ -3,10 +3,7 @@ package com.lvt4j.rbac.cluster;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.scheduling.annotation.Async;
-
 import com.lvt4j.rbac.BroadcastMsg4Center;
-import com.lvt4j.rbac.dto.ClientInfo;
 import com.lvt4j.rbac.dto.MemberStatus;
 import com.lvt4j.rbac.dto.NodeInfo;
 
@@ -29,17 +26,15 @@ public interface Cluster {
     /** 获取master节点信息，若还未选主，阻塞 */
     public NodeInfo getMasterInfo();
     
-//    /** 更新本节点连接的客户端信息 */
-//    @Async
-//    public void setLocalStatusClients(List<ClientInfo> clients);
+    /**
+     * 获取整个集群每个节点简单状态，仅包括
+     * {@link MemberStatus#id}和{@link MemberStatus#status}
+     * @return
+     */
+    public List<MemberStatus> getMemberShortStats();
     
-    @Async
-    public void addLocalClient(ClientInfo client);
-    @Async
-    public void removeLocalClient(ClientInfo client);
-    
-    /** 获取整个集群状态 */
-    public List<MemberStatus> getMemberStats();
+    /** 获取整个集群每个节点详细状态 */
+    public List<MemberStatus> getMemberStats() throws Throwable;
     
     /** 向事件总线上发布消息，集群中每个节点都会收到该消息 */
     public void publish(BroadcastMsg4Center msg);

@@ -25,7 +25,6 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.lvt4j.rbac.BroadcastMsg4Center;
 import com.lvt4j.rbac.BroadcastMsg4Center.ProIdBroadcastMsg;
-import com.lvt4j.rbac.cluster.Cluster;
 import com.lvt4j.rbac.dto.ClientInfo;
 
 import lombok.Data;
@@ -45,8 +44,6 @@ public class ClientService {
     
     @Autowired
     private SingleThreader singleThreader;
-    @Autowired
-    private Cluster cluster;
     
     /** 所有客户端长链 */
     private final Map<String, ClientMeta> clients = new ConcurrentHashMap<>();
@@ -64,8 +61,6 @@ public class ClientService {
             sse(emitter, BroadcastMsg4Center.ClientHandshake, this::onSendException);
             clients.put(id, client);
             log.info("客户端[{}]接入", info.txt());
-//            cluster.setLocalStatusClients(getClients());
-            cluster.addLocalClient(info);
         });
         return emitter;
     }
@@ -94,8 +89,6 @@ public class ClientService {
         clients.values().parallelStream().filter(c->now-c.lastHeartbeatTime>ClientKeepaliveThreshold).forEach(c->{
             log.info("客户端[{}]移除：因为过久未心跳(上次{})", c.info.txt(), dateFormat(c.lastHeartbeatTime));
             clients.remove(c.info.getId());
-//            cluster.setLocalStatusClients(getClients());
-            cluster.removeLocalClient(c.info);
         });
     }
     
@@ -126,9 +119,7 @@ public class ClientService {
         ClientMeta client = clients.values().stream().filter(c->c.emitter==emitter).findFirst().orElse(null);
         if(client==null) return;
         log.info("断开客户端[{}]的连接", client.info.txt());
-        clients.remove(emitter);
-//        cluster.setLocalStatusClients(getClients());
-        cluster.removeLocalClient(client.info);
+        clients.remove(client.info.getId());
     }
     
     @ManagedOperation

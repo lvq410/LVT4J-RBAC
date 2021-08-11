@@ -1,10 +1,13 @@
 package com.lvt4j.rbac.cluster.hazelcast;
 
-import static java.util.Collections.emptyList;
-import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
-
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
 
@@ -12,19 +15,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Component;
 
-import com.hazelcast.cluster.Address;
+import com.hazelcast.cluster.Member;
 import com.hazelcast.cluster.MembershipEvent;
 import com.hazelcast.cluster.MembershipListener;
+import com.hazelcast.core.ExecutionCallback;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-import com.hazelcast.multimap.MultiMap;
+import com.hazelcast.core.IExecutorService;
 import com.hazelcast.topic.ITopic;
 import com.lvt4j.rbac.BroadcastMsg4Center;
 import com.lvt4j.rbac.cluster.Cluster;
 import com.lvt4j.rbac.condition.DbIsClusterable;
-import com.lvt4j.rbac.dto.ClientInfo;
 import com.lvt4j.rbac.dto.MemberStatus;
 import com.lvt4j.rbac.dto.NodeInfo;
+import com.lvt4j.rbac.service.ClientService;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +41,8 @@ import lombok.extern.slf4j.Slf4j;
 @Conditional(DbIsClusterable.class)
 class ClusterImpl implements Cluster, MembershipListener {
 
+    private static ClusterImpl Instance;
+    
     @Autowired
     private NodeInfo localNodeInfo;
     
@@ -50,18 +55,19 @@ class ClusterImpl implements Cluster, MembershipListener {
     @Autowired
     private MasterElector masterElector;
     
-    private IMap<String, NodeInfo> nodes;
-    private MultiMap<String, ClientInfo> clients;
+    @Autowired
+    private ClientService clientService;
+    
+    private IExecutorService clientsCollector;
     
     private ITopic<BroadcastMsg4Center> eventBusTopic;
     
     @PostConstruct
     private void init() {
-        nodes = hazelcast.getMap("cluster-nodes");
-        clients = hazelcast.getMultiMap("cluster-clients");
+        clientsCollector = hazelcast.getExecutorService("cluster-clients");
         eventBusTopic = hazelcast.getTopic("event-bus");
         hazelcast.getCluster().addMembershipListener(this);
-        nodes.put(nodeId(localNodeInfo), localNodeInfo);
+        Instance = this;
     }
     
     public boolean isLocalMaster() {
@@ -74,28 +80,45 @@ class ClusterImpl implements Cluster, MembershipListener {
     }
     
     @Override
-    public void addLocalClient(ClientInfo client) {
-        clients.put(nodeId(localNodeInfo), client);
+    public List<MemberStatus> getMemberShortStats() {
+        Set<Member> members = hazelcast.getCluster().getMembers();
+        List<MemberStatus> stats = new ArrayList<>(members.size());
+        for(Member member : members){
+            MemberStatus status = new MemberStatus();
+            status.id = member.getAttribute("localIp")+":"+member.getAttribute("server.port");
+            status.status = masterElector.getMasterInfo().address().equals(status.id)?"master":"slave";
+            stats.add(status);
+        }
+        return stats;
     }
     
     @Override
-    public void removeLocalClient(ClientInfo client) {
-        clients.remove(nodeId(localNodeInfo), client);
-    }
-    
-    @Override
-    public List<MemberStatus> getMemberStats() {
-        NodeInfo masterInfo = getMasterInfo();
-        String masterId = nodeId(masterInfo);
-        return nodes.values().stream().map(n->{
-            MemberStatus s = new MemberStatus();
-            s.id = nodeId(n);
-            s.address = n.address();
-            s.regTime = n.getRegTime();
-            s.status = masterId.equals(s.id)?"master":"slave";
-            s.clients = defaultIfNull(clients.get(s.id), emptyList());
-            return s;
-        }).collect(Collectors.toList());
+    public List<MemberStatus> getMemberStats() throws Throwable {
+        Set<Member> members = hazelcast.getCluster().getMembers();
+        List<MemberStatus> stats = Collections.synchronizedList(new ArrayList<>(members.size()));
+        CountDownLatch latch = new CountDownLatch(stats.size());
+        for(Member member : members){
+            clientsCollector.submitToMember(new GetStatus(), member, new ExecutionCallback<MemberStatus>() {
+                @Override
+                public void onResponse(MemberStatus status) {
+                    stats.add(status);
+                    latch.countDown();
+                }
+                @Override
+                public void onFailure(Throwable e) {
+                    log.error("从节点{}加载状态失败", member, e);
+                    
+                    MemberStatus status = new MemberStatus();
+                    status.id = member.getAttribute("localIp")+":"+member.getAttribute("server.port");
+                    status.status = "unreachable";
+                    status.clients = Collections.emptyList();
+                    stats.add(status);
+                    latch.countDown();
+                }
+            });
+        }
+        latch.await(10, TimeUnit.SECONDS);
+        return stats;
     }
     
     @Override
@@ -104,7 +127,7 @@ class ClusterImpl implements Cluster, MembershipListener {
     }
     
     private static String nodeId(NodeInfo nodeInfo) {
-        return nodeInfo.getHost()+":"+nodeInfo.getHazelcastPort();
+        return nodeInfo.getHost()+":"+nodeInfo.getPort();
     }
     
     @Override
@@ -117,10 +140,23 @@ class ClusterImpl implements Cluster, MembershipListener {
             System.exit(-1);
             return;
         }
-        Address address = event.getMember().getAddress();
-        String id = address.getHost()+":"+address.getPort();
-        nodes.remove(id);
-        clients.remove(id);
     }
     
+    static class GetStatus implements Callable<MemberStatus>, Serializable {
+        private static final long serialVersionUID = -8571074704095263292L;
+        @Override
+        public MemberStatus call() throws Exception {
+            ClusterImpl service = ClusterImpl.Instance;
+            
+            NodeInfo n = service.localNodeInfo;
+            
+            MemberStatus s = new MemberStatus();
+            s.id = nodeId(n);
+            s.regTime = n.getRegTime();
+            s.status = service.isLocalMaster()?"master":"slave";
+            s.clients = service.clientService.getClients();
+            
+            return s;
+        }
+    }
 }

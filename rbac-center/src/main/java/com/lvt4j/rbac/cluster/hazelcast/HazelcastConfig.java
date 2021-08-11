@@ -12,10 +12,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 
 import com.hazelcast.config.Config;
+import com.hazelcast.config.ExecutorConfig;
 import com.hazelcast.config.JoinConfig;
 import com.hazelcast.config.ListenerConfig;
 import com.hazelcast.config.MapConfig;
-import com.hazelcast.config.MultiMapConfig;
+import com.hazelcast.config.MemberAttributeConfig;
 import com.hazelcast.config.NetworkConfig;
 import com.hazelcast.config.ReplicatedMapConfig;
 import com.hazelcast.config.SplitBrainProtectionConfig;
@@ -52,6 +53,8 @@ class HazelcastConfig {
     private String host;
     @Value("${hazelcast.port}")
     private int port;
+    @Value("${server.port}")
+    private int serverPort;
     
     @Autowired
     private Discover discover;
@@ -71,6 +74,11 @@ class HazelcastConfig {
             .setClusterName(appName)
             .setProperty("hazelcast.jmx", "true");
         
+        MemberAttributeConfig attrConfig = new MemberAttributeConfig();
+        attrConfig.setAttribute("localIp", host);
+        attrConfig.setAttribute("server.port", String.valueOf(serverPort));
+        config.setMemberAttributeConfig(attrConfig);
+        
         NetworkConfig networkConfig = config.getNetworkConfig()
             .setPort(port)
             .setPublicAddress(host)
@@ -89,27 +97,22 @@ class HazelcastConfig {
             .setFunctionImplementation(members->members.size()>=discover.getQuorumByCache());
         config.addSplitBrainProtectionConfig(splitBrainProtectionConfig);
         
-        ReplicatedMapConfig metaMapConfig = new ReplicatedMapConfig("meta")
+        ReplicatedMapConfig metaMapConfig = new ReplicatedMapConfig("meta").setStatisticsEnabled(true)
             .setSplitBrainProtectionName(splitBrainProtectionConfig.getName());
         config.addReplicatedMapConfig(metaMapConfig);
         
-        TopicConfig topicConfig = new TopicConfig("event-bus")
+        TopicConfig topicConfig = new TopicConfig("event-bus").setStatisticsEnabled(true)
             .setGlobalOrderingEnabled(true);
         MessageListener<BroadcastMsg4Center> topicListener = msg->broadcastMsgHandler.onBroadcastMsg(msg.getMessageObject());
         topicConfig.addMessageListenerConfig(new ListenerConfig(topicListener));
         config.addTopicConfig(topicConfig);
         
-        ReplicatedMapConfig clusterNodesMapConfig = new ReplicatedMapConfig("cluster-nodes")
-            .setSplitBrainProtectionName(splitBrainProtectionConfig.getName());
-        config.addReplicatedMapConfig(clusterNodesMapConfig);
-        
-        MultiMapConfig clusterClientsMapConfig = new MultiMapConfig("cluster-clients")
-            .setBackupCount(0).setAsyncBackupCount(1)
-            .setSplitBrainProtectionName(splitBrainProtectionConfig.getName());
-        config.addMultiMapConfig(clusterClientsMapConfig);
+        ExecutorConfig executorConfig = new ExecutorConfig("cluster-clients").setStatisticsEnabled(true)
+                .setPoolSize(1).setSplitBrainProtectionName(splitBrainProtectionConfig.getName());
+        config.addExecutorConfig(executorConfig);
         
         MapConfig proAuthCacheMapConfig = new MapConfig("pro-auth-*")
-            .setBackupCount(0).setAsyncBackupCount(1).setReadBackupData(true)
+            .setBackupCount(0).setAsyncBackupCount(1).setReadBackupData(true).setStatisticsEnabled(true)
             .setMaxIdleSeconds((int)TimeUnit.DAYS.toSeconds(1L));
         config.addMapConfig(proAuthCacheMapConfig);
         

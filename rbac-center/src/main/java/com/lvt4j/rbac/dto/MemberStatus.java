@@ -8,15 +8,10 @@ import java.util.Collection;
  */
 public class MemberStatus {
 
-    /**
-     * hazelcast模式时是ip:${hazelcast.port}
-     * 单机模式时是ip:${server.port}
-     */
+    /** 节点ip与服务端口号的组合：ip:${server.port} */
     public String id;
     /** 节点的启动时间 */
     public long regTime;
-    /** 节点的访问地址ip:${server.port} */
-    public String address;
     /** master/slave/unreachable */
     public String status;
     /** 连接在该节点上的客户端的清单 */
