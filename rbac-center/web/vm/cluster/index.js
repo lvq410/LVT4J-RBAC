@@ -53,7 +53,7 @@ var tpl_clients = $tpl(function(memberStats){
                     {Tigh(client.fromHost)}:{Tigh(client.fromPort)}<br>
                     version:{Tigh(client.version)}<br>
                     注册时间:{Tigh(TtimestampFormat(client.regTime))}<br>
-                    注册节点:{Tigh(client.memberStatus.address)}<br>
+                    注册节点:{Tigh(client.memberStatus.id)}<br>
                 </div>
             </span>*/
         })
