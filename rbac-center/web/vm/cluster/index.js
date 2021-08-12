@@ -22,6 +22,7 @@ function cacheClean(){
 }
 
 var tpl_clusterStats = $tpl(function(memberStats){
+    memberStats.sort(function(s1,s2){ return s1.id.localeCompare(s2.id); })
     memberStats.forEach(function(memberStatus){
         /*<tr><td title="{memberStatus.regTime?('注册时间'+TtimestampFormat(memberStatus.regTime)):''}">{Tigh(memberStatus.id)}</td><td>{Tigh(memberStatus.status)}</td><td>{Tigh((memberStatus.clients||[]).length)}</td></tr>*/
     })
@@ -37,7 +38,12 @@ var tpl_clients = $tpl(function(memberStats){
             proClients[client.proId] = clients;
         });
     });
+    var proIds = [];
     for(var proId in proClients){
+        proIds.push(proId);
+    }
+    proIds.sort();
+    proIds.forEach(function(proId){
         /*<tr><td><div style="width:max-content;">{Tigh(proId)}</div></td><td>*/
         proClients[proId].forEach(function(client){
             /*<span class="badge badge-{getBadge(client.host)} msg-tooltiper" style="cursor:default;">
@@ -52,5 +58,5 @@ var tpl_clients = $tpl(function(memberStats){
             </span>*/
         })
         /*</td></tr>*/
-    }
+    })
 });
