@@ -23,7 +23,7 @@ function cacheClean(){
 
 var tpl_clusterStats = $tpl(function(memberStats){
     memberStats.forEach(function(memberStatus){
-        /*<tr><td title="{memberStatus.regTime?('注册时间'+TtimestampFormat(memberStatus.regTime)):''}">{Tigh(memberStatus.address)}</td><td>{Tigh(memberStatus.status)}</td><td>{Tigh((memberStatus.clients||[]).length)}</td></tr>*/
+        /*<tr><td title="{memberStatus.regTime?('注册时间'+TtimestampFormat(memberStatus.regTime)):''}">{Tigh(memberStatus.id)}</td><td>{Tigh(memberStatus.status)}</td><td>{Tigh((memberStatus.clients||[]).length)}</td></tr>*/
     })
 });
 var tpl_clients = $tpl(function(memberStats){

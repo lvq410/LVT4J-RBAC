@@ -29,3 +29,4 @@ rbac.trace.db
 /config/
 /test/
 /logs/
+*.log

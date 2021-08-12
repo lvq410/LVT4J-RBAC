@@ -96,7 +96,7 @@ class ClusterImpl implements Cluster, MembershipListener {
     public List<MemberStatus> getMemberStats() throws Throwable {
         Set<Member> members = hazelcast.getCluster().getMembers();
         List<MemberStatus> stats = Collections.synchronizedList(new ArrayList<>(members.size()));
-        CountDownLatch latch = new CountDownLatch(stats.size());
+        CountDownLatch latch = new CountDownLatch(members.size());
         for(Member member : members){
             clientsCollector.submitToMember(new GetStatus(), member, new ExecutionCallback<MemberStatus>() {
                 @Override
