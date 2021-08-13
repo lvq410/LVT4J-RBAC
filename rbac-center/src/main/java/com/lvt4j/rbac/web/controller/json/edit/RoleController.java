@@ -100,7 +100,7 @@ public class RoleController extends AbstractEditController {
         now.accesses = accessAutoIds.stream().map(accessMapper::selectById).filter(Objects::nonNull).collect(toList());
         now.permissions = permissionAutoIds.stream().map(permissionMapper::selectById).filter(Objects::nonNull).collect(toList());
         RoleVo orig = null;
-        OpLog opLog = OpLog.create(role.autoId);
+        OpLog opLog = OpLog.create(role.proAutoId);
         if(role.autoId==null){
             opLog.action = "新增角色";
             mapper.insert(role);
