@@ -102,8 +102,14 @@ var tpl_oplogs = $tpl(function(oplogs, pros){
     for (var i = 0; i < oplogs.length; i++) {
         var oplog = oplogs[i];
         var pro = pros[oplog.proAutoId];
-        /*<tr title="{Tigh(oplog.comment)}">
-            <td title="{(oplog.ip?'操作人IP：':'')+Tigh(oplog.ip)}">{Tigh(oplog.operator)}</td>
+        /*<tr>
+            <td class="msg-tooltiper">
+                {Tigh(oplog.operator)}
+                <div class="tooltip-msg">*/
+                    if(oplog.ip) {/*{'操作人IP：'+Tigh(oplog.ip)}<br>*/};
+                    /*{Tigh(oplog.comment)}
+                </div>
+            </td>
             <td>{tpl_auths([pro])}<br>{Tigh(oplog.action)}<br>{TtimestampFormat(oplog.time)}</td>
             <td style="padding:0;"><div class="logdata">{tpl_logdata(oplog.orig)}</div></td>
             <td style="padding:0;"><div><div class="logdata">{tpl_logdata(oplog.now)}</div></div></td>
