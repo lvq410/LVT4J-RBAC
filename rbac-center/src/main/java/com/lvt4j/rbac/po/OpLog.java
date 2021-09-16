@@ -46,6 +46,7 @@ public class OpLog {
     public Integer proAutoId;
     public String orig;
     public String now;
+    public String comment;
     
     public static OpLog create(Integer proAutoId) {
         HttpServletRequest req = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();

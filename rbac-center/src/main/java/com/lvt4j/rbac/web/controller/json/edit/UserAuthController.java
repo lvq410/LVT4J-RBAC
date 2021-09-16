@@ -47,14 +47,15 @@ class UserAuthController extends AbstractEditController{
             @RequestParam(value="params",defaultValue="{}") MapIntStr params,
             @RequestParam(defaultValue="[]") ListInt roleAutoIds,
             @RequestParam(defaultValue="[]") ListInt accessAutoIds,
-            @RequestParam(defaultValue="[]") ListInt permissionAutoIds){
+            @RequestParam(defaultValue="[]") ListInt permissionAutoIds,
+            @RequestParam(required=false) String comment){
         Product product = productMapper.selectById(proAutoId);
         Checker.isTrue(product!=null, "产品[autoId=%s]不存在", proAutoId);
         User user = mapper.selectById(userAutoId);
         Checker.isTrue(user!=null, "用户[autoId=%s]不存在", userAutoId);
         
         OpLog opLog = OpLog.create(proAutoId);
-        opLog.action = "用户授权";
+        opLog.action = "用户授权"; opLog.comment = comment;
         UserVo orig = userController.toVo(user, proAutoId);
         opLog.orig(orig);
         

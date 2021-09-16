@@ -175,7 +175,8 @@ CREATE TABLE "oplog" (
 "time"  TIMESTAMP NOT NULL,
 "proAutoId" INT,
 "orig"  TEXT,
-"now"  TEXT
+"now"  TEXT,
+"comment"  TEXT
 );
 CREATE INDEX "oplog_operator" ON "oplog" ("operator" ASC);
 CREATE INDEX "oplog_time" ON "oplog" ("time" DESC);
