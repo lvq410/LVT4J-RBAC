@@ -33,7 +33,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lvt4j.rbac.cluster.hazelcast.Discover;
+import com.lvt4j.rbac.cluster.hazelcast.Discovery;
 import com.lvt4j.rbac.condition.DbIsClusterable;
 import com.lvt4j.rbac.dto.NodeInfo;
 
@@ -64,9 +64,9 @@ public class SpringConfig implements WebMvcConfigurer, AsyncConfigurer, Scheduli
     
     @PostConstruct
     private void init() {
-        if(DbIsClusterable.isClusterableDb(dbType) && !Discover.isValidMode(hazelcastDiscoverMode)){
+        if(DbIsClusterable.isClusterableDb(dbType) && !Discovery.isValidMode(hazelcastDiscoverMode)){
             throw new IllegalArgumentException(String.format("数据库类型[%s]为支持分布式类型，请配置合法的hazelcast.discover.mode(rancher or seeds but [%s])", dbType, hazelcastDiscoverMode));
-        }else if(!DbIsClusterable.isClusterableDb(dbType) && Discover.isValidMode(hazelcastDiscoverMode)){
+        }else if(!DbIsClusterable.isClusterableDb(dbType) && Discovery.isValidMode(hazelcastDiscoverMode)){
             throw new IllegalArgumentException(String.format("数据库类型[%s]不支持分布式，请配置hazelcast.discover.mode为none", dbType, hazelcastDiscoverMode));
         }
     }

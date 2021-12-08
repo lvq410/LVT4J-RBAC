@@ -50,7 +50,7 @@ class ClusterImpl implements Cluster, MembershipListener {
     private HazelcastInstance hazelcast;
     
     @Autowired
-    private Discover discover;
+    private Discovery discover;
     
     @Autowired
     private MasterElector masterElector;
@@ -131,10 +131,13 @@ class ClusterImpl implements Cluster, MembershipListener {
     }
     
     @Override
-    public void memberAdded(MembershipEvent event) {}
+    public void memberAdded(MembershipEvent event) {
+        discover.invalidateQuorumCache();
+    }
     
     @Override @SneakyThrows
     public void memberRemoved(MembershipEvent event) {
+        discover.invalidateQuorumCache();
         if(hazelcast.getCluster().getMembers().size()<discover.getQuorum()){
             log.error("集群成员数{}过少<{}，可能脑裂，终止程序", hazelcast.getCluster().getMembers().size(), discover.getQuorum());
             System.exit(-1);

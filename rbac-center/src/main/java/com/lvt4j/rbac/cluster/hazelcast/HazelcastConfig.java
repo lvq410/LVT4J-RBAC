@@ -40,6 +40,10 @@ import lombok.extern.slf4j.Slf4j;
 @Conditional(DbIsClusterable.class)
 class HazelcastConfig {
 
+    static final String SplitBrainProtectionName = "by-discovery";
+    
+    static final String MetaReplicatedMapName = "_meta";
+    
     @Value("${spring.application.name}")
     private String appName;
     
@@ -57,7 +61,7 @@ class HazelcastConfig {
     private int serverPort;
     
     @Autowired
-    private Discover discover;
+    private Discovery discover;
     
     @Autowired @Lazy
     private BroadcastMsgHandler broadcastMsgHandler;
@@ -92,12 +96,12 @@ class HazelcastConfig {
             .setMembers(discover.getSeeds());
         joinConfig.setTcpIpConfig(tcpIpConfig);
         
-        SplitBrainProtectionConfig splitBrainProtectionConfig = new SplitBrainProtectionConfig("by-discover", true)
+        SplitBrainProtectionConfig splitBrainProtectionConfig = new SplitBrainProtectionConfig(SplitBrainProtectionName, true)
             .setMinimumClusterSize(2)
-            .setFunctionImplementation(members->members.size()>=discover.getQuorumByCache());
+            .setFunctionImplementation(members->members.size()>=discover.getQuorum());
         config.addSplitBrainProtectionConfig(splitBrainProtectionConfig);
         
-        ReplicatedMapConfig metaMapConfig = new ReplicatedMapConfig("meta").setStatisticsEnabled(true)
+        ReplicatedMapConfig metaMapConfig = new ReplicatedMapConfig(MetaReplicatedMapName).setStatisticsEnabled(true)
             .setSplitBrainProtectionName(splitBrainProtectionConfig.getName());
         config.addReplicatedMapConfig(metaMapConfig);
         

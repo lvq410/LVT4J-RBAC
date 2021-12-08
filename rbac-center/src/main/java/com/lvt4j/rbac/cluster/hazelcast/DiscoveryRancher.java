@@ -1,4 +1,4 @@
-package com.lvt4j.rbac.cluster.hazelcast.rancher;
+package com.lvt4j.rbac.cluster.hazelcast;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -17,21 +17,27 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
+import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
+import org.springframework.boot.actuate.endpoint.annotation.WriteOperation;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jmx.export.annotation.ManagedAttribute;
+import org.springframework.jmx.export.annotation.ManagedOperation;
+import org.springframework.jmx.export.annotation.ManagedResource;
+import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lvt4j.rbac.cluster.hazelcast.Discover;
 
+import lombok.AccessLevel;
 import lombok.Cleanup;
 import lombok.Setter;
 import lombok.SneakyThrows;
@@ -45,7 +51,7 @@ import lombok.extern.slf4j.Slf4j;
 @Configuration
 @ConfigurationProperties("hazelcast.discover.rancher")
 @ConditionalOnProperty(name="hazelcast.discover.mode",havingValue="rancher")
-class RancherDiscover extends Thread implements Discover {
+class DiscoveryRancher implements Discovery {
 
     @Value("${hazelcast.port}")
     private int port;
@@ -59,6 +65,9 @@ class RancherDiscover extends Thread implements Discover {
     /** rancher api 用secretKey */
     @Setter
     private String secretKey;
+    /** 请求 rancher api 超时时间(ms) */
+    @Setter
+    private int timeout = 30000;
     /** pod部署的projectId */
     @Setter
     private String projectId;
@@ -72,19 +81,14 @@ class RancherDiscover extends Thread implements Discover {
     @Setter
     private String workloadId;
     
-    /** quorum检查的最小间隔 */
-    @Setter
-    private long quorumCheckMinInterval = 1000L;
     //======================================================================变量
     private String hostname;
     
     private String auth;
     
-    private volatile boolean destory;
-    
+    @Setter(AccessLevel.PRIVATE)
     private int quorum = 1;
-    
-    private volatile long lastQuorumCheckTime;
+    private boolean quorumValid;
     
     @Autowired
     private ObjectMapper objectMapper;
@@ -95,15 +99,7 @@ class RancherDiscover extends Thread implements Discover {
         detectNamespaceId();
         detectProjectId();
         detectWorkloadId();
-        quorum = workloadReplica(10000)/2+1;
-        setName("RancherDiscover");
-        start();
-    }
-    
-    @PreDestroy
-    private void destory() {
-        destory = true;
-        interrupt();
+        loadQuorum();
     }
     
     public List<String> getSeeds() throws Throwable {
@@ -120,34 +116,29 @@ class RancherDiscover extends Thread implements Discover {
     }
     
     @Override
-    public int getQuorum() throws Throwable {
-        return quorum = workloadReplica(10000)/2+1;
-    }
-    
-    @Override
-    public int getQuorumByCache() {
-        if(System.currentTimeMillis()-lastQuorumCheckTime>quorumCheckMinInterval){
-            synchronized (this) { notify(); }
-        }
+    public int getQuorum() {
+        checkAndRefreshQuorum();
         return quorum;
     }
-    
     @Override
-    public void run() {
-        while(!destory){
+    public void invalidateQuorumCache() {
+        quorumValid = false;
+        checkAndRefreshQuorum();
+    }
+    private void checkAndRefreshQuorum() {
+        if(quorumValid) return;
+        synchronized(this){
+            if(quorumValid) return;
             try{
-                quorum = workloadReplica(10000)/2+1;
-                lastQuorumCheckTime = System.currentTimeMillis();
+                loadQuorum();
             }catch(Throwable e){
-                if(destory) return;
                 log.warn("刷新Hazelcast quorum异常", e);
             }
-            synchronized(this){
-                try{
-                    wait();
-                }catch(InterruptedException e){}
-            }
         }
+    }
+    private void loadQuorum() throws Throwable {
+        quorum = workloadReplica()/2+1;
+        quorumValid = true;
     }
     
     private void detectNamespaceId() throws Exception {
@@ -200,7 +191,7 @@ class RancherDiscover extends Thread implements Discover {
         }
     }
     
-    private int workloadReplica(int timeout) throws Throwable {
+    private int workloadReplica() throws Throwable {
         JsonNode rst = callRancherApi("/project/%s/workloads/%s", timeout, projectId, workloadId);
         int minMembers = rst.at("/deploymentStatus/updatedReplicas").asInt();
         if(minMembers==0) throw new IllegalStateException(String.format("Get workload replica numbers from rancher api [/project/%s/workloads/%s] failed.Api response:\n%s", projectId, workloadId, rst));
@@ -238,5 +229,38 @@ class RancherDiscover extends Thread implements Discover {
         synchronized(this){
             return auth = "Basic "+Base64.getEncoder().encodeToString((accessKey+":"+secretKey).getBytes());
         }
+    }
+    
+    @Endpoint(id="hazelcast-quorum")
+    @ManagedResource(objectName="Discovery:des=查询、重载与手动设置quorum")
+    @Component("hazelcast-quorum-actuator")
+    @ConditionalOnProperty(name="hazelcast.discover.mode",havingValue="rancher")
+    public static class QuorumAcutator {
+        
+        @Autowired
+        private DiscoveryRancher discovery;
+        
+        @ReadOperation
+        @ManagedAttribute
+        public int getQuorum() {
+            return discovery.getQuorum();
+        }
+        
+        @ManagedOperation(description="重新从rancher接口拉取quorum值并更新到本地内存缓存")
+        public int reloadQuorum() throws Throwable {
+            discovery.loadQuorum();
+            return discovery.getQuorum();
+        }
+        
+        @WriteOperation
+        @ManagedAttribute(description="本地内存中缓存的quorum值\n"
+            +"集群有节点变动时缓存会失效，会重新从rancher接口拉取quorum值\n"
+            +"因此除非临时需要，否则Rancher服务发现模式不推荐使用该方法更新本地缓存的quorum值")
+        public int setQuorum(int quorum) throws Exception {
+            log.info("Hazelcast quorum set manually to {}", quorum);
+            discovery.setQuorum(quorum);
+            return quorum;
+        }
+
     }
 }
