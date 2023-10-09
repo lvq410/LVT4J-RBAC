@@ -1,5 +1,5 @@
 # 基础镜像
-FROM openjdk:8-jre-alpine
+FROM adoptopenjdk/openjdk8:jdk8u382-b05-alpine
 
 # 将打包好的项目添加到镜像中
 WORKDIR /app
