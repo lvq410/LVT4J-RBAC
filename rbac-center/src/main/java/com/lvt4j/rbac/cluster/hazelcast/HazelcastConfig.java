@@ -1,7 +1,5 @@
 package com.lvt4j.rbac.cluster.hazelcast;
 
-import java.util.concurrent.TimeUnit;
-
 import javax.annotation.PreDestroy;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +50,21 @@ class HazelcastConfig {
     
     @Value("${hazelcast.discover.initClusterTimeout}")
     private long initClusterTimeout;
+
+    @Value("${hazelcast.cp.sessionHeartbeatIntervalSeconds:1}")
+    private int cpSessionHeartbeatIntervalSeconds;
+    @Value("${hazelcast.cp.sessionTimeToLiveSeconds:5}")
+    private int cpSessionTimeToLiveSeconds;
+    @Value("${hazelcast.cp.missingCPMemberAutoRemovalSeconds:10}")
+    private int cpMissingCPMemberAutoRemovalSeconds;
+    
+    
+    @Value("${hazelcast.cache.pro-auth.backupCount:0}")
+    private int proAuthBackupCount;
+    @Value("${hazelcast.cache.pro-auth.asyncbackupCount:1}")
+    private int proAuthAsyncBackupCount;
+    @Value("${hazelcast.cache.pro-auth.maxIdleSeconds:86400}")
+    private int proAuthMaxIdleSeconds;
     
     @Value("${localIp}")
     private String host;
@@ -112,18 +125,18 @@ class HazelcastConfig {
         config.addTopicConfig(topicConfig);
         
         ExecutorConfig executorConfig = new ExecutorConfig("cluster-clients").setStatisticsEnabled(true)
-                .setPoolSize(1).setSplitBrainProtectionName(splitBrainProtectionConfig.getName());
+            .setPoolSize(1).setSplitBrainProtectionName(splitBrainProtectionConfig.getName());
         config.addExecutorConfig(executorConfig);
         
         MapConfig proAuthCacheMapConfig = new MapConfig("pro-auth-*")
-            .setBackupCount(0).setAsyncBackupCount(1).setReadBackupData(true).setStatisticsEnabled(true)
-            .setMaxIdleSeconds((int)TimeUnit.DAYS.toSeconds(1L));
+            .setBackupCount(proAuthBackupCount).setAsyncBackupCount(proAuthAsyncBackupCount).setReadBackupData(true).setStatisticsEnabled(true)
+            .setMaxIdleSeconds(proAuthMaxIdleSeconds);
         config.addMapConfig(proAuthCacheMapConfig);
         
         config.getCPSubsystemConfig()
-            .setSessionHeartbeatIntervalSeconds(1)
-            .setSessionTimeToLiveSeconds(5)
-            .setMissingCPMemberAutoRemovalSeconds(10);
+            .setSessionHeartbeatIntervalSeconds(cpSessionHeartbeatIntervalSeconds)
+            .setSessionTimeToLiveSeconds(cpSessionTimeToLiveSeconds)
+            .setMissingCPMemberAutoRemovalSeconds(cpMissingCPMemberAutoRemovalSeconds);
         
         instance = Hazelcast.newHazelcastInstance(config);
         
